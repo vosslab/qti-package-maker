@@ -77,7 +77,7 @@ def _html_table_to_text(table_html: str) -> str:
 
 	if _tabulate:
 		try:
-			return _tabulate(data_rows, headers=headers if headers else (), tablefmt="fancy_outline")
+			return _tabulate(data_rows, headers=headers if headers else (), tablefmt="fancy_grid")
 		except Exception:
 			return "[TABLE]"
 
