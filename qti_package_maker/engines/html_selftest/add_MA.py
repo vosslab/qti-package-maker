@@ -29,6 +29,8 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 	for idx, choice_text in enumerate(choices_list, start=1):
 		# Extract the choice text and whether it is the correct answer
 		is_correct_bool = (choice_text in answers_list)
+		# Generate the letter prefix (A, B, C, ...)
+		choice_letter = chr(64 + idx)
 		# Add a list item to contain the checkbox button and label
 		html_content += "  <li>\n"
 		# Add an input element of type "checkbox"
@@ -37,8 +39,10 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 		html_content += f" name=\"answer_{crc16_text}\" "
 		# Store whether the choice is correct as a custom data attribute
 		html_content += f" data-correct=\"{str(is_correct_bool).lower()}\">\n"
-		# Add a label for the checkbox button, associated by its ID
-		html_content += f"    <label for=\"option_{crc16_text}_{idx}\">{choice_text}</label>\n"
+		# Add a label with bold letter prefix and text wrapped in span for proper sub/sup rendering
+		html_content += f"    <label for=\"option_{crc16_text}_{idx}\">"
+		html_content += f"<span style=\"font-weight: bold;\">{choice_letter}.</span> "
+		html_content += f"<span>{choice_text}</span></label>\n"
 		# Close the list item
 		html_content += "  </li>\n"
 	# Close the unordered list of choices

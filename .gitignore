@@ -5,8 +5,4 @@
 *.zip
 *.xml
 
-report_shebang.txt
-report_pyflakes.txt
-report_ascii_compliance.txt
-report_bandit.txt
-report_pyright.txt
+report_*.txt

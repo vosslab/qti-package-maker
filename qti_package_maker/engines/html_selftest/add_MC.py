@@ -27,6 +27,8 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 	for idx, choice_text in enumerate(choices_list):
 		# Extract the choice text and whether it is the correct answer
 		is_correct_bool = (choice_text == answer_text)
+		# Generate the letter prefix (A, B, C, ...)
+		choice_letter = chr(65 + idx)
 		# Add a list item to contain the radio button and label
 		html_content += "  <li>\n"
 		# Add an input element of type "radio"
@@ -35,8 +37,10 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 		html_content += f" name=\"answer_{crc16_text}\" "
 		# Store whether the choice is correct as a custom data attribute
 		html_content += f" data-correct=\"{str(is_correct_bool).lower()}\">\n"
-		# Add a label for the radio button, associated by its ID
-		html_content += f"    <label for=\"option{idx}\">{choice_text}</label>\n"
+		# Add a label with bold letter prefix and text wrapped in span for proper sub/sup rendering
+		html_content += f"    <label for=\"option{idx}\">"
+		html_content += f"<span style=\"font-weight: bold;\">{choice_letter}.</span> "
+		html_content += f"<span>{choice_text}</span></label>\n"
 		# Close the list item
 		html_content += "  </li>\n"
 	# Close the unordered list of choices

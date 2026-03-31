@@ -3,8 +3,8 @@
 import os
 import re
 import argparse
+import importlib.metadata
 
-import qti_package_maker
 from qti_package_maker import package_interface
 
 #=====================================================
@@ -14,7 +14,10 @@ def _check_version():
 		return  # Not running from repo, skip check
 	with open(repo_version_file, 'r') as f:
 		repo_version = f.read().strip()
-	installed_version = qti_package_maker.__version__
+	try:
+		installed_version = importlib.metadata.version("qti_package_maker")
+	except importlib.metadata.PackageNotFoundError:
+		return  # Not installed as a package, skip check
 	if repo_version != installed_version:
 		print(f"VERSION MISMATCH: repo VERSION file says {repo_version}, "
 			f"but imported qti_package_maker is {installed_version}")

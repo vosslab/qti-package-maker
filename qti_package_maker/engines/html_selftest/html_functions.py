@@ -1,6 +1,7 @@
 
 # Import modules from the standard library
 import re
+import html
 import json
 
 # Pip3 Library
@@ -282,17 +283,32 @@ def add_reset_game_button(crc16_text: str, button_text: str="Reset Game"):
 	return make_button(button_text, js_function, "md-button md-button--secondary custom-button qti-btn qti-btn-reset")
 
 #============================================
+def _visible_text_length(html_text: str) -> int:
+	"""
+	Return the visible character count of an HTML string.
+
+	Strips HTML tags and unescapes entities so that markup like
+	K<sub>M</sub> counts as 2 chars and &alpha; counts as 1 char.
+	"""
+	# Strip HTML tags
+	stripped = re.sub(r'<[^>]+>', '', html_text)
+	# Unescape HTML entities (e.g. &alpha; -> single char)
+	unescaped = html.unescape(stripped)
+	return len(unescaped)
+
+#============================================
 def determine_choice_layout_class(choices_list: list) -> str:
 	"""
-	Determine the CSS grid class for MC/MA choice layout based on choice count.
+	Determine the CSS grid class for MC/MA choice layout based on choice count
+	and visible text length.
 
 	Uses CSS Grid auto-fit to let the browser automatically arrange choices
 	based on their actual rendered width. No measurement needed in Python.
 
 	Returns one of:
-	- "" (empty string): default vertical layout (2-3 choices)
-	- "qti-auto-grid-compact": responsive grid with min 150px columns (4-5 choices)
-	- "qti-auto-grid": responsive grid with min 200px columns (6+ choices)
+	- "" (empty string): default vertical layout (2-3 choices or any long choice)
+	- "qti-auto-grid-compact": responsive grid with min 150px columns (4-5 short choices)
+	- "qti-auto-grid": responsive grid with min 200px columns (6+ short choices)
 	"""
 	num_choices = len(choices_list)
 
@@ -300,11 +316,16 @@ def determine_choice_layout_class(choices_list: list) -> str:
 	if num_choices <= 3:
 		return ""
 
-	# For 4-5 choices, use compact grid (min 150px per choice)
+	# If any choice has long visible text, force vertical layout to avoid wrapping
+	max_visible_len = max(_visible_text_length(c) for c in choices_list)
+	if max_visible_len > 50:
+		return ""
+
+	# For 4-5 short choices, use compact grid (min 150px per choice)
 	# Will fit 2-3 columns on typical screens, adapts to actual width
 	if num_choices <= 5:
 		return "qti-auto-grid-compact"
 
-	# For 6+ choices, use standard grid (min 200px per choice)
+	# For 6+ short choices, use standard grid (min 200px per choice)
 	# Will fit 2-4 columns depending on choice content width
 	return "qti-auto-grid"

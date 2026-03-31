@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-03-30
+
+### Changed
+- Add bold choice letters (A., B., C., etc.) to html_selftest MC and MA labels.
+- Wrap html_selftest choice text in a `<span>` so `<sub>` and `<sup>` tags render as proper subscripts and superscripts inside flex labels.
+- Add visible-text-length check to `determine_choice_layout_class()` so choices longer than 50 visible characters force vertical layout instead of grid.
+- Strip HTML tags and unescape entities before measuring choice text length for layout decisions.
+- Remove `__version__` assignment from `qti_package_maker/__init__.py`; version check in `bbq_converter.py` now uses `importlib.metadata.version()` directly.
+- Remove re-exports and `__all__` from `color_theory/__init__.py`; all consumers already import submodules directly.
+- Rename `color_theory/main.py` to `color_theory/rcp_debug_plots.py` to reflect its role as a dev visualization script.
+- Move `matplotlib`, `numpy`, and `scipy` from `pip_requirements.txt` to `pip_requirements-dev.txt` (only used in `rcp_debug_plots.py`).
+- Remove incorrect `colour` entry from `pip_requirements.txt`; add `"colour": "colour-science"` alias to `test_import_requirements.py`.
+
 ## 2026-02-07
 
 ### Added

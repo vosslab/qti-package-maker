@@ -1,0 +1,9 @@
+# Development dependencies
+bandit  # security linting for Python code
+matplotlib  # color wheel debug/visualization in color_theory/main.py
+numpy  # array operations in color_theory/main.py
+packaging  # version parsing/comparison helpers used by tooling/tests
+pyflakes  # static analysis lint checks
+pytest  # automated test runner
+rich  # formatted terminal output in developer tools
+scipy  # interpolation in color_theory/main.py

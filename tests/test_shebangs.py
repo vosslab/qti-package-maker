@@ -3,10 +3,9 @@ import stat
 from typing import Optional
 
 import git_file_utils
-from get_repo_root import get_repo_root
 
 
-REPO_ROOT = get_repo_root()
+REPO_ROOT = git_file_utils.get_repo_root()
 SKIP_DIRS = {
 	".git",
 	".venv",
@@ -76,6 +75,9 @@ def read_shebang(path: str) -> str:
 		return ""
 	if not line.startswith(b"#!"):
 		return ""
+	# Rust inner attributes start with #![ and are not shebangs
+	if line.startswith(b"#!["):
+		return ""
 	try:
 		return line.decode("utf-8").rstrip("\n")
 	except UnicodeDecodeError:
@@ -130,6 +132,33 @@ def has_main_guard(path: str) -> bool:
 
 
 #============================================
+def is_test_file(path: str) -> bool:
+	"""
+	Detect whether a Python file is a test file.
+
+	Checks if the filename matches test_*.py and the content
+	imports pytest.
+
+	Args:
+		path: Absolute file path.
+
+	Returns:
+		bool: True if the file is a pytest test file.
+	"""
+	basename = os.path.basename(path)
+	if not basename.startswith("test_") or not basename.endswith(".py"):
+		return False
+	try:
+		with open(path, "r", encoding="utf-8", errors="ignore") as handle:
+			content = handle.read()
+	except OSError:
+		return False
+	if "import pytest" in content or "from pytest" in content:
+		return True
+	return False
+
+
+#============================================
 def categorize_errors() -> dict[str, list[str]]:
 	"""
 	Scan repo for shebang and executable mismatches.
@@ -143,6 +172,8 @@ def categorize_errors() -> dict[str, list[str]]:
 		"python_shebang_invalid": [],
 		"shebang_without_main_guard": [],
 		"main_guard_missing_shebang": [],
+		"test_file_has_shebang": [],
+		"test_file_is_executable": [],
 	}
 	for path in iter_repo_files():
 		shebang = read_shebang(path)
@@ -164,6 +195,13 @@ def categorize_errors() -> dict[str, list[str]]:
 				errors["shebang_without_main_guard"].append(path)
 			if has_guard and not shebang and exec_flag:
 				errors["main_guard_missing_shebang"].append(path)
+
+			# Test files should not have shebangs or executable bits
+			if is_test_file(path):
+				if shebang:
+					errors["test_file_has_shebang"].append(path)
+				if exec_flag:
+					errors["test_file_is_executable"].append(path)
 
 	return errors
 
