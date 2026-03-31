@@ -9,6 +9,8 @@
 - Refactor `from`/`as` imports to direct module imports in `test_multi_engine_roundtrip.py` and `test_html_selftest_output.py`.
 - Convert 3-space indentation to tabs in `rcp_debug_plots.py`.
 - Bump version from 26.02 to 26.03.
+- Fix version mismatch check in `bbq_converter.py` to normalize PEP 440 versions before comparing (e.g., `26.03` vs `26.3`); use `packaging.version.Version` for proper normalization.
+- Add editable-install sync check to `devel/submit_to_pypi.py` that detects stale `pip install -e .` metadata before running pytest, preventing confusing version mismatch failures.
 - Add bold choice letters (A., B., C., etc.) to html_selftest MC and MA labels.
 - Wrap html_selftest choice text in a `<span>` so `<sub>` and `<sup>` tags render as proper subscripts and superscripts inside flex labels.
 - Add visible-text-length check to `determine_choice_layout_class()` so choices longer than 50 visible characters force vertical layout instead of grid.

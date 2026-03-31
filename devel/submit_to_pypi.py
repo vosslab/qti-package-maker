@@ -456,6 +456,48 @@ def require_dist_empty(project_dir: str) -> None:
 		fail(f"dist/ is not empty after cleaning: {joined}")
 
 
+def require_editable_install_in_sync(
+	python_exe: str, project_dir: str, package_name: str, version: str
+) -> None:
+	"""Ensure the editable install version matches the repo version.
+
+	An editable install (pip install -e .) caches metadata at install time.
+	When the version is bumped in pyproject.toml without re-running pip install,
+	the installed metadata goes stale and version checks in tools will fail.
+
+	Args:
+		python_exe: Python executable.
+		project_dir: Project directory.
+		package_name: Package name to check.
+		version: Expected version from pyproject.toml.
+	"""
+	import_name = re.sub(r"[-.]", "_", package_name)
+	# Check if the package is importable at all
+	check_cmd = [python_exe, "-c", f"import {import_name}"]
+	result = run_command_allow_fail(check_cmd, project_dir, True)
+	if result.returncode != 0:
+		# Not installed, nothing to check
+		return
+	# Get the installed version via importlib.metadata
+	version_cmd = [
+		python_exe, "-c",
+		f"import importlib.metadata; print(importlib.metadata.version('{package_name}'))",
+	]
+	result = run_command_allow_fail(version_cmd, project_dir, True)
+	if result.returncode != 0:
+		return
+	installed_version = result.stdout.strip()
+	repo_normalized = str(Version(version))
+	installed_normalized = str(Version(installed_version))
+	if repo_normalized != installed_normalized:
+		fail(
+			f"Editable install is stale: installed {package_name} is {installed_version}, "
+			f"but pyproject.toml says {version}.\n"
+			f"Run 'pip install -e .' from {project_dir} to sync."
+		)
+
+#============================================
+
 def require_pytest_passes_if_available(python_exe: str, project_dir: str) -> None:
 	"""Run pytest if it is installed."""
 	result = run_command_allow_fail([python_exe, "-c", "import pytest"], project_dir, False)
@@ -1007,6 +1049,7 @@ def main() -> None:
 	require_version_tag(project_dir, version)
 	require_twine_available(sys.executable, project_dir)
 	require_index_reachable(index_url)
+	require_editable_install_in_sync(sys.executable, project_dir, package_name, version)
 	require_pytest_passes_if_available(sys.executable, project_dir)
 
 	check_version_exists(sys.executable, project_dir, package_name, version, index_url)

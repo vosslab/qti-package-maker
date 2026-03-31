@@ -18,7 +18,11 @@ def _check_version():
 		installed_version = importlib.metadata.version("qti_package_maker")
 	except importlib.metadata.PackageNotFoundError:
 		return  # Not installed as a package, skip check
-	if repo_version != installed_version:
+	# PEP 440 normalizes 26.03 to 26.3, so compare normalized forms
+	from packaging.version import Version
+	repo_normalized = str(Version(repo_version))
+	installed_normalized = str(Version(installed_version))
+	if repo_normalized != installed_normalized:
 		print(f"VERSION MISMATCH: repo VERSION file says {repo_version}, "
 			f"but imported qti_package_maker is {installed_version}")
 		print("Run 'pip install -e .' from the repo root to sync.")
