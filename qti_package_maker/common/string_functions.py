@@ -90,7 +90,7 @@ def _html_table_to_text(table_html: str) -> str:
 	return "\n".join(lines)
 
 #==========================
-def number_to_letter(integer):
+def number_to_letter(integer: int) -> str:
 	"""
 	Convert a number to its alphabetical representation.
 	"""
@@ -102,7 +102,7 @@ def number_to_letter(integer):
 	return letters[integer-1]
 
 #==========================
-def number_to_lowercase(integer):
+def number_to_lowercase(integer: int) -> str:
 	"""
 	Convert a number to its alphabetical representation.
 	"""
@@ -113,7 +113,7 @@ def number_to_lowercase(integer):
 	return lowercase_letters[integer-1]
 
 #==========================
-def number_to_ordinal(integer):
+def number_to_ordinal(integer: int) -> str:
 	"""
 	Convert a number to its ordinal representation.
 	Args:
@@ -124,7 +124,7 @@ def number_to_ordinal(integer):
 	return num2words.num2words(integer, to='ordinal', lang='en_US')
 
 #==========================
-def number_to_cardinal(integer):
+def number_to_cardinal(integer: int) -> str:
 	"""
 	Convert a number to its cardinal representation.
 	Args:
@@ -231,7 +231,7 @@ def remove_prefix_from_list(choices_list: list) -> list:
 	return cleaned_choice_list
 
 #==========================
-def get_crc16_from_string(mystr):
+def get_crc16_from_string(mystr: str) -> str:
 	crc16 = crcmod.predefined.Crc('xmodem')
 	try:
 		crc16.update(mystr.encode('ascii', errors='strict'))
@@ -241,12 +241,12 @@ def get_crc16_from_string(mystr):
 	return crc16.hexdigest().lower()
 
 #==========================
-def get_random_crc16():
+def get_random_crc16() -> str:
 	rand_crc16 = f"{random.randrange(16**4):04x}"
 	return rand_crc16
 
 #==========================
-def check_ascii(mystr):
+def check_ascii(mystr: str) -> bool:
 	#destructive function
 	mystr = mystr.replace('. ', '\n')
 	mystr = mystr.replace(', ', '\n')
@@ -268,7 +268,7 @@ def check_ascii(mystr):
 
 
 #==========================
-def make_question_pretty(question):
+def make_question_pretty(question: str) -> str:
 	pretty_question = copy.copy(question)
 	#print(len(pretty_question))
 	table_map = {}
@@ -345,7 +345,7 @@ def make_question_pretty(question):
 	return pretty_question.strip()
 
 #=====================
-def convert_sub_sup(pretty_question):
+def convert_sub_sup(pretty_question: str) -> str:
 	"""Replace <sub> and <sup> HTML tags with Unicode equivalents using regex."""
 
 	# Define subscript and superscript mappings
@@ -374,7 +374,7 @@ def convert_sub_sup(pretty_question):
 
 #==============
 # This function formats HTML content using the lxml library.
-def format_html_lxml(html_string):
+def format_html_lxml(html_string: str) -> str:
 	"""
 	Format an HTML string using lxml library for cleaner output.
 
@@ -401,14 +401,14 @@ def format_html_lxml(html_string):
 	return formatted_html
 
 #========================================
-def html_monospace(txt, use_nbsp=True):
+def html_monospace(txt: str, use_nbsp: bool = True) -> str:
 	local_txt = copy.copy(txt)
 	if use_nbsp is True:
 		local_txt = local_txt.replace(' ', '&nbsp;')
 	return f"<span style='font-family: monospace;'>{local_txt}</span>"
 
 #==========================
-def html_color_text(text, hex_code):
+def html_color_text(text: str, hex_code: str) -> str:
 	return f'<span style="color: #{hex_code};">{text}</span>'
 
 #=====================

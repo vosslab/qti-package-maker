@@ -30,7 +30,7 @@ class ItemBank:
 		self.item_type_pattern = re.compile(r"^[A-Z_]+$")
 
 	#============================================
-	def _discover_item_classes(self):
+	def _discover_item_classes(self) -> dict:
 		"""
 		Dynamically find all assessment item classes in item_types.py.
 		Returns:
@@ -43,19 +43,19 @@ class ItemBank:
 		return classes
 
 	#============================================
-	def get_available_item_types(self):
+	def get_available_item_types(self) -> list:
 		"""Returns a list of available assessment item types."""
 		return list(self.item_classes.keys())
 
 	#============================================
-	def show_available_item_types(self):
+	def show_available_item_types(self) -> None:
 		"""Prints the available assessment item types."""
 		print("Available Assessment Item Types:")
 		for item_type in self.get_available_item_types():
 			print(f"- {item_type}")
 
 	#============================================
-	def summarize_item_types(self):
+	def summarize_item_types(self) -> None:
 		"""
 		Generates a formatted ASCII table summarizing the count of each item type.
 		"""
@@ -72,7 +72,7 @@ class ItemBank:
 		print(tabulate(data, headers=["Item Type", "Count"], tablefmt="fancy_outline"))
 
 	#============================================
-	def gather_histogram_data(self, item_type: str):
+	def gather_histogram_data(self, item_type: str) -> dict:
 		"""
 		Gathers histogram data for a given item type.
 		"""
@@ -90,7 +90,7 @@ class ItemBank:
 		return answer_counts
 
 	#============================================
-	def print_histogram(self):
+	def print_histogram(self) -> None:
 		"""
 		Summarizes the count of each item type in items_dict and prints histograms for supported types.
 		"""
@@ -104,14 +104,14 @@ class ItemBank:
 			self.print_histogram_MA_items()
 
 	#============================================
-	def print_histogram_MC_items(self):
+	def print_histogram_MC_items(self) -> None:
 		"""
 		Prints a histogram summarizing the distribution of answers for Multiple Choice (MC) items.
 		"""
 		self.print_histogram_type("MC", "Multiple Choice (MC)")
 
 	#============================================
-	def print_histogram_MA_items(self):
+	def print_histogram_MA_items(self) -> None:
 		"""
 		Prints a histogram summarizing the distribution of answers for Multiple Answer (MA) items.
 		"""
@@ -145,7 +145,7 @@ class ItemBank:
 		print(tabulate(data, headers=["Letter", "Count", "%"], tablefmt="fancy_outline"))
 
 	#============================================
-	def _validate_item_type(self, item_type):
+	def _validate_item_type(self, item_type: str) -> None:
 		"""
 		Ensures consistency of item types if allow_mixed is False.
 		"""
@@ -161,7 +161,7 @@ class ItemBank:
 			+ f"allowed type is '{self.first_item_type}', attempted to add '{item_type}'")
 
 	#============================================
-	def add_item(self, item_type: str, item_tuple: tuple):
+	def add_item(self, item_type: str, item_tuple: tuple) -> None:
 		"""
 		Creates and adds an assessment item to the bank.
 		Args:
@@ -183,7 +183,7 @@ class ItemBank:
 		self.add_item_cls(item_cls)
 
 	#============================================
-	def add_item_cls(self, item_cls: item_types.BaseItem):
+	def add_item_cls(self, item_cls: item_types.BaseItem) -> None:
 		"""
 		Adds an existing item_cls instance to the bank.
 		"""
@@ -213,13 +213,13 @@ class ItemBank:
 		self.used_item_types_set.add(item_cls.item_type)
 
 	#============================================
-	def renumber_items(self):
+	def renumber_items(self) -> None:
 		for number, item_cls in enumerate(self.items_dict.values(), start=1):
 			item_cls.item_number = number
 		return
 
 	#============================================
-	def merge(self, other):
+	def merge(self, other: "ItemBank") -> "ItemBank":
 		"""
 		Merges two ItemBank objects, ensuring no duplicate items.
 		Args:
@@ -263,22 +263,22 @@ class ItemBank:
 		return merged_bank
 
 	#============================================
-	def union(self, other):
+	def union(self, other: "ItemBank") -> "ItemBank":
 		"""Alias for merging two ItemBank"""
 		return self.merge(other)
 
 	#============================================
-	def __or__(self, other):
+	def __or__(self, other: "ItemBank") -> "ItemBank":
 		"""Alias for merging two ItemBank objects using the `|` operator."""
 		return self.merge(other)
 
 	#============================================
-	def __add__(self, other):
+	def __add__(self, other: "ItemBank") -> "ItemBank":
 		"""Alias for merging two ItemBank objects using the `+` operator."""
 		return self.merge(other)
 
 	#============================================
-	def __len__(self):
+	def __len__(self) -> int:
 		"""Returns the number of items in the ItemBank."""
 		return len(self.items_dict)
 
@@ -327,7 +327,7 @@ class ItemBank:
 			self.items_dict_key_list.insert(index, key)
 
 	#============================================
-	def __repr__(self):
+	def __repr__(self) -> str:
 		"""
 		Returns a concise string representation for debugging.
 		Shows the number of items and the ordered list of keys.
@@ -335,14 +335,14 @@ class ItemBank:
 		return f"<ItemBank: {len(self.items_dict)} items, keys={self.items_dict_key_list}>"
 
 	#============================================
-	def sort(self):
+	def sort(self) -> None:
 		"""
 		Sorts the items in the bank based on their item_crc16 values.
 		"""
 		self.items_dict_key_list.sort()
 
 	#============================================
-	def __eq__(self, other):
+	def __eq__(self, other: object) -> bool:
 		"""
 		Checks if two ItemBank instances are equal.
 		Two banks are equal if:

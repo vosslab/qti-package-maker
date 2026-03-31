@@ -5,18 +5,18 @@ import pytest
 import re
 
 # QTI Package Maker
-from qti_package_maker.assessment_items import item_bank
-from qti_package_maker.assessment_items import item_types
-from qti_package_maker.engines.bbq_text_upload import engine_class as bbq_engine
-from qti_package_maker.engines.bbq_text_upload import read_package as bbq_reader
-from qti_package_maker.engines.text2qti import engine_class as text2qti_engine
-from qti_package_maker.engines.text2qti import read_package as text2qti_reader
-from qti_package_maker.engines.okla_chrst_bqgen import engine_class as okla_engine
-from qti_package_maker.engines.okla_chrst_bqgen import read_package as okla_reader
+import qti_package_maker.assessment_items.item_bank
+import qti_package_maker.assessment_items.item_types
+import qti_package_maker.engines.bbq_text_upload.engine_class
+import qti_package_maker.engines.bbq_text_upload.read_package
+import qti_package_maker.engines.text2qti.engine_class
+import qti_package_maker.engines.text2qti.read_package
+import qti_package_maker.engines.okla_chrst_bqgen.engine_class
+import qti_package_maker.engines.okla_chrst_bqgen.read_package
 
 
 def _build_bank(items):
-	bank = item_bank.ItemBank(allow_mixed=True)
+	bank = qti_package_maker.assessment_items.item_bank.ItemBank(allow_mixed=True)
 	for item in items:
 		bank.add_item_cls(item)
 	return bank
@@ -66,50 +66,50 @@ def _normalize_bank(bank):
 
 
 def _write_bbq(bank, tmp_path, filename):
-	engine = bbq_engine.EngineClass("pkg", verbose=False)
+	engine = qti_package_maker.engines.bbq_text_upload.engine_class.EngineClass("pkg", verbose=False)
 	outfile = tmp_path / filename
 	return engine.save_package(bank, outfile=str(outfile))
 
 
 def _read_bbq(path):
-	return bbq_reader.read_items_from_file(str(path), allow_mixed=True)
+	return qti_package_maker.engines.bbq_text_upload.read_package.read_items_from_file(str(path), allow_mixed=True)
 
 
 def _write_text2qti(bank, tmp_path, filename):
-	engine = text2qti_engine.EngineClass("pkg", verbose=False)
+	engine = qti_package_maker.engines.text2qti.engine_class.EngineClass("pkg", verbose=False)
 	outfile = tmp_path / filename
 	return engine.save_package(bank, outfile=str(outfile))
 
 
 def _read_text2qti(path):
-	return text2qti_reader.read_items_from_file(str(path), allow_mixed=True)
+	return qti_package_maker.engines.text2qti.read_package.read_items_from_file(str(path), allow_mixed=True)
 
 
 def _write_okla(bank, tmp_path, filename):
-	engine = okla_engine.EngineClass("pkg", verbose=False)
+	engine = qti_package_maker.engines.okla_chrst_bqgen.engine_class.EngineClass("pkg", verbose=False)
 	outfile = tmp_path / filename
 	return engine.save_package(bank, outfile=str(outfile))
 
 
 def _read_okla(path):
-	return okla_reader.read_items_from_file(str(path), allow_mixed=True)
+	return qti_package_maker.engines.okla_chrst_bqgen.read_package.read_items_from_file(str(path), allow_mixed=True)
 
 
 def _make_item(item_type):
 	if item_type == "MC":
-		return item_types.MC("MC question?", ["A", "B", "C"], "B")
+		return qti_package_maker.assessment_items.item_types.MC("MC question?", ["A", "B", "C"], "B")
 	if item_type == "MA":
-		return item_types.MA("MA question?", ["A", "B", "C", "D"], ["A", "D"])
+		return qti_package_maker.assessment_items.item_types.MA("MA question?", ["A", "B", "C", "D"], ["A", "D"])
 	if item_type == "MATCH":
-		return item_types.MATCH("MATCH question?", ["P1", "P2"], ["C1", "C2"])
+		return qti_package_maker.assessment_items.item_types.MATCH("MATCH question?", ["P1", "P2"], ["C1", "C2"])
 	if item_type == "NUM":
-		return item_types.NUM("NUM question?", 3.14, 0.01, False)
+		return qti_package_maker.assessment_items.item_types.NUM("NUM question?", 3.14, 0.01, False)
 	if item_type == "FIB":
-		return item_types.FIB("FIB question?", ["alpha", "beta"])
+		return qti_package_maker.assessment_items.item_types.FIB("FIB question?", ["alpha", "beta"])
 	if item_type == "MULTI_FIB":
-		return item_types.MULTI_FIB("MULTI_FIB [x] [y]?", {"x": ["one"], "y": ["two"]})
+		return qti_package_maker.assessment_items.item_types.MULTI_FIB("MULTI_FIB [x] [y]?", {"x": ["one"], "y": ["two"]})
 	if item_type == "ORDER":
-		return item_types.ORDER("ORDER question?", ["first", "second", "third"])
+		return qti_package_maker.assessment_items.item_types.ORDER("ORDER question?", ["first", "second", "third"])
 	raise ValueError(f"Unsupported item type: {item_type}")
 
 

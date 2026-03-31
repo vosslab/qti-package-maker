@@ -14,11 +14,11 @@ import lxml.html
 #from qti_package_maker.common import string_functions
 
 #============================================
-def format_question_text(crc16_text: str, question_text: str):
+def format_question_text(crc16_text: str, question_text: str) -> str:
 	# Replace adjacent paragraph tags with a line break for cleaner formatting
 	question_text = re.sub(r'</p>\s*<p>', '<br/>', question_text, flags=re.MULTILINE)
 	# Add the question text inside another uniquely identified div
-	html_content = f"<div id=\"statement_text_{crc16_text}\">{question_text}</div>\n"
+	html_content = f"<div id='statement_text_{crc16_text}'>{question_text}</div>\n"
 	return html_content
 
 #============================================
@@ -31,7 +31,7 @@ def escape_non_iso_8859_1(html_text: str) -> str:
 	return html_text.encode("iso-8859-1", "xmlcharrefreplace").decode("iso-8859-1")
 
 #============================================
-def add_result_div(crc16_text: str):
+def add_result_div(crc16_text: str) -> str:
 	# Add a div to display the result message, styled with inline CSS
 	style = (
 		'style="display: block; '
@@ -41,11 +41,11 @@ def add_result_div(crc16_text: str):
 		'font-weight: bold; '
 		'font-family: monospace;"'
 		)
-	html_content = f"<div id=\"result_{crc16_text}\" {style}>&nbsp;</div>\n"
+	html_content = f"<div id='result_{crc16_text}' {style}>&nbsp;</div>\n"
 	return html_content
 
 #============================================
-def add_selftest_theme_css():
+def add_selftest_theme_css() -> str:
 	"""
 	Inject scoped theme CSS for html_selftest output if not already present.
 	"""
@@ -248,16 +248,16 @@ def validate_selftest_html(html_str: str) -> bool:
 	return True
 
 #============================================
-def make_button(button_text: str, js_function: str, button_class: str = None):
+def make_button(button_text: str, js_function: str, button_class: str = None) -> str:
 	# Add a custom button
 	button_content = ""
 	# Set the button type to "button" to prevent form submission
-	button_content += "<button type=\"button\" "
+	button_content += "<button type='button' "
 	# Set the class of the button to match the material design theme of the website
 	button_class = button_class or "md-button md-button--secondary custom-button qti-btn"
 	button_content += f'class="{button_class}" '
 	# Add an onclick event to call the answer-checking function for this question
-	button_content += f"onclick=\"{js_function}()\">"
+	button_content += f"onclick='{js_function}()'>"
 	# Set the button's visible text
 	button_content += button_text
 	# Close the button element

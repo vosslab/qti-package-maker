@@ -33,7 +33,7 @@ class BaseItem:
 	Base class for all assessment items.
 	Handles validation, CRC calculations, and common properties.
 	"""
-	def __init__(self, question_text):
+	def __init__(self, question_text: str):
 		"""
 		Initializes a base assessment item.
 		Ensures necessary properties are set and validates the item.
@@ -63,20 +63,20 @@ class BaseItem:
 		self._validate()
 
 	#============================================
-	def __lt__(self, other):
+	def __lt__(self, other: "BaseItem") -> bool:
 		"""Defines sorting based on item_crc16."""
 		# Sort by CRC
 		return self.item_crc16 < other.item_crc16
 
 	#============================================
-	def __eq__(self, other):
+	def __eq__(self, other: object) -> bool:
 		if not isinstance(other, BaseItem):
 			return False
 		# Compare by CRC16
 		return self.item_crc16 == other.item_crc16
 
 	#============================================
-	def __repr__(self):
+	def __repr__(self) -> str:
 		"""
 		Returns a compact yet informative string representation of the item.
 		Includes item type, CRC, and question preview.
@@ -85,7 +85,7 @@ class BaseItem:
 		return f"<Item: {self.item_type}: {self.item_crc16}, '{preview_text}'>"
 
 	#============================================
-	def copy(self):
+	def copy(self) -> "BaseItem":
 		"""
 		Creates a deep copy of the assessment item.
 		- Ensures that modifying the copy does not affect the original.
@@ -97,7 +97,7 @@ class BaseItem:
 
 	#==============
 	@property
-	def item_type(self):
+	def item_type(self) -> str:
 		"""
 		Dynamically retrieves the class name as the item type.
 		Used to determine validation and processing logic.
@@ -106,7 +106,7 @@ class BaseItem:
 		return self.__class__.__name__
 
 	#==============
-	def _validate(self):
+	def _validate(self) -> None:
 		"""
 		Calls the appropriate validator function for the item type.
 		Ensures the item meets required structure and content constraints.
@@ -117,7 +117,7 @@ class BaseItem:
 		validate_function(self.question_text, *self.get_tuple())
 
 	#==============
-	def get_supporting_field_names(self):
+	def get_supporting_field_names(self) -> tuple:
 		"""
 		Returns a list of attribute names that are part of the supporting elements
 		of the assessment item (everything that is NOT the question_text).
@@ -125,7 +125,7 @@ class BaseItem:
 		raise NotImplementedError("Subclasses must implement get_supporting_field_names().")
 
 	#==============
-	def get_tuple(self):
+	def get_tuple(self) -> tuple:
 		"""
 		Dynamically constructs and returns a tuple of supporting fields.
 		"""
@@ -150,7 +150,7 @@ class MC(BaseItem):
 		self.answer_index = choices_list.index(answer_text)
 		super().__init__(question_text)
 	#================
-	def get_supporting_field_names(self):
+	def get_supporting_field_names(self) -> tuple:
 		return ("choices_list", "answer_text")
 
 #============================================
@@ -172,7 +172,7 @@ class MA(BaseItem):
 		self.answer_index_list = [choices_list.index(answer_text) for answer_text in answers_list]
 		super().__init__(question_text)
 	#================
-	def get_supporting_field_names(self):
+	def get_supporting_field_names(self) -> tuple:
 		return ("choices_list", "answers_list", "min_answers_required", "allow_all_correct")
 
 #============================================
@@ -184,7 +184,7 @@ class MATCH(BaseItem):
 		self.secondary_crc16 = string_functions.get_crc16_from_string(secondary_string)
 		super().__init__(question_text)
 	#================
-	def get_supporting_field_names(self):
+	def get_supporting_field_names(self) -> tuple:
 		return ("prompts_list", "choices_list")
 
 #============================================
@@ -197,7 +197,7 @@ class NUM(BaseItem):
 		self.secondary_crc16 = string_functions.get_crc16_from_string(secondary_string)
 		super().__init__(question_text)
 	#================
-	def get_supporting_field_names(self):
+	def get_supporting_field_names(self) -> tuple:
 		return ("answer_float", "tolerance_float", "tolerance_message")
 
 #============================================
@@ -208,7 +208,7 @@ class FIB(BaseItem):
 		self.secondary_crc16 = string_functions.get_crc16_from_string(secondary_string)
 		super().__init__(question_text)
 	#================
-	def get_supporting_field_names(self):
+	def get_supporting_field_names(self) -> tuple:
 		return ("answers_list",)
 
 #============================================
@@ -219,7 +219,7 @@ class MULTI_FIB(BaseItem):
 		self.secondary_crc16 = string_functions.get_crc16_from_string(secondary_string)
 		super().__init__(question_text)
 	#================
-	def get_supporting_field_names(self):
+	def get_supporting_field_names(self) -> tuple:
 		return ("answer_map",)
 
 #============================================
@@ -230,5 +230,5 @@ class ORDER(BaseItem):
 		self.secondary_crc16 = string_functions.get_crc16_from_string(secondary_string)
 		super().__init__(question_text)
 	#================
-	def get_supporting_field_names(self):
+	def get_supporting_field_names(self) -> tuple:
 		return ("ordered_answers_list",)
