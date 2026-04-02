@@ -271,6 +271,15 @@ is still allowed.
 **Instead:** Use `Read(file_path='file.txt', offset=10, limit=11)`.
 Other sed operations (substitution, etc.) are allowed.
 
+### `perl` on `.pg`/`.pgml` files
+
+**Blocked:** `perl -c problem.pgml`, `perl problem.pg`
+
+**Why:** PGML is not standard Perl. Running perl on these files produces misleading
+results.
+
+**Instead:** Use the `/webwork-writer` skill lint guide to validate WeBWorK problems.
+
 ### Heredocs (`<<EOF`)
 
 **Blocked:** `python3 - <<EOF`, `bash <<'SCRIPT'`

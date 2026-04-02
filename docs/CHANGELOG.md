@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-02
+
+### Additions and New Features
+- Add `exam_yaml` write-only engine that exports an ItemBank to exam YAML format for printable ODT exam generation. Supports MC, MA, MATCH, ORDER, NUM, FIB, and MULTI_FIB item types. This is an intentionally lossy export: answer keys, scoring metadata, and section structure are not preserved. Inline HTML tags (`<sub>`, `<sup>`, `<b>`, `<strong>`, `<i>`, `<em>`) and HTML entities (`&Delta;`, `&deg;`, etc.) are passed through verbatim.
+
 ## 2026-04-01
 
 ### Additions and New Features
