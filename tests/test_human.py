@@ -2,11 +2,11 @@
 import os
 
 # QTI Package Maker
-from qti_package_maker import package_interface
+import qti_package_maker.package_interface
 
 
 def test_human_output(tmp_cwd):
-	qti_packer = package_interface.QTIPackageInterface("dummy", allow_mixed=True)
+	qti_packer = qti_package_maker.package_interface.QTIPackageInterface("dummy", allow_mixed=True)
 	qti_packer.show_available_item_types()
 	question_text = "What is your favorite color?"
 	answer_text = "blue"

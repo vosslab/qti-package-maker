@@ -1,9 +1,9 @@
 # QTI Package Maker
-from qti_package_maker import package_interface
+import qti_package_maker.package_interface
 
 
 def test_human_readable_tables(tmp_path):
-	qti_packer = package_interface.QTIPackageInterface("human-table", verbose=False, allow_mixed=True)
+	qti_packer = qti_package_maker.package_interface.QTIPackageInterface("human-table", verbose=False, allow_mixed=True)
 	question_text = (
 		"<p>Use the table below.</p>"
 		"<table>"

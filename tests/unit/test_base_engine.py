@@ -5,8 +5,8 @@ import types
 import pytest
 
 # QTI Package Maker
-from qti_package_maker.engines import base_engine
-from qti_package_maker.assessment_items.item_bank import ItemBank
+import qti_package_maker.engines.base_engine
+import qti_package_maker.assessment_items.item_bank
 
 
 class _DummyWriteItem:
@@ -15,7 +15,7 @@ class _DummyWriteItem:
 		return "ok"
 
 
-class DummyEngine(base_engine.BaseEngine):
+class DummyEngine(qti_package_maker.engines.base_engine.BaseEngine):
 	def __init__(self, package_name: str):
 		super().__init__(package_name, verbose=False)
 		self.write_item = _DummyWriteItem
@@ -30,7 +30,7 @@ class DummyEngine(base_engine.BaseEngine):
 		raise NotImplementedError
 
 
-class EngineWithModuleWriteItem(base_engine.BaseEngine):
+class EngineWithModuleWriteItem(qti_package_maker.engines.base_engine.BaseEngine):
 	def __init__(self, package_name: str, write_item_module):
 		super().__init__(package_name, verbose=False)
 		self.write_item = write_item_module
@@ -57,7 +57,7 @@ def test_get_outfile_name_respects_existing_prefix():
 
 def test_process_item_bank_empty():
 	engine = DummyEngine("sample")
-	empty_bank = ItemBank()
+	empty_bank = qti_package_maker.assessment_items.item_bank.ItemBank()
 	assert engine.process_item_bank(empty_bank) == []
 	assert engine.process_random_item_from_item_bank(empty_bank) is None
 
@@ -104,7 +104,7 @@ def test_process_item_bank_skips_unsupported(capsys, tmp_path):
 		return "ok"
 	write_item_module.MC = mc_writer
 	engine = EngineWithModuleWriteItem("sample", write_item_module)
-	bank = ItemBank(allow_mixed=True)
+	bank = qti_package_maker.assessment_items.item_bank.ItemBank(allow_mixed=True)
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank.add_item("MA", ("Q2?", ["A", "B", "C"], ["A"]))
 	items = engine.process_item_bank(bank)
@@ -120,7 +120,7 @@ def test_process_random_item_does_not_reorder(tmp_path):
 		return "ok"
 	write_item_module.MC = mc_writer
 	engine = EngineWithModuleWriteItem("sample", write_item_module)
-	bank = ItemBank()
+	bank = qti_package_maker.assessment_items.item_bank.ItemBank()
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank.add_item("MC", ("Q2?", ["A", "B"], "B"))
 	bank.add_item("MC", ("Q3?", ["A", "B"], "A"))

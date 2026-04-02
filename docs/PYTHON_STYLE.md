@@ -47,7 +47,7 @@ AI agents frequently get these wrong. Read the full sections below for details.
 - Avoid using `sys.exit(1)` prefer to raise Errors.
 - Use f-strings, in older code I used `.format()` or `'%'` system, update to f-strings.
 - I prefer string concatenation `'+='` over multiline strings.
-- Shebangs apply ONLY to executable scripts — files with a `if __name__ == '__main__':` guard that are meant to be run directly from the command line.
+- Shebangs apply ONLY to executable scripts - files with a `if __name__ == '__main__':` guard that are meant to be run directly from the command line.
 - The required shebang is `#!/usr/bin/env python3` and it must be the very first line. The module docstring comes after it.
 - Do NOT add shebangs to library modules, helper files, `__init__.py` files, or test files. These are imported, not executed directly.
 - Do not hard-code interpreter paths in shebangs (bad: `#!/opt/homebrew/.../python3.12`).

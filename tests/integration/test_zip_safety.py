@@ -4,11 +4,11 @@ import zipfile
 import pathlib
 
 # QTI Package Maker
-from qti_package_maker import package_interface
+import qti_package_maker.package_interface
 
 
 def _make_packer():
-	qti_packer = package_interface.QTIPackageInterface("zip-safe", verbose=False, allow_mixed=True)
+	qti_packer = qti_package_maker.package_interface.QTIPackageInterface("zip-safe", verbose=False, allow_mixed=True)
 	qti_packer.add_item("MC", ("What is 2 + 2?", ["3", "4"], "4"))
 	return qti_packer
 

@@ -5,6 +5,15 @@
 ### Additions and New Features
 - Add `exam_yaml` write-only engine that exports an ItemBank to exam YAML format for printable ODT exam generation. Supports MC, MA, MATCH, ORDER, NUM, FIB, and MULTI_FIB item types. This is an intentionally lossy export: answer keys, scoring metadata, and section structure are not preserved. Inline HTML tags (`<sub>`, `<sup>`, `<b>`, `<strong>`, `<i>`, `<em>`) and HTML entities (`&Delta;`, `&deg;`, etc.) are passed through verbatim.
 
+### Fixes and Maintenance
+- Refactor test suite to match `docs/PYTHON_STYLE.md` guidelines across all test files.
+- Convert `from X import Y` and aliased `from X import Y as Z` imports to `import X` module style across ~30 test files.
+- Remove try/except block in `test_all_engines.py`; engines return None for unsupported types instead of raising.
+- Replace brittle `len(bank) == N` collection size assertions with behavioral checks (`len(bank) > 0`, `len(bank) > 1`, etc.) across unit and integration tests.
+- Replace brittle `item_type == __class__.__name__` assertion in `test_item_types.py` with property-based check.
+- Convert spaces to tabs in `test_color_wheel_next_gen.py`.
+- Split oversized `test_write_html_color_table_cam16_debug` (12+ assertions) into 6 focused test functions.
+
 ## 2026-04-01
 
 ### Additions and New Features
