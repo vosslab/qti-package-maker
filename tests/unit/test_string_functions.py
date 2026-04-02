@@ -111,3 +111,77 @@ def test_format_html_lxml_skips_script(capsys):
 	out = capsys.readouterr().out
 	assert "skipping" in out
 	assert formatted == raw_html
+
+
+def test_html_table_to_text_cell_borders():
+	# Cell-level visible borders should produce fancy_grid (box-drawing grid lines)
+	html = (
+		'<table>'
+		'<tr><td style="border: 1px solid black">A</td>'
+		'<td style="border: 1px solid black">B</td></tr>'
+		'<tr><td style="border: 1px solid black">1</td>'
+		'<td style="border: 1px solid black">2</td></tr>'
+		'</table>'
+	)
+	result = string_functions._html_table_to_text(html)
+	assert "[TABLE]" not in result
+	assert "A" in result
+	# fancy_grid uses double-line top border character
+	assert "\u2554" in result or "\u2555" in result or "\u2550" in result
+
+
+def test_html_table_to_text_cell_border_zero():
+	# Cell-level border: 0 should NOT trigger fancy_grid
+	# This is the metabolic pathway table pattern
+	html = (
+		"<table border='0' style='border-collapse: collapse; border: 0;'>"
+		"<tr><td style='border: 0; text-align: center;'>A</td>"
+		"<td style='border: 0; text-align: center;'>B</td></tr>"
+		"<tr><td style='border: 0; text-align: center;'>1</td>"
+		"<td style='border: 0; text-align: center;'>2</td></tr>"
+		"</table>"
+	)
+	result = string_functions._html_table_to_text(html)
+	assert "[TABLE]" not in result
+	assert "A" in result
+	# Should be plain format - no box-drawing characters
+	for ch in ("\u2550", "\u2554", "\u2502", "\u2551", "\u256a"):
+		assert ch not in result
+
+
+def test_html_table_to_text_border_zero():
+	# border="0" should produce plain format (no box-drawing characters)
+	html = (
+		'<table border="0">'
+		'<tr><th>X</th><th>Y</th></tr>'
+		'<tr><td>3</td><td>4</td></tr>'
+		'</table>'
+	)
+	result = string_functions._html_table_to_text(html)
+	assert "[TABLE]" not in result
+	assert "X" in result
+	assert "3" in result
+	# plain format should not have box-drawing characters
+	for ch in ("\u2550", "\u2554", "\u2502", "\u2551", "\u256a"):
+		assert ch not in result
+
+
+def test_html_table_to_text_border_collapse():
+	# Table-level border + collapse should produce fancy_outline
+	html = (
+		'<table style="border: 1px solid black; border-collapse: collapse;">'
+		'<tr><th>H1</th><th>H2</th></tr>'
+		'<tr><td>a</td><td>b</td></tr>'
+		'<tr><td>c</td><td>d</td></tr>'
+		'</table>'
+	)
+	result = string_functions._html_table_to_text(html)
+	assert "[TABLE]" not in result
+	assert "H1" in result
+	assert "a" in result
+	# fancy_outline has outer border and a header separator, but no inter-row lines
+	assert "\u2550" in result  # double line present in outline border
+	# fancy_outline only has 1 separator (header/body), not between data rows
+	# fancy_grid would have separators between every row
+	lines_with_separator = [l for l in result.split("\n") if "\u256a" in l]
+	assert len(lines_with_separator) <= 1  # at most header separator

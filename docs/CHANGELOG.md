@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-04-01
+
+### Additions and New Features
+- Add `_detect_tablefmt()` and `_has_visible_border()` helpers in `string_functions.py` that inspect HTML table border attributes to choose the appropriate tabulate format: `"fancy_grid"` for cell-level visible borders, `"plain"` for `border="0"`, and `"fancy_outline"` for table-level border with collapse.
+- Add four unit tests for border-aware tablefmt detection: visible cell borders, cell `border: 0` (metabolic pathway pattern), `border="0"` attribute, and border-collapse.
+
+### Fixes and Maintenance
+- Fix `_html_table_to_text()` rendering borderless HTML tables (e.g., metabolic pathway diagrams) with box-drawing grid lines. Tables with `border: 0` on cells now correctly use plain format instead of `fancy_grid`.
+
+### Decisions and Failures
+- Reviewed all `tablefmt` calls across the codebase (5 call sites). Console display calls in `item_bank.py` and `engine_registration.py` all use `"fancy_outline"` consistently. No consolidation needed; adding a shared constant would add indirection without benefit.
+
 ## 2026-03-30
 
 ### Behavior or Interface Changes

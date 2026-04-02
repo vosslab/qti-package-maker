@@ -13,6 +13,72 @@ import crcmod.predefined #pip
 # QTI Package Maker
 # none allowed here!!
 
+# Matches border values that mean "no visible border"
+_NO_BORDER_RE = re.compile(r'border\s*:\s*(0|0px|none|0\s)', re.IGNORECASE)
+
+#==========================
+def _has_visible_border(style: str) -> bool:
+	"""
+	Check if a CSS style string contains a visible border declaration.
+	Returns False for border: 0, border: none, border: 0px, etc.
+	"""
+	if "border" not in style:
+		return False
+	# If all border mentions are zero/none, there is no visible border
+	if _NO_BORDER_RE.search(style):
+		# Has an explicit "border: 0" or "border: none"
+		# Check if there is also a positive border (e.g., border-top: 1px)
+		# by looking for border with a unit like px, em, solid, etc.
+		without_zeros = _NO_BORDER_RE.sub('', style)
+		if "border" not in without_zeros:
+			return False
+	return True
+
+#==========================
+def _detect_tablefmt(table_el) -> str:
+	"""
+	Choose a tabulate format based on the HTML table's border attributes.
+
+	Priority order:
+	  1. Cell-level visible borders (td/th style="border: 1px...") -> "fancy_grid"
+	  2. border="0" on <table> -> "plain"
+	  3. Table-level border/border-collapse in style -> "fancy_outline"
+	  4. border attribute > 0 -> "fancy_outline"
+	  5. Default (bare <table>) -> "fancy_grid"
+	"""
+	# Check for cell-level visible borders first (highest specificity)
+	for cell in table_el.xpath(".//td|.//th"):
+		cell_style = (cell.get("style") or "").lower()
+		if _has_visible_border(cell_style):
+			return "fancy_grid"
+
+	# Check HTML border attribute for explicit zero
+	border_attr = table_el.get("border")
+	if border_attr is not None and border_attr.strip() == "0":
+		return "plain"
+
+	# Check table-level style for visible border or border-collapse
+	table_style = (table_el.get("style") or "").lower()
+	has_collapse = "border-collapse" in table_style
+	has_visible_table_border = _has_visible_border(table_style)
+	if has_visible_table_border and has_collapse:
+		return "fancy_outline"
+	if has_visible_table_border:
+		return "fancy_outline"
+
+	# Table style has border-collapse but border: 0 means no visible border
+	if has_collapse and not has_visible_table_border:
+		# Check if the table also has border="0" or border: 0 in style
+		if _NO_BORDER_RE.search(table_style):
+			return "plain"
+
+	# Non-zero border attribute without inline styles
+	if border_attr is not None:
+		return "fancy_outline"
+
+	# Default: full grid (preserves existing behavior for bare tables)
+	return "fancy_grid"
+
 #==========================
 def _html_table_to_text(table_html: str) -> str:
 	"""
@@ -77,7 +143,9 @@ def _html_table_to_text(table_html: str) -> str:
 
 	if _tabulate:
 		try:
-			return _tabulate(data_rows, headers=headers if headers else (), tablefmt="fancy_grid")
+			# Choose tablefmt based on HTML border attributes
+			fmt = _detect_tablefmt(table_el)
+			return _tabulate(data_rows, headers=headers if headers else (), tablefmt=fmt)
 		except Exception:
 			return "[TABLE]"
 
