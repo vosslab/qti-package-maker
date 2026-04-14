@@ -162,3 +162,91 @@ def test_complex_mixed_case_and_idempotence():
 		assert {'style', 'class', 'onclick', 'cellpadding', 'width'}.isdisjoint(elem.attrib)
 	# Unwrapped content preserved
 	assert 'quoted' in first_pass
+
+
+#============================================
+
+def test_drop_anti_cheat_hidden_span():
+	"""Anti-cheat hidden-term spans are dropped with their content."""
+	input_html = (
+		"real word "
+		"<span style='font-size: 1px; color: white;'>caused</span>"
+		" another word"
+	)
+	output = html_sanitize.sanitize_fragment(input_html)
+	assert "caused" not in output
+	assert "real word" in output and "another word" in output
+
+
+def test_drop_hidden_style_variants():
+	"""Any element marked hidden by common CSS signatures is dropped."""
+	variants = [
+		"<span style='display: none'>secret</span>",
+		"<span style='visibility: hidden'>secret</span>",
+		"<span style='opacity: 0'>secret</span>",
+		"<span style='color: #fff'>secret</span>",
+		"<span style='font-size: 0'>secret</span>",
+	]
+	for variant in variants:
+		output = html_sanitize.sanitize_fragment(f"visible {variant} text")
+		assert "secret" not in output, f"leaked from: {variant}"
+
+
+def test_hidden_span_preserves_word_boundary():
+	"""
+	Anti-cheat helpers emit hidden spans as replacements for inter-word
+	spaces, so dropping the span must leave a space in its place or
+	adjacent words collapse.
+	"""
+	input_html = (
+		"The<span style='font-size: 1px; color: white;'>cheat</span>following"
+		" question refers to"
+		"<span style='font-size: 1px; color: white;'>noise</span>the table"
+	)
+	output = html_sanitize.sanitize_fragment(input_html)
+	assert "cheat" not in output and "noise" not in output
+	assert "The following" in output
+	assert "to the table" in output
+
+
+def test_table_cells_survive_background_color_white():
+	"""
+	Regression: the hidden-element signature was matching `color:white`
+	as a substring of `background-color:white`, which dropped every
+	table cell with a white background. Cell values must survive.
+	"""
+	input_html = (
+		"<table><tr>"
+		"<td style='background-color: white'>0.001</td>"
+		"<td style='background-color:#ffffff'>26.7</td>"
+		"<td style='border-color: white'>57.2</td>"
+		"</tr></table>"
+	)
+	output = html_sanitize.sanitize_fragment(input_html)
+	assert "0.001" in output
+	assert "26.7" in output
+	assert "57.2" in output
+
+
+def test_table_cell_values_preserved():
+	"""Plain table cell values pass through sanitization unchanged."""
+	input_html = (
+		"<table><tbody>"
+		"<tr><th>[S]</th><th>V0</th></tr>"
+		"<tr><td>0.001</td><td>26.7</td></tr>"
+		"<tr><td>0.005</td><td>57.2</td></tr>"
+		"</tbody></table>"
+	)
+	output = html_sanitize.sanitize_fragment(input_html)
+	for value in ("[S]", "V0", "0.001", "26.7", "0.005", "57.2"):
+		assert value in output, f"lost cell value: {value}"
+
+
+def test_hidden_span_idempotent():
+	"""Sanitizing twice produces the same result for hidden-span inputs."""
+	input_html = (
+		"<p>foo <span style='font-size: 1px; color: white;'>hidden</span> bar</p>"
+	)
+	first = html_sanitize.sanitize_fragment(input_html)
+	second = html_sanitize.sanitize_fragment(first)
+	assert first == second

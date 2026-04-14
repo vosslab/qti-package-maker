@@ -135,7 +135,7 @@ class EngineClass(base_engine.BaseEngine):
 		Args:
 			item_count: Number of items in the package.
 		"""
-		question_bank_etree = assessment_meta.generate_question_bank(item_count)
+		question_bank_etree = assessment_meta.generate_question_bank(item_count, self.package_name)
 		question_bank_xml_string = lxml.etree.tostring(
 			question_bank_etree,
 			pretty_print=True,

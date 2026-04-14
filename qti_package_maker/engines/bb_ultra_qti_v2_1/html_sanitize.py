@@ -56,6 +56,13 @@ def sanitize_fragment(html_fragment: str) -> str:
 	# Rewrite legacy tags to Ultra-compatible forms.
 	_rewrite_legacy_tags(all_elements, original_tags)
 
+	# Phase 1.5: Drop hidden elements (tag + content) BEFORE the style strip.
+	# Some source pipelines embed anti-cheat spans with tiny/white/invisible
+	# styles (e.g. `font-size: 1px; color: white;`). Ultra strips every
+	# style attribute, which would reveal the hidden text as garbage words.
+	# Drop the whole element instead.
+	_drop_hidden_elements(root)
+
 	# Phase 2: Strip disallowed attributes from all elements.
 	_strip_disallowed_attributes(root)
 
@@ -120,6 +127,87 @@ def _rewrite_legacy_tags(all_elements: list, original_tags: list) -> None:
 			elem.tag = 'span'
 		elif original_tag == 'pre':
 			elem.tag = 'p'
+
+
+#============================================
+
+def _is_hiding_style(style_value: str) -> bool:
+	"""
+	Check whether a CSS style string contains a "hide this element" signature.
+
+	Matches common cheat-deterrent and CSS-hiding patterns that only work
+	because the CSS survives to the renderer. Ultra strips every style, so
+	these elements become visible garbage words unless dropped here.
+
+	Properties are matched precisely by splitting the style on ';' and
+	comparing each property/value pair. Substring matches would be unsafe
+	because `background-color: white` and `border-color: white` both
+	contain the substring `color:white` and would trigger false positives
+	on table cells with white backgrounds.
+	"""
+	# Each entry is a (property, value-substring) pair. The value check is
+	# substring so "1px" matches "1px !important" too; the property check
+	# is exact so "background-color" never matches "color".
+	hide_pairs = (
+		("font-size", "1px"),
+		("font-size", "0"),
+		("color", "white"),
+		("color", "#fff"),
+		("color", "#ffffff"),
+		("display", "none"),
+		("visibility", "hidden"),
+		("opacity", "0"),
+	)
+	# Normalize: lowercase, split on ';', strip each declaration, split on
+	# ':' to isolate property vs value. Anything malformed is ignored.
+	for declaration in style_value.lower().split(";"):
+		if ":" not in declaration:
+			continue
+		prop, value = declaration.split(":", 1)
+		prop = prop.strip()
+		value = value.strip()
+		for hide_prop, hide_value in hide_pairs:
+			if prop == hide_prop and hide_value in value:
+				return True
+	return False
+
+
+#============================================
+
+def _drop_hidden_elements(element) -> None:
+	"""
+	Drop elements (tag + content) whose style attribute hides them.
+
+	Runs before the style-strip phase so the style attribute is still present
+	and inspectable. Covers anti-cheat hidden-term spans and any other
+	CSS-hidden content that would leak as visible text once Ultra strips
+	the styles.
+	"""
+	# Snapshot the tree because we're removing elements as we walk it.
+	all_elements = list(element.iter())
+	for elem in all_elements:
+		style_value = elem.attrib.get("style")
+		if style_value is None:
+			continue
+		if not _is_hiding_style(style_value):
+			continue
+		parent = elem.getparent()
+		if parent is None:
+			continue
+		# Replace the dropped element with a single space so adjacent words
+		# stay separated. Anti-cheat pipelines (see docs/BLACKBOARD_ULTRA_NOTES.md)
+		# emit hidden spans as REPLACEMENTS for inter-word spaces, so silently
+		# removing them collapses neighbors into "thefollowingquestion".
+		# Merge the space with any existing tail text, then splice onto the
+		# previous sibling's tail (or the parent's text).
+		tail_text = " " + (elem.tail or "")
+		index = list(parent).index(elem)
+		if index > 0:
+			prev = parent[index - 1]
+			prev.tail = (prev.tail or "") + tail_text
+		else:
+			parent.text = (parent.text or "") + tail_text
+		parent.remove(elem)
 
 
 #============================================

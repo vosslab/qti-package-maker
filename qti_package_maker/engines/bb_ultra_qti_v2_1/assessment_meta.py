@@ -114,12 +114,24 @@ def generate_manifest(item_count: int) -> lxml.etree.ElementTree:
 
 
 #============================================
-def generate_question_bank(item_count: int) -> lxml.etree.ElementTree:
+def _humanize_package_name(package_name: str) -> str:
+	"""
+	Turn a snake_case package name into a human-readable title.
+
+	Underscores become spaces; hyphens are preserved (they often carry
+	meaning, like a trailing subject tag in `michaelis_menten_table-Km`).
+	"""
+	return package_name.replace("_", " ")
+
+
+#============================================
+def generate_question_bank(item_count: int, package_name: str) -> lxml.etree.ElementTree:
 	"""
 	Generate the Ultra question_bank00001.xml test file.
 
 	Args:
 		item_count: Number of assessment items in the package.
+		package_name: Name of the package, used as the assessment test title.
 
 	Returns:
 		lxml.etree.ElementTree: The question_bank tree.
@@ -131,12 +143,13 @@ def generate_question_bank(item_count: int) -> lxml.etree.ElementTree:
 	}
 
 	# Root assessmentTest element
+	test_title = _humanize_package_name(package_name)
 	assessment_test = lxml.etree.Element(
 		"assessmentTest",
 		nsmap=nsmap,
 		attrib={
 			"identifier": "question_bank00001",
-			"title": "Test Bank",
+			"title": test_title,
 			"{http://www.w3.org/2001/XMLSchema-instance}schemaLocation": (
 				"http://www.imsglobal.org/xsd/imsqti_v2p1 "
 				"http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd"
