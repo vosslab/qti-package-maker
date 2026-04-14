@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-04-14
+
+### Additions and New Features
+- Add `docs/BLACKBOARD_ULTRA_NOTES.md`, the empirical contract for what Blackboard Ultra accepts, rewrites, and destroys on QTI 2.1 import/export. Derived from one manual round trip of `output/ultra_probe.zip` through an Ultra sandbox; re-export preserved in [ULTRA/ultra_probe-roundtrip/](../ULTRA/ultra_probe-roundtrip/).
+
+### Decisions and Failures
+- **`<pre>` is functionally equivalent to `<p>` in Ultra.** The `<pre>` tag survives round trip, but every whitespace semantic is destroyed: newlines collapse to spaces, runs of spaces collapse to single spaces, tabs collapse to single spaces. Confirmed by probe items 1 (pre_alignment), 2 (pre_vs_p), and 7 (whitespace_stress). Kills the planned `<pre>` + tabulate table strategy entirely.
+- **`&#xa0;` runs and `<br/>` are the only reliable layout primitives.** Five-nbsp runs and five-br runs survive round trip byte-for-byte (probe items 3 and 4). The new `blackboard_qti_v2_1_ultra` engine will use `<p>` with nbsp padding and `<br/>` row separators as its sole table strategy - no fallback ladder.
+- **`<img>` is structurally broken on Ultra re-export.** Probe item 15 showed Ultra replaces the `src` with a null-file WebDAV stub, drops the referenced PNG from `csfiles/home_dir/`, and turns the self-closing `<img/>` into a wrapper that absorbs subsequent siblings as children. The engine will strip `<img>` unconditionally.
+- **All CSS is stripped.** `style=` attributes on spans and blocks, `<style>` tags, and `class=` attributes are all removed on re-export (probe item 14). No narrow property allowlist survives; even the text color and font size the WYSIWYG editor shows while authoring do not round-trip. CSS is a non-feature.
+- **Ultra shifts heading levels down by 1.** `<h3>` becomes `<h4>`, `<h4>` becomes `<h5>` (probe item 13). The engine will emit `<h4>`/`<h5>` directly.
+- **`<hr/>`, `<blockquote>`, and `<kbd>` are stripped.** Content of `<blockquote>` and `<kbd>` is preserved, wrapper removed. `<hr/>` disappears entirely.
+- **Deprecated presentational attributes are stripped.** `border`, `cellpadding`, `cellspacing`, `align`, `width`, `bgcolor` all removed from `<table>`, `<tr>`, `<th>`, `<td>` (probe item 8). Table tags survive structurally but render as a single-column vertical stack - not usable for layout.
+- **`<b>`, `<i>`, `<u>` are rewritten.** `<b>` to `<strong>`, `<i>` to `<em>`, `<u>` to an attribute-less `<span>` (underline visually lost).
+
+### Developer Tests and Notes
+- Add `tools/build_ultra_probe.py`, a throwaway script that emits `output/ultra_probe.zip` containing 15 small MC probe items targeting one Blackboard Ultra HTML/structural sanitizer dimension each (`<pre>`, `&nbsp;` columns, bare `<table>`, cell structure variants, whitespace, inline formatting, lists, headings, entities, `style=` and `<style>`, `<img>`). The ZIP is cloned from the shape of `ULTRA/manually-created-ultra-question/` (compact manifest with `csm`/`imsqti` namespaces, `qti21/question_bank00001.xml` test file, `csfiles/home_dir/probe_tiny.png` hand-built 67-byte PNG). First milestone of the new `blackboard_qti_v2_1_ultra` engine plan; the probe is the input to one manual Ultra round trip that will lock the table strategy and allowed-tag set.
+- Round-trip output of the probe ZIP through the Ultra sandbox is preserved verbatim at [ULTRA/ultra_probe-roundtrip/](../ULTRA/ultra_probe-roundtrip/). All 15 items imported and re-exported as well-formed XML (every item parses under `lxml.etree`), including the structurally broken item 15 wrapper.
+
 ## 2026-04-02
 
 ### Additions and New Features
