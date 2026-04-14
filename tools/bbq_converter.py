@@ -114,12 +114,13 @@ def main():
 
 	# Shortcuts for common formats (used for both -f and individual options)
 	format_shortcuts = {
-		'canvas_qti_v1_2':     ('-1', 'qti12', 	"Set output format to Canvas QTI v1.2"),
-		'blackboard_qti_v2_1': ('-2', 'qti21', 	"Set output format to Blackboard QTI v2.1"),
-		'human_readable':      ('-r', 'human', 	"Set output format to human-readable text"),
-		'bbq_text_upload':     ('-b', 'bbq',   	"Set output format to (B)lack(B)oard (Q)uestions"),
-		'html_selftest':       ('-s', 'selftest',	"Set output format to HTML self-test"),
-		'moodle_aiken':        ('-A', 'aiken',	   "Set output format to MOODLE aiken"),
+		'canvas_qti_v1_2':        ('-1', 'qti12', 	"Set output format to Canvas QTI v1.2"),
+		'blackboard_qti_v2_1':    ('-2', 'qti21', 	"Set output format to Blackboard QTI v2.1"),
+		'bb_ultra_qti_v2_1':      ('-u', 'ultra',	"Set output format to Blackboard Ultra QTI v2.1"),
+		'human_readable':         ('-r', 'human', 	"Set output format to human-readable text"),
+		'bbq_text_upload':        ('-b', 'bbq',   	"Set output format to (B)lack(B)oard (Q)uestions"),
+		'html_selftest':          ('-s', 'selftest',	"Set output format to HTML self-test"),
+		'moodle_aiken':           ('-A', 'aiken',	   "Set output format to MOODLE aiken"),
 	}
 
 	args = parse_args(format_shortcuts)
