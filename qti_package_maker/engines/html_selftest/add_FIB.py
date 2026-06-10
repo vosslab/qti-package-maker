@@ -1,3 +1,6 @@
+# Standard Library
+import json
+
 # Local libraries
 from qti_package_maker.common import string_functions
 from qti_package_maker.engines.html_selftest import html_functions
@@ -19,18 +22,24 @@ def generate_core_html(crc16_text: str, question_text: str, answers_list: list):
 def generate_javascript(crc16_text: str, answers_list: list) -> str:
 	normalized_answers = [ans.lower().strip() for ans in answers_list]
 	js = "<script>\n"
-	js += f"const fibAnswers_{crc16_text} = {normalized_answers!r};\n"
+	# json.dumps produces a valid JS/JSON array literal (double-quoted strings, proper escaping)
+	js += f"const fibAnswers_{crc16_text} = {json.dumps(normalized_answers)};\n"
 	js += f"function checkAnswer_{crc16_text}() {{\n"
 	js += f"  const inputEl = document.getElementById('fib_input_{crc16_text}');\n"
 	js += "  if (!inputEl) { return; }\n"
 	js += "  const userAns = inputEl.value.trim().toLowerCase();\n"
 	js += f"  const resultDiv = document.getElementById('result_{crc16_text}');\n"
-	js += "  const isCorrect = fibAnswers_{crc16_text}.includes(userAns);\n"
+	# Locate the Check Answer button to disable it on correct
+	js += f"  const checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
+	js += f"  const isCorrect = fibAnswers_{crc16_text}.includes(userAns);\n"
 	js += "  if (isCorrect) {\n"
-	js += "    resultDiv.style.color = 'green';\n"
+	# Engage success pill and disable Check button
+	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
 	js += "    resultDiv.textContent = 'CORRECT';\n"
+	js += "    if (checkBtn) { checkBtn.disabled = true; }\n"
 	js += "  } else {\n"
-	js += "    resultDiv.style.color = 'red';\n"
+	# Engage error pill
+	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
 	js += "    resultDiv.textContent = 'incorrect';\n"
 	js += "  }\n"
 	js += "}\n"

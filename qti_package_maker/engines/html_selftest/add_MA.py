@@ -81,35 +81,39 @@ def generate_javascript(crc16_text) -> str:
 	# Get the result display element
 	javascript_html += f"\tconst resultDiv = document.getElementById('result_{crc16_text}');\n"
 
+	# Locate the Check Answer button for this question (used to disable on correct)
+	javascript_html += f"\tconst checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
+
 	# Count correct and incorrect selections
 	javascript_html += "\tconst numCorrectSelected = selectedOptions.filter(option => correctOptions.includes(option)).length;\n"
 	javascript_html += "\tconst numIncorrectSelected = selectedOptions.length - numCorrectSelected;\n"
 	javascript_html += "\tconst totalCorrect = correctOptions.length;\n"
 	javascript_html += "\tconst totalSelected = selectedOptions.length;\n"
 
-	# Check for a fully correct answer
+	# Check for a fully correct answer: engage success pill and disable Check
 	javascript_html += "\tif (numCorrectSelected === totalCorrect && totalSelected === totalCorrect) {\n"
-	javascript_html += "\t\tresultDiv.style.color = 'var(--qti-success-fg, #008000)';\n"
+	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
 	javascript_html += "\t\tresultDiv.textContent = 'CORRECT';\n"
+	javascript_html += "\t\tif (checkBtn) { checkBtn.disabled = true; }\n"
 
-	# Case: Too many choices (some correct, some incorrect)
+	# Case: Too many choices (some correct, some incorrect): error pill
 	javascript_html += "\t} else if (totalSelected > totalCorrect) {\n"
-	javascript_html += "\t\tresultDiv.style.color = 'var(--qti-error-fg, #9b1b1b)';\n"
+	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
 	javascript_html += "\t\tresultDiv.textContent = `Too many answers selected. You selected ${numCorrectSelected} correct answers, but also included ${numIncorrectSelected} incorrect choices.`;\n"
 
-	# Case: Too few correct answers selected
+	# Case: Too few correct answers selected: error pill
 	javascript_html += "\t} else if (numCorrectSelected < totalCorrect && totalSelected < totalCorrect) {\n"
-	javascript_html += "\t\tresultDiv.style.color = 'var(--qti-warning-fg, #b37100)';\n"
+	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
 	javascript_html += "\t\tresultDiv.textContent = `Too few answers selected. You got ${numCorrectSelected} out of ${totalCorrect} correct.`;\n"
 
-	# Case: Correct number of boxes checked, but contains incorrect answers
+	# Case: Correct number of boxes checked, but contains incorrect answers: error pill
 	javascript_html += "\t} else if (totalSelected === totalCorrect && numCorrectSelected < totalCorrect) {\n"
-	javascript_html += "\t\tresultDiv.style.color = 'var(--qti-warning-fg, #b37100)';\n"
+	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
 	javascript_html += "\t\tresultDiv.textContent = `You selected the right number of choices, but only ${numCorrectSelected} out of ${totalCorrect} are correct.`;\n"
 
-	# Case: No selection
+	# Case: No selection: neutral pill
 	javascript_html += "\t} else if (totalSelected === 0) {\n"
-	javascript_html += "\t\tresultDiv.style.color = 'inherit';\n"
+	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result';\n"
 	javascript_html += "\t\tresultDiv.textContent = 'Please select an answer.';\n"
 
 	javascript_html += "\t}\n"  # Close the if statement

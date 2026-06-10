@@ -14,7 +14,7 @@ from qti_package_maker.engines.html_selftest import html_functions
 def _wrap_selftest_html(html_text: str) -> str:
 	theme_css = html_functions.add_selftest_theme_css()
 	wrapped = f"{theme_css}<div class=\"qti-selftest\">\n{html_text}\n</div>\n"
-	return html_functions.escape_non_iso_8859_1(wrapped)
+	return html_functions.escape_non_ascii(wrapped)
 
 #==============================================================
 def MC(item_cls):

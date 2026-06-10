@@ -88,9 +88,16 @@ def generate_check_answers_js(crc16_text: str):
 	js += "    }\n"
 	js += "  });\n"
 	js += f"  const resultDiv = document.getElementById('result_{crc16_text}');\n"
+	# Locate Check button to disable on full-correct
+	js += f"  const checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
 	js += "  resultDiv.textContent = `Correct positions: ${correct} of ${total}`;\n"
-	js += "  resultDiv.style.color = (correct === total) ? 'var(--qti-success-fg, #008000)' : "
-	js += "    (correct === 0 ? 'var(--qti-error-fg, #9b1b1b)' : 'inherit');\n"
+	# Engage success pill on full-correct, error pill otherwise; disable Check on full-correct
+	js += "  if (correct === total) {\n"
+	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
+	js += "    if (checkBtn) { checkBtn.disabled = true; }\n"
+	js += "  } else {\n"
+	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	js += "  }\n"
 	js += "}\n"
 	js += "</script>\n"
 	return js

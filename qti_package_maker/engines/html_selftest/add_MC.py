@@ -79,20 +79,24 @@ def generate_javascript(crc16_text) -> str:
 	javascript_html += " }, null);\n"
 	# Get the result display element by its unique ID
 	javascript_html += f" const resultDiv = document.getElementById('result_{crc16_text}');\n"
+	# Locate the Check Answer button for this question (used to disable on correct)
+	javascript_html += f" const checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
 	# Check if the user selected an option
 	javascript_html += " if (selectedOption) {\n"
-	# If the selected option is correct, display a "CORRECT" message in green
+	# If the selected option is correct, display a "CORRECT" message and engage success pill
 	javascript_html += "  if (selectedOption === correctOption) {\n"
-	javascript_html += "   resultDiv.style.color = 'var(--qti-success-fg, #008000)';\n"
+	javascript_html += "   resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
 	javascript_html += "   resultDiv.textContent = 'CORRECT';\n"
-	# If the selected option is incorrect, display an "incorrect" message in red
+	# Disable the Check button so the question appears resolved
+	javascript_html += "   if (checkBtn) { checkBtn.disabled = true; }\n"
+	# If the selected option is incorrect, display an "incorrect" message and engage error pill
 	javascript_html += "  } else {\n"
-	javascript_html += "   resultDiv.style.color = 'var(--qti-error-fg, #9b1b1b)';\n"
+	javascript_html += "   resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
 	javascript_html += "   resultDiv.textContent = 'incorrect';\n"
 	javascript_html += "  }\n"
-	# If no option was selected, prompt the user to select an answer
+	# If no option was selected, prompt the user to select an answer (neutral pill)
 	javascript_html += " } else {\n"
-	javascript_html += "  resultDiv.style.color = 'inherit';\n"
+	javascript_html += "  resultDiv.className = 'qti-feedback-result';\n"
 	javascript_html += "  resultDiv.textContent = 'Please select an answer.';\n"
 	javascript_html += " }\n"
 	# Close the function definition

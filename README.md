@@ -1,9 +1,8 @@
 # QTI Package Maker
 
-qti_package_maker is a Python package and CLI for converting Blackboard Question Upload (BBQ)
-text files into QTI packages and other export formats (Canvas QTI v1.2, Blackboard QTI v2.1,
-human-readable text, and HTML self-tests). It is aimed at instructors and developers who need
-to move assessments across LMSs.
+A Python package and CLI that converts Blackboard Question Upload (BBQ) text files into QTI
+packages and other formats (Canvas, Blackboard, human-readable text, HTML self-tests). For
+instructors and developers moving assessments across LMSs.
 
 ## Documentation
 Core docs:

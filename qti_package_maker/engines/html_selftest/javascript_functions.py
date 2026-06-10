@@ -22,12 +22,16 @@ def add_clear_selection_javascript(crc16_text: str):
 	javascript_text += f"\t\tconst checkboxes = document.getElementsByName('answer_{crc16_text}');\n"
 	# Convert NodeList to an array and uncheck each checkbox
 	javascript_text += "\t\tArray.from(checkboxes).forEach(checkbox => checkbox.checked = false);\n"
-	# Clear the result div if it exists
+	# Clear the result div and reset pill classes back to neutral
 	javascript_text += f"\t\tconst resultDiv = document.getElementById('result_{crc16_text}');\n"
-	javascript_text += "\t\tif (resultDiv) {"
+	javascript_text += "\t\tif (resultDiv) {\n"
 	javascript_text += "\t\t\tresultDiv.textContent = '';\n"  # Clear result message
-	javascript_text += "\t\t\tresultDiv.style.color = 'inherit';\n"  # Clear result message
-	javascript_text += "\t\t}"
+	# Reset to neutral base class (remove success/error)
+	javascript_text += "\t\t\tresultDiv.className = 'qti-feedback-result';\n"
+	javascript_text += "\t\t}\n"
+	# Re-enable the Check Answer button (it may have been disabled on correct)
+	javascript_text += f"\t\tconst checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
+	javascript_text += "\t\tif (checkBtn) { checkBtn.disabled = false; }\n"
 	# Close function
 	javascript_text += "\t}\n"
 	# Close script tag
@@ -65,8 +69,15 @@ def add_reset_game_javascript(crc16_text: str):
 	javascript_text += '\t\t\tcell.style.backgroundColor = "transparent";\n'
 	javascript_text += "\t\t});\n"
 
-	# Clear score result div
-	javascript_text += f'\t\tdocument.getElementById("result_{crc16_text}").innerHTML = "";\n'
+	# Clear score result div and reset pill classes back to neutral
+	javascript_text += f'\t\tconst resultDiv_{crc16_text} = document.getElementById("result_{crc16_text}");\n'
+	javascript_text += '\t\tif (resultDiv_' + crc16_text + ') {\n'
+	javascript_text += '\t\t\tresultDiv_' + crc16_text + '.textContent = "";\n'
+	javascript_text += '\t\t\tresultDiv_' + crc16_text + '.className = "qti-feedback-result";\n'
+	javascript_text += '\t\t}\n'
+	# Re-enable the Check Answer button
+	javascript_text += '\t\tconst checkBtn_' + crc16_text + ' = document.querySelector("' + "[onclick='checkAnswer_" + crc16_text + "()']" + '");\n'
+	javascript_text += '\t\tif (checkBtn_' + crc16_text + ') { checkBtn_' + crc16_text + '.disabled = false; }\n'
 
 	# Close function
 	javascript_text += "\t}\n"

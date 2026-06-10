@@ -126,24 +126,21 @@ def generate_check_answers_js(crc16_text: str):
 	# Update feedback text
 	js_content += "\t\tfeedbackText = `Total Score: ${score} out of ${possible}`;\n";
 	js_content += "\t\tconst resultDiv = document.getElementById('result_"+crc16_text+"');\n";
+	# Locate Check button to disable on full-correct
+	js_content += "\t\tconst checkBtn = document.querySelector(\"[onclick='checkAnswer_"+crc16_text+"()']\");\n";
 
-	# If 100% correct, make feedback green
+	# If 100% correct: engage success pill and disable Check
 	js_content += "\t\tif (score === possible) {\n";
-	js_content += "\t\t\tresultDiv.style.color = 'var(--qti-success-fg, #008000)';\n";
+	js_content += "\t\t\tresultDiv.className = 'qti-feedback-result qti-feedback-success';\n";
+	js_content += "\t\t\tif (checkBtn) { checkBtn.disabled = true; }\n";
+
+	# Otherwise: engage error pill
+	js_content += "\t\t} else {\n";
+	js_content += "\t\t\tresultDiv.className = 'qti-feedback-result qti-feedback-error';\n";
 	js_content += "\t\t}\n";
 
-	# If score is less than 50%, make feedback red
-	js_content += "\t\telse if (score <= Math.floor(possible / 2)) {\n";
-	js_content += "\t\t\tresultDiv.style.color = 'var(--qti-error-fg, #9b1b1b)';\n";
-	js_content += "\t\t}\n";
-
-	# Otherwise, use the default text color (inherit from theme)
-	js_content += "\t\telse {\n";
-	js_content += "\t\t\tresultDiv.style.color = 'inherit';\n";
-	js_content += "\t\t}\n";
-
-	# Update the result div
-	js_content += "\t\tresultDiv.innerHTML = feedbackText;\n";
+	# Set the result text (textContent preserves exact strings for bp-website classifier)
+	js_content += "\t\tresultDiv.textContent = feedbackText;\n";
 
 	# Close function
 	js_content += "\t}\n"

@@ -3,8 +3,10 @@
 # Standard Library
 import os
 import re
+import sys
 import tomllib
 import argparse
+import datetime
 
 BASE_VERSION_PATTERN = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$")
 PEP440_PATTERN = re.compile(
@@ -52,6 +54,15 @@ CANDIDATE_FILENAMES = {
 	"version.txt",
 	"version.py",
 }
+SHORT_BUMP_ALIASES = {
+	"M": "major",
+	"m": "minor",
+	"p": "patch",
+	"a": "alpha",
+	"b": "beta",
+	"r": "rc",
+}
+ADVANCED_HELP = argparse.SUPPRESS
 
 #============================================
 
@@ -61,52 +72,67 @@ def parse_args() -> argparse.Namespace:
 	Returns:
 		argparse.Namespace: Parsed arguments.
 	"""
+	show_advanced = "--help-advanced" in sys.argv[1:]
 	parser = argparse.ArgumentParser(
 		description=(
 			"Bump or set version numbers across common version files. "
 			"Defaults to dry-run mode."
 		),
 	)
+	parser.add_argument(
+		"--help-advanced",
+		action="help",
+		help="Show advanced options and exit.",
+	)
 
 	parser.add_argument(
 		"-b", "--base-dir",
 		dest="base_dir",
 		default=".",
-		help="Base directory to scan (default: current directory).",
+		help=advanced_help(show_advanced, "Base directory to scan."),
 	)
 	parser.add_argument(
 		"-s", "--source",
 		dest="source",
 		default="",
-		help="Source file to anchor the version selection.",
+		help=advanced_help(show_advanced, "Source file to anchor version selection."),
 	)
 	parser.add_argument(
 		"-m", "--max-depth",
 		dest="max_depth",
 		type=int,
 		default=4,
-		help="Max directory depth to scan (default: 4).",
+		help=advanced_help(show_advanced, "Max directory depth to scan."),
 	)
 
+	parser.add_argument(
+		"action",
+		nargs="?",
+		default="",
+		help="Version to set, such as 26.05.",
+	)
 	parser.add_argument(
 		"--bump",
 		dest="bump",
 		default="",
 		choices=["major", "minor", "patch", "alpha", "beta", "rc"],
-		help="Bump the version by major, minor, patch, alpha, beta, or rc.",
+		help=advanced_help(show_advanced, "Bump by major, minor, patch, alpha, beta, or rc."),
 	)
 	parser.add_argument(
-		"--set-version",
+		"-v", "--set-version",
 		dest="set_version",
 		default="",
-		help=(
-			"Set an explicit version (ex: 1.2.3). When combined with --bump, "
-			"this is treated as the base version to bump from."
-		),
+		help="Set an explicit version, such as 26.05.",
+	)
+	parser.add_argument(
+		"-c", "--calver",
+		dest="calver",
+		action="store_true",
+		help="Use the current YY.MM CalVer value.",
 	)
 
 	parser.add_argument(
-		"--apply",
+		"-A", "--apply",
 		dest="apply",
 		action="store_true",
 		help="Write changes to disk.",
@@ -115,35 +141,79 @@ def parse_args() -> argparse.Namespace:
 		"-n", "--dry-run",
 		dest="apply",
 		action="store_false",
-		help="Only print planned changes (default).",
+		help=advanced_help(show_advanced, "Only print planned changes."),
 	)
 	parser.set_defaults(apply=False)
 
 	parser.add_argument(
-		"--update-all",
+		"-u", "--update-all",
 		dest="update_all",
 		action="store_true",
-		help="Update all discovered versions, even if they differ.",
+		help=advanced_help(show_advanced, "Update all discovered versions, even if they differ."),
 	)
 	parser.add_argument(
 		"--pre-style",
 		dest="pre_style",
 		choices=["pep440", "dash"],
 		default="pep440",
-		help="Prerelease style when adding alpha/beta/rc (default: pep440).",
+		help=advanced_help(show_advanced, "Prerelease style when adding alpha/beta/rc."),
 	)
 	parser.add_argument(
 		"--no-enforce-yy-mm",
 		dest="enforce_yy_mm",
 		action="store_false",
-		help="Disable YY.MM.PATCH enforcement.",
+		help=advanced_help(show_advanced, "Disable YY.MM.PATCH enforcement."),
 	)
 	parser.set_defaults(enforce_yy_mm=True)
 
 	args = parser.parse_args()
+	if args.calver and args.set_version:
+		parser.error("Use either --calver or --set-version, not both.")
+	if args.action:
+		if args.action in SHORT_BUMP_ALIASES:
+			if args.bump:
+				parser.error("Use either positional bump shortcut or --bump, not both.")
+			if args.set_version or args.calver:
+				parser.error(
+					"Use either positional bump shortcut or version source, not both."
+				)
+			args.bump = SHORT_BUMP_ALIASES[args.action]
+		else:
+			if args.set_version or args.calver:
+				parser.error("Use either positional version or version flag, not both.")
+			args.set_version = args.action
+	if args.calver:
+		args.set_version = current_calver_month()
 	if not args.bump and not args.set_version:
-		parser.error("One of --bump or --set-version is required.")
+		args.set_version = current_calver_month()
 	return args
+
+#============================================
+
+def advanced_help(show_advanced: bool, help_text: str) -> str:
+	"""Return help text only when advanced help was requested.
+
+	Args:
+		show_advanced (bool): Whether advanced help is visible.
+		help_text (str): Help text for the argument.
+
+	Returns:
+		str: Help text or argparse suppression marker.
+	"""
+	if show_advanced:
+		return help_text
+	return ADVANCED_HELP
+
+#============================================
+
+def current_calver_month() -> str:
+	"""Return the current month in repo CalVer format.
+
+	Returns:
+		str: Current YY.MM value.
+	"""
+	today = datetime.date.today()
+	return f"{today.year % 100:02d}.{today.month:02d}"
 
 #============================================
 
@@ -315,7 +385,38 @@ def parse_simple_version_file(path: str, force_update: bool=False) -> dict | Non
 			return entry
 		return None
 
+	if force_update:
+		entry = {
+			"path": path,
+			"kind": "simple",
+			"version": "",
+			"force_update": True,
+			"create": False,
+		}
+		return entry
+
 	return None
+
+#============================================
+
+def build_version_file_entry(base_dir: str, version: str="", create: bool=True) -> dict:
+	"""Build a VERSION-file entry.
+
+	Args:
+		base_dir (str): Base directory.
+		version (str): Current version value.
+		create (bool): Whether the VERSION file needs to be created.
+
+	Returns:
+		dict: Version entry.
+	"""
+	return {
+		"path": os.path.join(base_dir, "VERSION"),
+		"kind": "simple",
+		"version": version,
+		"force_update": True,
+		"create": create,
+	}
 
 #============================================
 
@@ -380,6 +481,26 @@ def parse_versions(base_dir: str, max_depth: int) -> list[dict]:
 			entries.append(entry)
 
 	return entries
+
+#============================================
+
+def ensure_version_file_entry(entries: list[dict], base_dir: str) -> list[dict]:
+	"""Ensure the root VERSION file is represented.
+
+	Args:
+		entries (list[dict]): Discovered version entries.
+		base_dir (str): Base directory.
+
+	Returns:
+		list[dict]: Entries with root VERSION appended when missing.
+	"""
+	version_path = os.path.join(base_dir, "VERSION")
+	for entry in entries:
+		if os.path.abspath(entry["path"]) == os.path.abspath(version_path):
+			return entries
+	if os.path.exists(version_path):
+		return entries
+	return entries + [build_version_file_entry(base_dir)]
 
 #============================================
 
@@ -780,6 +901,9 @@ def update_simple_version(text: str, new_version: str, force_update: bool=False)
 		lines[index] = f"{new_version}{newline}"
 		return "".join(lines), True
 
+	if force_update:
+		return f"{new_version}\n", True
+
 	return text, False
 
 #============================================
@@ -824,8 +948,11 @@ def update_entry(entry: dict, new_version: str, apply: bool) -> dict:
 		dict: Result summary.
 	"""
 	path = entry["path"]
-	with open(path, "r", encoding="utf-8") as handle:
-		text = handle.read()
+	if entry.get("create"):
+		text = ""
+	else:
+		with open(path, "r", encoding="utf-8") as handle:
+			text = handle.read()
 
 	version_value = normalize_target_version(entry, new_version)
 	if entry["kind"] == "pyproject":
@@ -856,14 +983,6 @@ def main() -> None:
 	base_dir = normalize_base_dir(args.base_dir)
 	entries = parse_versions(base_dir, args.max_depth)
 
-	if not entries:
-		raise SystemExit("No version sources found.")
-
-	print("Discovered versions:")
-	for entry in entries:
-		rel_path = os.path.relpath(entry["path"], base_dir)
-		print(f"- {rel_path}: {entry['version']} ({entry['kind']})")
-
 	base_version_override = ""
 	explicit_version = ""
 	if args.bump and args.set_version:
@@ -874,6 +993,20 @@ def main() -> None:
 		explicit_version = args.set_version.strip()
 		if not explicit_version:
 			raise SystemExit("--set-version requires a non-empty value.")
+
+	if explicit_version:
+		entries = ensure_version_file_entry(entries, base_dir)
+
+	if not entries:
+		raise SystemExit("No version sources found.")
+
+	print("Discovered versions:")
+	for entry in entries:
+		rel_path = os.path.relpath(entry["path"], base_dir)
+		version_display = entry["version"] if entry["version"] else "(empty)"
+		if entry.get("create"):
+			version_display = "(missing)"
+		print(f"- {rel_path}: {version_display} ({entry['kind']})")
 
 	base_version_display = ""
 	if base_version_override:
@@ -912,10 +1045,12 @@ def main() -> None:
 
 	if args.update_all:
 		if all(entry["version"] == new_version for entry in entries):
-			raise SystemExit("New version matches current version. Nothing to do.")
+			print("New version matches current version. Nothing to do.")
+			return
 	else:
 		if base_version == new_version:
-			raise SystemExit("New version matches current version. Nothing to do.")
+			print("New version matches current version. Nothing to do.")
+			return
 
 	if args.update_all:
 		selected = list(entries)

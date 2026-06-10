@@ -3,6 +3,7 @@ import pytest
 
 # QTI Package Maker
 import qti_package_maker.assessment_items.item_types
+import qti_package_maker.engines.html_selftest.add_FIB
 import qti_package_maker.engines.html_selftest.write_item
 import qti_package_maker.engines.html_selftest.html_functions
 
@@ -150,3 +151,70 @@ def test_html_selftest_ma_adaptive_grid_classes(num_choices, expected_class):
 		# For 3 choices, should have <ul id="choices_..."> with no class attribute
 		assert '<ul id="choices_' in html_text
 		assert 'class="qti-auto-grid' not in html_text
+
+
+def test_fib_js_uses_crc_not_literal_placeholder():
+	# Verify the f-string fix: emitted JS must reference the actual crc, not the literal placeholder
+	sample_crc = "ab12"
+	js = qti_package_maker.engines.html_selftest.add_FIB.generate_javascript(sample_crc, ["answer"])
+	assert f"fibAnswers_{sample_crc}.includes" in js
+	assert "{crc16_text}" not in js
+
+
+def test_fib_js_answers_array_is_valid_js_with_special_chars():
+	# Python repr of ["it's correct"] emits ['it\'s correct'] - a JS syntax error.
+	# json.dumps emits ["it's correct"] - valid JS where the apostrophe is inside double quotes.
+	sample_crc = "cd34"
+	tricky_answers = ["it's correct", "cafe"]
+	js = qti_package_maker.engines.html_selftest.add_FIB.generate_javascript(sample_crc, tricky_answers)
+	# Locate the array assignment line
+	array_line = next(
+		(line for line in js.splitlines() if f"fibAnswers_{sample_crc} =" in line),
+		None,
+	)
+	assert array_line is not None, f"No fibAnswers_{sample_crc} assignment line found in generated JS"
+	# The RHS must be a JSON array (starts with "["), not a Python repr list (starts with "['" or "['")
+	rhs = array_line.split("= ", 1)[1].rstrip(";")
+	assert rhs.startswith("["), f"Expected JSON array starting with '[', got: {rhs[:20]!r}"
+	# json.dumps always wraps string elements in double quotes
+	assert rhs.startswith('["'), f"Array elements should be double-quoted JSON strings: {rhs!r}"
+
+
+def test_fib_js_uses_feedback_classes():
+	# Verify feedback uses pill classes instead of inline hardcoded colors
+	sample_crc = "ab12"
+	js = qti_package_maker.engines.html_selftest.add_FIB.generate_javascript(sample_crc, ["answer"])
+	# Classes carry theme-var colors via CSS; no hardcoded color strings should appear
+	assert "qti-feedback-success" in js
+	assert "qti-feedback-error" in js
+	assert "'green'" not in js
+	assert "'red'" not in js
+
+
+def test_mc_js_sets_feedback_classes_and_disables_check(sample_items):
+	"""
+	MC generated JS must:
+	- set qti-feedback-success on the result element when the answer is CORRECT
+	- set qti-feedback-error on the result element when the answer is incorrect
+	- still emit the literal string 'CORRECT' as the textContent value
+	- disable the Check button (checkBtn.disabled = true) on correct
+	"""
+	item_cls = qti_package_maker.assessment_items.item_types.MC(*sample_items["MC"])
+	html_text = qti_package_maker.engines.html_selftest.write_item.MC(item_cls)
+	# Feedback pill classes must be set in the JS
+	assert "qti-feedback-success" in html_text
+	assert "qti-feedback-error" in html_text
+	# The textContent for full-correct must still be the exact string the bp-website classifier reads
+	assert "'CORRECT'" in html_text
+	# Check button must be disabled on correct (not relabeled or hidden)
+	assert "checkBtn.disabled = true" in html_text
+
+
+def test_ma_clear_selection_button_has_reset_class(sample_items):
+	"""
+	MA Clear Selection button must carry qti-btn-reset so it renders as a ghost button.
+	"""
+	item_cls = qti_package_maker.assessment_items.item_types.MA(*sample_items["MA"])
+	html_text = qti_package_maker.engines.html_selftest.write_item.MA(item_cls)
+	# The Clear Selection button must have the ghost/secondary class
+	assert "qti-btn-reset" in html_text

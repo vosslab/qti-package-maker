@@ -22,26 +22,32 @@ def format_question_text(crc16_text: str, question_text: str) -> str:
 	return html_content
 
 #============================================
-def escape_non_iso_8859_1(html_text: str) -> str:
+def escape_non_ascii(html_text: str) -> str:
 	"""
-	Replace non-ISO-8859-1 characters with numeric HTML entities.
+	Replace all non-ASCII characters (codepoint > U+007F) with numeric HTML entities.
+
+	Uses ascii/xmlcharrefreplace so that Latin-1 characters such as non-breaking
+	space (U+00A0), plus-minus (U+00B1), and middle dot (U+00B7) are emitted as
+	&#160;, &#177;, &#183; instead of raw multi-byte UTF-8 sequences that cause
+	mojibake when the fragment is served without an explicit UTF-8 declaration.
+
+	Plain ASCII is passed through unchanged. Already-numeric entities such as
+	&#945; or named entities such as &alpha; are not double-escaped because the
+	function operates on the raw text value, not on parsed HTML.
 	"""
 	if html_text is None:
 		return ""
-	return html_text.encode("iso-8859-1", "xmlcharrefreplace").decode("iso-8859-1")
+	# encode to ascii, replacing every codepoint > 0x7F with &#NNN;
+	return html_text.encode("ascii", "xmlcharrefreplace").decode("ascii")
 
 #============================================
 def add_result_div(crc16_text: str) -> str:
-	# Add a div to display the result message, styled with inline CSS
-	style = (
-		'style="display: block; '
-		'margin: 0; '
-		'padding: 0; '
-		'font-size: large; '
-		'font-weight: bold; '
-		'font-family: monospace;"'
-		)
-	html_content = f"<div id='result_{crc16_text}' {style}>&nbsp;</div>\n"
+	# Add a div to display the result message as a styled pill/badge.
+	# The qti-feedback-result class provides base pill styling (neutral state).
+	# JS toggles qti-feedback-success / qti-feedback-error after answer check.
+	# Inline style dropped in favor of CSS classes for theme-awareness.
+	# Use numeric entity &#160; instead of &nbsp; so output is pure ASCII
+	html_content = f"<div id='result_{crc16_text}' class='qti-feedback-result'>&#160;</div>\n"
 	return html_content
 
 #============================================
@@ -68,11 +74,15 @@ def add_selftest_theme_css() -> str:
   --qti-success-fg: #008000;
   --qti-error-fg: #9b1b1b;
   --qti-warning-fg: #b37100;
-  --qti-btn-bg: #e6eeff;
-  --qti-btn-reset-bg: #fbe9eb;
-  --qti-btn-fg: inherit;
+  --qti-btn-bg: #3a5acd;
+  --qti-btn-fg: #ffffff;
+  --qti-btn-disabled-bg: #aaaaaa;
+  --qti-btn-disabled-fg: #eeeeee;
+  --qti-btn-reset-bg: transparent;
+  --qti-btn-reset-fg: #555555;
+  --qti-btn-reset-border: #999999;
   --qti-input-bg: #ffffff;
-  --qti-input-fg: inherit;
+  --qti-input-fg: #111111;
   --qti-input-border: #999999;
 }
 .qti-choice-1 { background-color: var(--qti-choice-1-bg); color: var(--qti-choice-1-fg); }
@@ -85,11 +95,14 @@ def add_selftest_theme_css() -> str:
   padding-left: 0;
   margin: 0 0 12px 0;
 }
+/* Each choice row: min 40px height for comfortable tap targets */
 .qti-selftest ul[id^="choices_"] > li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 6px 0;
+  gap: 10px;
+  margin: 4px 0;
+  padding: 6px 4px;
+  min-height: 40px;
 }
 .qti-selftest ul[id^="choices_"].qti-auto-grid {
   display: grid;
@@ -104,12 +117,19 @@ def add_selftest_theme_css() -> str:
 .qti-selftest ul[id^="choices_"] > li > label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
+  cursor: pointer;
 }
+/* Enlarged radio/checkbox inputs: ~1.4em via width/height, transform-origin top-left keeps layout aligned */
 .qti-selftest ul[id^="choices_"] > li > input[type="radio"],
 .qti-selftest ul[id^="choices_"] > li > input[type="checkbox"] {
   margin: 0;
+  flex-shrink: 0;
+  width: 1.4em;
+  height: 1.4em;
+  cursor: pointer;
+  accent-color: var(--qti-btn-bg, #3a5acd);
 }
 .qti-dropzone {
   background-color: var(--qti-dropzone-bg, #f8f8f8);
@@ -117,30 +137,100 @@ def add_selftest_theme_css() -> str:
 .qti-dropzone-hover {
   background-color: var(--qti-dropzone-hover-bg, #e6e6e6);
 }
+/* Primary filled button (Check Answer) */
 .qti-btn {
-  background-color: var(--qti-btn-bg, #e6eeff);
-  color: var(--qti-btn-fg, inherit);
+  background-color: var(--qti-btn-bg, #3a5acd);
+  color: var(--qti-btn-fg, #ffffff);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 20px;
+  font-weight: 600;
+  cursor: pointer;
 }
+.qti-btn:hover {
+  filter: brightness(1.1);
+}
+/* Disabled state: muted appearance after a correct answer (disabled attribute set by JS) */
+.qti-btn:disabled,
+.qti-btn[disabled] {
+  background-color: var(--qti-btn-disabled-bg, #aaaaaa);
+  color: var(--qti-btn-disabled-fg, #eeeeee);
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: none;
+}
+/* Secondary ghost button (Clear / Reset) */
 .qti-btn-reset {
-  background-color: var(--qti-btn-reset-bg, #fbe9eb);
-  color: var(--qti-btn-fg, inherit);
+  background-color: var(--qti-btn-reset-bg, transparent);
+  color: var(--qti-btn-reset-fg, #555555);
+  border: 1px solid var(--qti-btn-reset-border, #999999);
+  border-radius: 4px;
+  padding: 7px 20px;
+  cursor: pointer;
 }
+.qti-btn-reset:hover {
+  background-color: var(--qti-dropzone-hover-bg, #e6e6e6);
+}
+/* Text input styling */
 .qti-input {
   background-color: var(--qti-input-bg, #ffffff);
-  color: var(--qti-input-fg, inherit);
+  color: var(--qti-input-fg, #111111);
   border: 1px solid var(--qti-input-border, #999999);
+  border-radius: 4px;
   font-size: 1.1em;
   line-height: 1.2;
   padding: 4px 6px;
 }
+/* Responsive images: prevent RDKit/structure canvases from overflowing on mobile */
+.qti-selftest canvas,
+.qti-selftest img {
+  max-width: 100%;
+  height: auto;
+}
+/* Feedback pill: neutral base state (empty placeholder, invisible until JS sets content) */
+.qti-feedback-result {
+  display: inline-block;
+  min-height: 1.5em;
+  margin: 8px 0 8px 0;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.5;
+  vertical-align: middle;
+}
+/* Success pill */
 .qti-feedback-success {
+  display: inline-block;
   background-color: var(--qti-success-bg, #ccffcc);
   color: var(--qti-success-fg, #008000);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.5;
+  margin: 8px 0 8px 0;
+  vertical-align: middle;
 }
+/* Error pill */
 .qti-feedback-error {
+  display: inline-block;
   background-color: var(--qti-error-bg, #ffcccc);
   color: var(--qti-error-fg, #9b1b1b);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.5;
+  margin: 8px 0 8px 0;
+  vertical-align: middle;
 }
+/* Non-color accessibility markers (ASCII, no impact on textContent) */
+.qti-feedback-success::before { content: "[+] "; }
+.qti-feedback-error::before { content: "[x] "; }
 @media (prefers-color-scheme: dark) {
   .qti-selftest {
     color: var(--md-default-fg-color, #e0e0e0);
@@ -160,10 +250,14 @@ def add_selftest_theme_css() -> str:
     --qti-success-fg: #a8e6b0;
     --qti-error-fg: #ffc1c1;
     --qti-warning-fg: #ffd9a3;
-    --qti-btn-bg: #2a3550;
-    --qti-btn-reset-bg: #4b2a2a;
-    --qti-btn-fg: #e0e0e0;
-    --qti-input-bg: #1f1f1f;
+    --qti-btn-bg: #4a6ee0;
+    --qti-btn-fg: #ffffff;
+    --qti-btn-disabled-bg: #555555;
+    --qti-btn-disabled-fg: #aaaaaa;
+    --qti-btn-reset-bg: transparent;
+    --qti-btn-reset-fg: #c0c0c0;
+    --qti-btn-reset-border: #777777;
+    --qti-input-bg: #2a2a2a;
     --qti-input-fg: #e0e0e0;
     --qti-input-border: #666666;
   }
@@ -186,11 +280,15 @@ body[data-md-color-scheme="default"] .qti-selftest {
   --qti-success-fg: #008000;
   --qti-error-fg: #9b1b1b;
   --qti-warning-fg: #b37100;
-  --qti-btn-bg: #e6eeff;
-  --qti-btn-reset-bg: #fbe9eb;
-  --qti-btn-fg: inherit;
+  --qti-btn-bg: #3a5acd;
+  --qti-btn-fg: #ffffff;
+  --qti-btn-disabled-bg: #aaaaaa;
+  --qti-btn-disabled-fg: #eeeeee;
+  --qti-btn-reset-bg: transparent;
+  --qti-btn-reset-fg: #555555;
+  --qti-btn-reset-border: #999999;
   --qti-input-bg: #ffffff;
-  --qti-input-fg: inherit;
+  --qti-input-fg: #111111;
   --qti-input-border: #999999;
 }
 body[data-md-color-scheme="slate"] .qti-selftest {
@@ -211,10 +309,14 @@ body[data-md-color-scheme="slate"] .qti-selftest {
   --qti-success-fg: #a8e6b0;
   --qti-error-fg: #ffc1c1;
   --qti-warning-fg: #ffd9a3;
-  --qti-btn-bg: #2a3550;
-  --qti-btn-reset-bg: #4b2a2a;
-  --qti-btn-fg: #e0e0e0;
-  --qti-input-bg: #1f1f1f;
+  --qti-btn-bg: #4a6ee0;
+  --qti-btn-fg: #ffffff;
+  --qti-btn-disabled-bg: #555555;
+  --qti-btn-disabled-fg: #aaaaaa;
+  --qti-btn-reset-bg: transparent;
+  --qti-btn-reset-fg: #c0c0c0;
+  --qti-btn-reset-border: #777777;
+  --qti-input-bg: #2a2a2a;
   --qti-input-fg: #e0e0e0;
   --qti-input-border: #666666;
 }
@@ -272,9 +374,9 @@ def add_check_answer_button(crc16_text: str, button_text: str="Check Answer"):
 
 #============================================
 def add_clear_selection_button(crc16_text: str, button_text: str="Clear Selection"):
-	# "Clear Selection" button
+	# "Clear Selection" ghost button (qti-btn-reset = secondary/ghost style)
 	js_function = f"clearSelection_{crc16_text}"
-	return make_button(button_text, js_function)
+	return make_button(button_text, js_function, "md-button md-button--secondary custom-button qti-btn-reset")
 
 #============================================
 def add_reset_game_button(crc16_text: str, button_text: str="Reset Game"):

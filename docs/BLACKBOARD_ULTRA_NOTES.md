@@ -73,24 +73,24 @@ not port until the image follow-up project lands.
 Three manual round trips through an Ultra sandbox on 2026-04-14:
 
 - **Probe 1 (15 dimensions):**
-  [output/ultra_probe.zip](../output/ultra_probe.zip), built by
-  [tools/build_ultra_probe.py](../tools/build_ultra_probe.py). Re-export
+  `output/ultra_probe.zip`, built by
+  `tools/build_ultra_probe.py`. Re-export
   preserved at
-  [ULTRA/ultra_probe-roundtrip/](../ULTRA/ultra_probe-roundtrip/). Each
+  `ULTRA/ultra_probe-roundtrip/`. Each
   item isolates one dimension: `<pre>`, nbsp columns, bare `<table>`,
   cell shape variants, whitespace, inline formatting, div-vs-p,
   entities, lists, headings, CSS, and minimal `<img>`.
 - **Probe 2 (12 table variants):**
-  [output/ultra_table_probe.zip](../output/ultra_table_probe.zip), built
-  by [tools/build_ultra_table_probe.py](../tools/build_ultra_table_probe.py).
+  `output/ultra_table_probe.zip`, built
+  by `tools/build_ultra_table_probe.py`.
   Re-export and 12 rendering screenshots preserved at
-  [ULTRA/ultra_table_probe/](../ULTRA/ultra_table_probe/). Holds the
+  `ULTRA/ultra_table_probe/`. Holds the
   dataset constant (a 2-column kinetics table) and varies only the table
   HTML structure - bare text cells, wrapped cells, with and without
   `<tbody>`, with and without `<th>`, nested spans, legacy attributes,
   and the exact shape the Learn engine emits.
 - **Image format probe:**
-  [ULTRA/image_test/](../ULTRA/image_test/) - a question hand-built in
+  `ULTRA/image_test/` - a question hand-built in
   Ultra's editor with an image attachment, then exported. This revealed
   the canonical Ultra-native image embedding pattern and the Hot Spot
   export failure (see below).
@@ -98,13 +98,13 @@ Three manual round trips through an Ultra sandbox on 2026-04-14:
 Supporting evidence:
 
 - Original Learn-shaped Michaelis-Menten package:
-  [ULTRA/blackboard_qti_v2_1-michaelis_menten_table-Km/](../ULTRA/blackboard_qti_v2_1-michaelis_menten_table-Km/)
+  `ULTRA/blackboard_qti_v2_1-michaelis_menten_table-Km/`
 - Ultra re-export of that same package:
-  [ULTRA/ExportFile_ultra_sandbox_nvoss/](../ULTRA/ExportFile_ultra_sandbox_nvoss/)
+  `ULTRA/ExportFile_ultra_sandbox_nvoss/`
 - Hand-built Ultra-native question (canonical shape reference):
-  [ULTRA/manually-created-ultra-question/](../ULTRA/manually-created-ultra-question/)
+  `ULTRA/manually-created-ultra-question/`
 - Anthology's Ultra question type documentation:
-  [ULTRA/question-banks.html](../ULTRA/question-banks.html)
+  `ULTRA/question-banks.html`
 
 ## The Michaelis-Menten root cause (important)
 
@@ -384,7 +384,7 @@ Only raster PNG is viable.
 ### Ultra-native image embedding (discovered, deferred to v2)
 
 The image test at
-[ULTRA/image_test/](../ULTRA/image_test/) shows Ultra's canonical
+`ULTRA/image_test/` shows Ultra's canonical
 image embedding pattern. A question with an image attachment authored
 in Ultra's editor exports as:
 

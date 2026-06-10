@@ -69,11 +69,16 @@ def generate_javascript(crc16_text: str) -> str:
 	js += "    }\n"
 	js += "  });\n"
 	js += "  const resultDiv = document.getElementById('result_"+crc16_text+"');\n"
+	# Locate Check button to disable on full-correct
+	js += "  const checkBtn = document.querySelector(\"[onclick='checkAnswer_"+crc16_text+"()']\");\n"
 	js += "  if (correctCount === inputs.length) {\n"
-	js += "    resultDiv.style.color = 'green';\n"
+	# All blanks correct: engage success pill and disable Check
+	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
 	js += "    resultDiv.textContent = 'CORRECT';\n"
+	js += "    if (checkBtn) { checkBtn.disabled = true; }\n"
 	js += "  } else {\n"
-	js += "    resultDiv.style.color = 'inherit';\n"
+	# Partial: engage error pill
+	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
 	js += "    resultDiv.textContent = `Correct: ${correctCount} of ${inputs.length}`;\n"
 	js += "  }\n"
 	js += "}\n"
