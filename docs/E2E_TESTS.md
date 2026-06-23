@@ -58,7 +58,8 @@ the `e2e_*` prefix as a secondary, human-readable convention.
 
 ## Naming conventions test
 
-File naming conventions are enforced by `tests/test_test_naming_conventions.py` to prevent silent bugs:
+File naming conventions are enforced by `templates/typescript/tests/test_test_naming_conventions.py`
+(ships only to `REPO_TYPE=typescript` consumer repos) to prevent silent bugs:
 
 - No `test_*.py` files anywhere under `tests/e2e/` (since `collect_ignore` would skip them silently, mismatching the name).
 - No `test_*.py` files anywhere under `tests/playwright/` (same trap).

@@ -9,6 +9,7 @@ report_*.txt
 
 # === UNIVERSAL ===
 _temp*.?*
+OTHER_REPOS/
 # === PYTHON ===
 build/
 dist/
