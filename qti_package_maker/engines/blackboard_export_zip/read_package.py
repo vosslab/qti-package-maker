@@ -1,14 +1,16 @@
 """
 Read a Blackboard Original pool-export package back into an ItemBank.
 
-This module is the inverse of the write path (`item_xml_helpers.py` +
-`assessment_meta.py`). It accepts either a Blackboard pool-export ZIP
+This module is the inverse of the write path (the per-type `<item>` builder
+modules `MC.py`/`MA.py`/`MATCH.py`/`FIB.py`/`NUM.py`/`MULTI_FIB.py` plus their
+shared `common_xml.py`, wrapped by `assessment_meta.py`). It accepts either a
+Blackboard pool-export ZIP
 (`Pool_ExportFile_*.zip`) or an already-unzipped pool directory, locates the
 `assessment/x-bb-qti-pool` resource through `imsmanifest.xml`, and parses each
 `<item>` in the pool `.dat` into an internal `item_types.*` instance.
 
 The pool dialect is the QTI-1.2-derived envelope with Blackboard extensions
-that `item_xml_helpers.py` writes (and that the real sample pools under
+that the per-type builder modules write (and that the real sample pools under
 `BB_Export_ZIP/` carry). The reader keys each item on its `<bbmd_questiontype>`
 ELEMENT value (not an attribute), recovers question/choice HTML by reading the
 `mat_formattedtext` element text (lxml un-escapes it once, reversing the
@@ -381,12 +383,45 @@ def _read_choice_labels(response_lid: lxml.etree.Element) -> tuple[list[str], li
 	return label_idents, choice_texts
 
 #============================================
+def _is_descendant_of_not(
+	varequal_el: lxml.etree.Element,
+	stop_el: lxml.etree.Element,
+) -> bool:
+	"""
+	Return True if varequal_el has a `<not>` ancestor between itself and stop_el.
+
+	Real Blackboard MA wraps incorrect choices in `<not><varequal .../></not>`
+	inside the `<and>` of the `title="correct"` branch. Walking the parent chain
+	from the varequal up to (but not including) the respcondition detects these
+	negated choices so the reader can skip them.
+
+	Args:
+		varequal_el: The varequal element to test.
+		stop_el: The respcondition element that is the boundary; the walk stops
+			before reaching it.
+
+	Returns:
+		True when varequal_el is nested inside a `<not>` on the path to stop_el.
+	"""
+	parent = varequal_el.getparent()
+	while parent is not None and parent is not stop_el:
+		if parent.tag == "not":
+			return True
+		parent = parent.getparent()
+	return False
+
+#============================================
 def _correct_choice_idents(item_el: lxml.etree.Element) -> list[str]:
 	"""
 	Read the correct label idents from the `title="correct"` resprocessing branch.
 
-	The correct branch holds one `<varequal respident="...">LABEL_IDENT</varequal>`
-	per correct choice; the varequal TEXT is the correct label ident.
+	For real Blackboard MA the `title="correct"` branch holds an `<and>` whose
+	children list every choice: correct choices as bare `<varequal
+	respident="response" case="No">IDENT</varequal>`, incorrect choices wrapped in
+	`<not><varequal .../></not>`. Only the non-negated varequals name correct
+	answers. For legacy engine-emitted MA (bare varequals in `<conditionvar>`
+	without any `<and>` or `<not>`) the same predicate keeps all varequals because
+	none has a `<not>` ancestor.
 
 	Args:
 		item_el: The `<item>` element.
@@ -396,11 +431,14 @@ def _correct_choice_idents(item_el: lxml.etree.Element) -> list[str]:
 	"""
 	resprocessing = _resprocessing(item_el)
 	correct_idents = []
-	# The correct branch is titled "correct"; its varequal texts name the answers.
+	# The correct branch is titled "correct"; only non-negated varequal texts name answers.
 	for respcondition in resprocessing.iter("respcondition"):
 		if respcondition.get("title") != "correct":
 			continue
 		for varequal in respcondition.iter("varequal"):
+			# Skip varequals nested inside a <not>: those are incorrect choices in real BB MA.
+			if _is_descendant_of_not(varequal, respcondition):
+				continue
 			if varequal.text:
 				correct_idents.append(varequal.text.strip())
 	if not correct_idents:

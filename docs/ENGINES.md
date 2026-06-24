@@ -76,9 +76,6 @@
   internal content hash, so exact-ID matching may drift. The root cause is that the item
   content hash is computed before the choice-prefix stripper runs. Question and answer
   content still round-trips correctly; an internal hashing fix is tracked separately.
-- The writer nests `RIGHT_MATCH_BLOCK` inside `RESPONSE_BLOCK`, while real Blackboard exports
-  place it as a sibling element. The reader handles both layouts, so round-trip is safe, but
-  real-export fidelity would prefer the sibling placement. Flagged for a follow-up writer tweak.
 - A live Blackboard/Ultra import is an optional out-of-band acceptance step. The engine omits
   `.bb-package-sig` because it is server-computed and not reproducible from package contents;
   CI does not perform a live import, so import success is unverified.

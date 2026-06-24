@@ -10,6 +10,9 @@ report_*.txt
 # === UNIVERSAL ===
 _temp*.?*
 OTHER_REPOS/
+# Local reference samples and smoke-test outputs (never committed)
+BB_Export_ZIP/
+output_smoke/
 # === PYTHON ===
 build/
 dist/

@@ -2,7 +2,9 @@
 Package scaffolding for the Blackboard pool export format.
 
 This module builds everything that wraps the per-item `<item>` elements from
-`item_xml_helpers.py` into a complete Blackboard Original pool-export package:
+the per-type builder modules (`MC.py`/`MA.py`/`MATCH.py`/`FIB.py`/`NUM.py`/
+`MULTI_FIB.py`, sharing `common_xml.py`) into a complete Blackboard Original
+pool-export package:
 
 - the `questestinterop` > `assessment` > `section` pool wrapper (`res00002.dat`),
 - the `imsmanifest.xml` content-package manifest in Blackboard's `bb:` namespace,
@@ -182,7 +184,7 @@ def build_pool_wrapper(
 	Build the `questestinterop` > `assessment` > `section` pool wrapper.
 
 	This is the root of `res00002.dat`. It wraps the already-built per-item
-	`<item>` elements (from `item_xml_helpers.build_<type>`) inside the pool
+	`<item>` elements (from the per-type `build_<type>` modules) inside the pool
 	envelope the real samples use: an `<assessment>` carrying `assessmentmetadata`,
 	an empty `rubric` and `presentation_material`, and a `<section>` carrying its
 	own `sectionmetadata` followed by every `<item>`.
