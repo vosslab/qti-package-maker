@@ -70,3 +70,42 @@ def test_bbq_converter_ultra_flag(tmp_path):
 	# Verify the output ZIP exists
 	output_zip = tmp_path / "qti21-ultra-test_ultra.zip"
 	assert output_zip.exists(), f"Expected output ZIP {output_zip.name} not found. Output:\n{result.stdout}"
+
+
+def test_bbq_converter_blackboard_export_zip_flag(tmp_path):
+	"""Test that the -B / --bbexport flag produces a valid Blackboard pool export ZIP."""
+	import zipfile
+	repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+	converter = os.path.join(repo_root, "tools", "bbq_converter.py")
+
+	# Create a minimal BBQ file with 1 MC question
+	bbq_file = tmp_path / "bbq-test_bbexport-questions.txt"
+	bbq_file.write_text("MC\tWhat is 2+2?\t3\tincorrect\t4\tcorrect\n", encoding="utf-8")
+
+	argv = [
+		sys.executable,
+		converter,
+		"-i",
+		str(bbq_file),
+		"-B",
+	]
+	env = os.environ.copy()
+	env["PYTHONPATH"] = repo_root + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+
+	result = subprocess.run(
+		argv,
+		cwd=str(tmp_path),
+		env=env,
+		check=True,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.STDOUT,
+		text=True,
+	)
+
+	# Verify the output ZIP exists and is openable
+	output_zip = tmp_path / "blackboard_export_zip-test_bbexport.zip"
+	assert output_zip.exists(), f"Expected output ZIP {output_zip.name} not found. Output:\n{result.stdout}"
+	# Confirm the ZIP contains imsmanifest.xml (structural sanity check)
+	with zipfile.ZipFile(str(output_zip)) as zf:
+		names = zf.namelist()
+	assert "imsmanifest.xml" in names, f"imsmanifest.xml missing from ZIP. Contents: {names}"

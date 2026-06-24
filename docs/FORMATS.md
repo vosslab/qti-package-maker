@@ -10,6 +10,8 @@
 ## Output formats
 - `canvas_qti_v1_2`: QTI v1.2 ZIP for Canvas/ADAPT.
 - `blackboard_qti_v2_1`: QTI v2.1 ZIP for Blackboard.
+- `bb_ultra_qti_v2_1`: QTI v2.1 ZIP for Blackboard Ultra; write only; strict HTML sanitization.
+- `blackboard_export_zip`: Blackboard pool export ZIP; read + write; carries Matching into Ultra.
 - `bbq_text_upload`: Blackboard text upload `.txt`.
 - `human_readable`: plain-text review format.
 - `html_selftest`: self-contained `.html` quiz.

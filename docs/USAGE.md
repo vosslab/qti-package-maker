@@ -26,6 +26,8 @@ Common flags:
 - `-a`, `--all`: Enable all output formats.
 - `-1`, `--qti12`: Canvas QTI v1.2 output.
 - `-2`, `--qti21`: Blackboard QTI v2.1 output.
+- `-u`, `--ultra`: Blackboard Ultra QTI v2.1 output.
+- `-B`, `--bbexport`: Blackboard pool export ZIP output.
 - `--allow-mixed`: Allow mixed question types in one run.
 
 ## Examples

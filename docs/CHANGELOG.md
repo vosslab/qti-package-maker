@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-06-23
+
+### Additions and New Features
+- Add new read+write engine `qti_package_maker/engines/blackboard_export_zip/` that emits and parses Blackboard's proprietary pool-export package format (a QTI-1.2-derived `questestinterop` envelope with BB extensions; Blackboard's UI calls it "Pool", never "QTI 1.2"). Engine files: `item_xml_helpers.py` (per-item XML builders for all supported types), `assessment_meta.py` (bb: namespace manifest + questestinterop/assessment/section wrapper + res00001/res00003-07 sidecars + `.bb-package-info`/`.bb-log-info`), `write_item.py` (MC/MA/MATCH/FIB/NUM/MULTI_FIB dispatch), `engine_class.py` (EngineClass with `save_package` and `read_items_from_file`), `read_package.py` (reader). Engine auto-registers (`can_read` and `can_write`). Supported item types: MC, MA, MATCH, FIB, NUM, MULTI_FIB; ORDER skipped with a named warning; media/images are out of scope. CLI flag `-B`/`--bbexport` added to `tools/bbq_converter.py`. M0 forgeability audit added at `docs/active_plans/audits/blackboard_export_zip_forgeability.md`.
+
+### Fixes and Maintenance
+- Fix MC/MA scoring-link bug in `qti_package_maker/engines/blackboard_export_zip/item_xml_helpers.py`: `build_MC` and `build_MA` set the `response_lid` ident to a deterministic UUID (`make_ident(... "response_lid" ...)`), but `_build_choice_correct_respcondition` emits `<varequal respident="response">`. The literal "response" could not resolve to the UUID ident, breaking the correct-answer link on a live Blackboard import. Both now set the `response_lid` ident to the literal `"response"` (matching NUM/FIB/MULTI_FIB and the real samples, e.g. `BB_Export_ZIP/Pool_ExportFile_E4.202620_Ch03b_General_MC_Full/res00002.dat`); per-choice `label_idents` stay deterministic `make_ident(...)` values. Round-trip stays green (29 passed, 2 skipped).
+- Remove dead code and a dangling re-export in the `blackboard_export_zip` engine: delete the unused `_find_all_flows_by_class` helper from `read_package.py` (zero call sites; only `_find_flow_by_class` is used), and drop the unreferenced `make_ident = item_xml_helpers.make_ident` re-export plus its now-unused `item_xml_helpers` import from `assessment_meta.py`.
+- Move the `read_package` import in `engine_class.py` `read_items_from_file` from a local function-body import to the module-level import block and delete the obsolete build-order comment (`read_package.py` exists and imports no engine module, so there is no import cycle).
+- Replace planning-scaffolding tags (WP-*/M0/F1/F2) left in permanent comments and docstrings across the engine files and `tests/bb_export_fixtures.py` with durable wording (write dispatcher, write path, forgeability audit, format audit).
+
+### Removals and Deprecations
+- Slim the `blackboard_export_zip` test suite to self-contained, fast pytests because `BB_Export_ZIP/` is not committed and is being deleted, so no test or tool may depend on it. Removed the sample-dependent `tests/integration/test_blackboard_export_zip_reproduction.py` (14 fixture-byte assertions, M0 scaffolding), `tests/integration/test_blackboard_export_zip_scaffolding.py` (9 internal-structure asserts, redundant with the round-trip), `tests/bb_export_fixtures.py` (sample-path helper), and the throwaway `devel/bb_rezip_probe.py` probe (also cleared a bandit B314 finding for its `xml.etree` use). Trimmed `tests/integration/test_blackboard_export_zip_read.py` to the one self-contained unknown-question-type check and `tests/integration/test_blackboard_export_zip_output.py` to the sig-omit and ORDER-skip checks.
+- Replace the sample-sweeping round-trip with a self-contained in-code round-trip in `tests/integration/test_blackboard_export_zip_roundtrip.py`: it builds one item of every supported type in memory, writes through the engine to a ZIP in `tmp_path`, reads it back, and asserts behavior-level equality (plus ORDER drop). Runs in ~0.1s and depends on no external data; the prior version walked ~14 `BB_Export_ZIP/` pools and took ~7.5s, over the pytest budget.
+
+### Decisions and Failures
+- `.bb-package-sig` is server-computed and NOT reproducible from package contents. Empirical probing (MD5 of manifest, pool `.dat`, and concatenated `.dat` files) all fail to match the real signature. The engine writes no `.bb-package-sig`; the working hypothesis is that a live Blackboard import does not hard-validate it. A live Blackboard/Ultra import remains an optional out-of-band acceptance step that gates nothing in CI.
+- NUM and MULTI_FIB encodings confirmed from real samples: NUM uses `response_num`/`Decimal` with `vargte`/`varlte`/`varequal` sibling conditions and no `<and>` wrapper; MULTI_FIB (Fill in the Blank Plus) uses per-blank `respident` keys and an `<and>` of `<or>` conditions.
+- MATCH per-prompt branches and NUM correct branch carry no `<setvar>` in real Blackboard exports (conditions matched, not scored additively). Engine follows the real-export shape.
+- Known limitations: (1) `item_crc16` drifts across re-import for MC/MA items whose choices carry a strippable prefix. Root cause is core `item_types.MC.__init__` computing `secondary_crc16` from choices before `remove_prefix_from_list` strips them; behavior round-trip still holds via `question_text`. Flagged for a follow-up core fix. (2) The writer nests `RIGHT_MATCH_BLOCK` inside `RESPONSE_BLOCK` while real Blackboard exports place it as a sibling; the reader handles both layouts, so round-trip is safe, but real-export fidelity would prefer the sibling placement. Flagged for a follow-up writer tweak.
+
+### Developer Tests and Notes
+- The in-code round-trip holds behavior-level equality across all six supported item types and confirms ORDER is dropped, in a single ~0.1s test. Engine pytests now total four small tests (round-trip, unknown-type read, sig-omit, ORDER-skip). Full suite: 2169 passed, 0 skipped in ~5.4s.
+
 ## 2026-06-09
 
 ### Fixes and Maintenance

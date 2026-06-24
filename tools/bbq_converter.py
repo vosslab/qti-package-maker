@@ -121,6 +121,7 @@ def main():
 		'bbq_text_upload':        ('-b', 'bbq',   	"Set output format to (B)lack(B)oard (Q)uestions"),
 		'html_selftest':          ('-s', 'selftest',	"Set output format to HTML self-test"),
 		'moodle_aiken':           ('-A', 'aiken',	   "Set output format to MOODLE aiken"),
+		'blackboard_export_zip':  ('-B', 'bbexport',	"Set output format to Blackboard pool export ZIP"),
 	}
 
 	args = parse_args(format_shortcuts)

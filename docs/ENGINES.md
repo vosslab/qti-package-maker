@@ -53,28 +53,59 @@
 - **File output:** A self-contained HTML file
 - **Use case:** Self-assessment quizzes without LMS integration
 
+### Blackboard pool export engine
+- **Engine name:** `blackboard_export_zip`
+- **Format type:** Blackboard pool export ZIP (QTI-1.2-derived envelope with BB extensions)
+- **Compatible LMS:** Blackboard Learn (Original)
+- **File output:** ZIP file in the Blackboard pool export format
+- **CLI flag:** `-B` or `--bbexport`
+- **Supported item types:** MC, MA, MATCH, FIB, NUM, MULTI_FIB
+- **Unsupported item types:** ORDER (not supported by this format), media attachments
+- **Verification:** Generated packages are verified locally by opening the ZIP and confirming
+  the presence of `imsmanifest.xml` and pool data files. Live Blackboard import relies on the
+  working hypothesis that the importer does not hard-validate `.bb-package-sig`; the engine
+  omits this signature file because it is computed server-side on genuine Blackboard exports.
+- **Key differences from QTI v2.1 engines:**
+  - Uses QTI 1.2 XML structure wrapped in Blackboard-specific extensions
+  - Produces the seven-file `.dat` sidecar layout expected by Blackboard pool import
+  - No `.bb-package-sig` file is written
+
+#### Known limitations
+
+- Re-importing MC/MA items whose choices carry a strippable label prefix can yield a new
+  internal content hash, so exact-ID matching may drift. The root cause is that the item
+  content hash is computed before the choice-prefix stripper runs. Question and answer
+  content still round-trips correctly; an internal hashing fix is tracked separately.
+- The writer nests `RIGHT_MATCH_BLOCK` inside `RESPONSE_BLOCK`, while real Blackboard exports
+  place it as a sibling element. The reader handles both layouts, so round-trip is safe, but
+  real-export fidelity would prefer the sibling placement. Flagged for a follow-up writer tweak.
+- A live Blackboard/Ultra import is an optional out-of-band acceptance step. The engine omits
+  `.bb-package-sig` because it is server-computed and not reproducible from package contents;
+  CI does not perform a live import, so import success is unverified.
+
 ## Engine capabilities
 
 ### Read and write
 
-| Engine name           | Can read   | Can write   |
-|-----------------------|------------|-------------|
-| bb_ultra_qti_v2_1    | X          | yes         |
-| bbq_text_upload       | yes        | yes         |
-| blackboard_qti_v2_1   | X          | yes         |
-| canvas_qti_v1_2       | X          | yes         |
-| html_selftest         | X          | yes         |
-| human_readable        | X          | yes         |
-| text2qti              | yes        | yes         |
+| Engine name              | Can read   | Can write   |
+|--------------------------|------------|-------------|
+| bb_ultra_qti_v2_1        | X          | yes         |
+| bbq_text_upload          | yes        | yes         |
+| blackboard_export_zip    | yes        | yes         |
+| blackboard_qti_v2_1      | X          | yes         |
+| canvas_qti_v1_2          | X          | yes         |
+| html_selftest            | X          | yes         |
+| human_readable           | X          | yes         |
+| text2qti                 | yes        | yes         |
 
 ### Assessment item types
 
-| Item type   | bb ultra qti v2.1   | bbq text upload   | blackboard qti v2.1   | canvas qti v1.2   | html selftest   | human readable   | text2qti   |
-|-------------|---------------------|-----------------|-----------------------|-------------------|-----------------|------------------|------------|
-| FIB         | yes                 | yes               | yes                   | X                 | yes            | yes              | yes        |
-| MA          | yes                 | yes               | yes                   | yes               | yes            | yes              | yes        |
-| MATCH       | yes                 | yes               | yes                   | yes               | yes            | yes              | no         |
-| MC          | yes                 | yes               | yes                   | yes               | yes            | yes              | yes        |
-| MULTI_FIB   | yes                 | yes               | yes                   | yes               | yes            | yes              | no         |
-| NUM         | yes                 | yes               | yes                   | yes               | yes            | yes              | yes        |
-| ORDER       | X                   | yes               | yes                   | X                 | yes            | yes              | no         |
+| Item type   | bb ultra qti v2.1   | bbq text upload   | blackboard export zip   | blackboard qti v2.1   | canvas qti v1.2   | html selftest   | human readable   | text2qti   |
+|-------------|---------------------|-------------------|-------------------------|-----------------------|-------------------|-----------------|------------------|------------|
+| FIB         | yes                 | yes               | yes                     | yes                   | X                 | yes            | yes              | yes        |
+| MA          | yes                 | yes               | yes                     | yes                   | yes               | yes            | yes              | yes        |
+| MATCH       | yes                 | yes               | yes                     | yes                   | yes               | yes            | yes              | no         |
+| MC          | yes                 | yes               | yes                     | yes                   | yes               | yes            | yes              | yes        |
+| MULTI_FIB   | yes                 | yes               | yes                     | yes                   | yes               | yes            | yes              | no         |
+| NUM         | yes                 | yes               | yes                     | yes                   | yes               | yes            | yes              | yes        |
+| ORDER       | X                   | yes               | X                       | yes                   | X                 | yes            | yes              | no         |
