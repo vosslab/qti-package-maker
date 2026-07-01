@@ -8,11 +8,9 @@ ULTRA/
 report_*.txt
 
 # === UNIVERSAL ===
+output*/
 _temp*.?*
 OTHER_REPOS/
-# Local reference samples and smoke-test outputs (never committed)
-BB_Export_ZIP/
-output_smoke/
 # === PYTHON ===
 build/
 dist/

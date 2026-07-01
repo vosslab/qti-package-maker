@@ -31,6 +31,17 @@ the appropriate repo root, package, or `templates/<type>/` path.
 
 ## Template devel scripts
 
+Some developer tools ship into consumer repos via propagation and appear in `devel/` when present.
+
+`templates/shared/devel/` holds tools that propagate to non-PyPI python, rust, swift, and other
+consumer repo types (repos with `pyproject.toml` are excluded by the `lacks_file` condition).
+When present in a consumer repo, `devel/make_release.py` prepares a GitHub source
+release: CalVer freshness check, free-tag check, committed-LICENSE verification, zip and tgz
+archive build with byte-level LICENSE spot-check, LLM-prompt generation for the release
+description, optional `docs/RELEASE_HISTORY.md` and `docs/NEWS.md` updates, and printed
+`git tag` + `gh release create` commands. Use `--dry-run` to preview or `--write` to update
+doc files. See [docs/REPO_STYLE.md](../docs/REPO_STYLE.md) versioning section for the full flow.
+
 Some developer tools are type-specific and live under `templates/<type>/devel/`
 so they propagate only to matching consumer repos. Examples include Python
 release publishing helpers and TypeScript setup/rendering helpers.

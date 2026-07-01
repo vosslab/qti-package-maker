@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # dist_clean.sh - wipe build artifacts, tool caches, and dependency installs.
 #
+# Front door: run this directly as ./dist_clean.sh. It is the interface for
+# everyone, no npm knowledge required. In TypeScript repos the npm run clean
+# alias is an optional mirror that points right back at this script.
+#
 # Universal across repo types (python, typescript, rust). Patterns that do
 # not exist in a given repo are silently skipped via `nullglob` + an
 # existence check, so no false-positive output.

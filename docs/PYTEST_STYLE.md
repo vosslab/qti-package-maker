@@ -23,6 +23,7 @@ Run this checklist before writing a new pytest or approving one in review. Any u
 - [ ] One or two assertions per function (not five on a simple function).
 - [ ] Test body free of complex logic; complex logic moved to a helper and tested there.
 - [ ] Targets code that will remain in the repo (not `_temp.*` or ad-hoc debugging scripts).
+- [ ] Uses inline, self-contained inputs rather than an external on-disk data file that can move or be deleted.
 
 See [Good tests](#good-tests) for examples of stable assertion shapes and [Brittle tests](#brittle-tests) for the rationale behind each red flag above.
 
@@ -100,6 +101,21 @@ Avoid tests that assert on dates, collection sizes, lists of required keys, hard
 tunable constants, or dataclass storage. These break when unrelated code changes and provide no
 real value. When in doubt, delete. A missing pytest is cheaper than a fragile one. This is the
 design-first philosophy applied to tests: see [REPO_STYLE.md](REPO_STYLE.md#core-philosophies).
+
+### Inline inputs, not external data files
+
+Prefer inline, self-contained test inputs. A test that reads an external on-disk data file is
+fragile by design: the file is a dependency that can move, be renamed, or be deleted, and when it
+vanishes the test fails for reasons unrelated to the code under test. If the missing file is loaded
+at module import time, the failure takes the whole test module down with it, not just the one case.
+Embed small real inputs directly in the test (a literal string, a short list, a few-line sample) so
+the case cannot drift out of existence.
+
+This is about external **data files**, not pytest fixtures. A `@pytest.fixture` that builds an
+object in memory, or `tmp_path` files the test writes itself during the run, are fine and preferred
+for setup. The hazard is a checked-in sample file the test reads at runtime: inline the content
+instead, or if the data is genuinely large, treat the round trip as an end-to-end check under
+`tests/e2e/` per [E2E_TESTS.md](E2E_TESTS.md).
 
 ## Basic commands
 
