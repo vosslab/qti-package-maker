@@ -367,19 +367,19 @@ def make_button(button_text: str, js_function: str, button_class: str = None) ->
 	return button_content
 
 #============================================
-def add_check_answer_button(crc16_text: str, button_text: str="Check Answer"):
+def add_check_answer_button(crc16_text: str, button_text: str="Check Answer") -> str:
 	# Add a button for submitting the answer
 	js_function = f"checkAnswer_{crc16_text}"
 	return make_button(button_text, js_function)
 
 #============================================
-def add_clear_selection_button(crc16_text: str, button_text: str="Clear Selection"):
+def add_clear_selection_button(crc16_text: str, button_text: str="Clear Selection") -> str:
 	# "Clear Selection" ghost button (qti-btn-reset = secondary/ghost style)
 	js_function = f"clearSelection_{crc16_text}"
 	return make_button(button_text, js_function, "md-button md-button--secondary custom-button qti-btn-reset")
 
 #============================================
-def add_reset_game_button(crc16_text: str, button_text: str="Reset Game"):
+def add_reset_game_button(crc16_text: str, button_text: str="Reset Game") -> str:
 	# "Reset Game" button
 	js_function = f"resetGame_{crc16_text}"
 	return make_button(button_text, js_function, "md-button md-button--secondary custom-button qti-btn qti-btn-reset")

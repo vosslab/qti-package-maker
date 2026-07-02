@@ -45,7 +45,7 @@ def generate_color_wheel(num_colors: int, backend: str = "cam16", **kwargs) -> l
 	raise ValueError(f"Unknown backend: {backend}")
 
 
-def _build_named_wheel(mode, names, num_colors):
+def _build_named_wheel(mode: str, names: list, num_colors: int) -> dict:
 	colors = generate_color_wheel(num_colors, backend="cam16", mode=mode)
 	if len(colors) != num_colors:
 		raise ValueError(f"Expected {num_colors} colors for mode {mode}, got {len(colors)}")
@@ -69,13 +69,13 @@ default_color_wheel_calc = _legacy_color_wheel.default_color_wheel_calc
 make_color_wheel = _legacy_color_wheel.make_color_wheel
 
 
-def default_color_wheel(num_colors, color_wheel=None):
+def default_color_wheel(num_colors: int, color_wheel: dict | None = None) -> list:
 	if color_wheel is None:
 		color_wheel = dark_color_wheel
 	return _legacy_color_wheel.default_color_wheel(num_colors, color_wheel=color_wheel)
 
 
-def light_and_dark_color_wheel(num_colors, dark_color_wheel=None, light_color_wheel=None):
+def light_and_dark_color_wheel(num_colors: int, dark_color_wheel: dict | None = None, light_color_wheel: dict | None = None) -> tuple:
 	if dark_color_wheel is None:
 		dark_color_wheel = _DEFAULT_DARK_WHEEL
 	if light_color_wheel is None:
@@ -87,11 +87,11 @@ def light_and_dark_color_wheel(num_colors, dark_color_wheel=None, light_color_wh
 	)
 
 
-def write_html_color_table(filename, num_colors=None):
+def write_html_color_table(filename: str, num_colors: int | None = None) -> None:
 	return _legacy_color_wheel.write_html_color_table(filename, num_colors=num_colors)
 
 
-def main():
+def main() -> None:
 	filename = "color_table.html"
 	num_colors = None
 

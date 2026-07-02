@@ -8,9 +8,10 @@ import lxml.etree
 # QTI Package Maker
 #from qti_package_maker.common import string_functions
 from qti_package_maker.engines.canvas_qti_v1_2 import item_xml_helpers
+from qti_package_maker.assessment_items import item_types
 
 #==============================================================
-def MC(item_cls):
+def MC(item_cls: item_types.MC) -> lxml.etree.Element:
 	#crc16_text: str, question_text: str, choices_list: list, answer_text: str):
 	"""Render an MC item as Canvas QTI 1.2 XML."""
 	# Create the root <item> element with a unique identifier and title
@@ -37,7 +38,7 @@ def MC(item_cls):
 	return assessment_item_etree
 
 #==============================================================
-def MA(item_cls):
+def MA(item_cls: item_types.MA) -> lxml.etree.Element:
 	#item_number: int, crc16_text: str, question_text: str, choices_list: list, answers_list: list):
 	"""Render an MA item as Canvas QTI 1.2 XML."""
 	# Create the root <item> element with a unique identifier and title
@@ -64,7 +65,7 @@ def MA(item_cls):
 	return assessment_item_etree
 
 #==============================================================
-def MATCH(item_cls):
+def MATCH(item_cls: item_types.MATCH) -> lxml.etree.Element:
 	#item_number: int, crc16_text: str, question_text: str, prompts_list: list, choices_list: list):
 	"""Render a MATCH item as Canvas QTI 1.2 XML."""
 	# Create the root <item> element with a unique identifier and title
@@ -92,7 +93,7 @@ def MATCH(item_cls):
 	return assessment_item_etree
 
 #==============================================================
-def NUM(item_cls):
+def NUM(item_cls: item_types.NUM) -> lxml.etree.Element:
 	#item_number: int, crc16_text: str, question_text: str, answer: float, tolerance: float, tol_message=True):
 	"""Render a NUM item as Canvas QTI 1.2 XML."""
 	assessment_item_etree = lxml.etree.Element("item",
@@ -107,7 +108,7 @@ def NUM(item_cls):
 	return assessment_item_etree
 
 #==============================================================
-def FIB(item_cls):
+def FIB(item_cls: item_types.FIB) -> lxml.etree.Element:
 	#item_number: int, crc16_text: str, question_text: str, answers_list: list):
 	"""Render a FIB item as Canvas QTI 1.2 XML."""
 	assessment_item_etree = lxml.etree.Element("item",
@@ -121,7 +122,7 @@ def FIB(item_cls):
 	return assessment_item_etree
 
 #==============================================================
-def MULTI_FIB(item_cls):
+def MULTI_FIB(item_cls: item_types.MULTI_FIB) -> lxml.etree.Element:
 	#item_number: int, crc16_text: str, question_text: str, answer_map: dict) -> str:
 	"""Render a MULTI_FIB item as Canvas QTI 1.2 XML."""
 	assessment_item_etree = lxml.etree.Element("item",
@@ -137,7 +138,7 @@ def MULTI_FIB(item_cls):
 	return assessment_item_etree
 
 #==============================================================
-def ORDER(item_cls):
+def ORDER(item_cls: item_types.ORDER) -> None:
 	#item_number: int, crc16_text: str, question_text: str, ordered_answers_list: list):
 	"""Canvas QTI 1.2 writer does not implement ORDER items."""
 	raise NotImplementedError

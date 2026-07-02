@@ -12,12 +12,12 @@ from qti_package_maker.common.color_theory.hue_layout import (
 	_generate_hues_offset,
 	_generate_hues_optimized,
 )
-from qti_package_maker.common.color_theory.wheel_specs import DEFAULT_WHEEL_SPECS
+from qti_package_maker.common.color_theory.wheel_specs import DEFAULT_WHEEL_SPECS, WheelSpec
 
 _MAX_M_CACHE = {}
 
 
-def _resolve_anchor_hex(anchor_hex):
+def _resolve_anchor_hex(anchor_hex: str | None) -> str:
 	if anchor_hex:
 		if anchor_hex == "legacy":
 			return legacy_color_wheel.dark_color_wheel["red"]
@@ -25,7 +25,7 @@ def _resolve_anchor_hex(anchor_hex):
 	return "ff0000"
 
 
-def _rotate_colors_to_target(colors, target_hex):
+def _rotate_colors_to_target(colors: list, target_hex: str | None) -> list:
 	if not colors:
 		return colors
 	target_hex = _resolve_anchor_hex(target_hex)
@@ -38,7 +38,7 @@ def _rotate_colors_to_target(colors, target_hex):
 	return colors[red_index:] + colors[:red_index]
 
 
-def _print_legacy_red_comparison(dark_hex, light_hex, extra_light_hex, labels=None):
+def _print_legacy_red_comparison(dark_hex: str, light_hex: str, extra_light_hex: str, labels: tuple | None = None) -> None:
 	legacy_dark = legacy_color_wheel.dark_color_wheel["red"]
 	legacy_light = legacy_color_wheel.light_color_wheel["red"]
 	legacy_extra_light = legacy_color_wheel.extra_light_color_wheel["red"]
@@ -51,7 +51,7 @@ def _print_legacy_red_comparison(dark_hex, light_hex, extra_light_hex, labels=No
 	print(f"- {labels[2]}: {legacy_extra_light} -> {extra_light_hex} (diff {_rgb_distance(legacy_extra_light, extra_light_hex):.1f})")
 
 
-def _redness_score(hex_value):
+def _redness_score(hex_value: str) -> tuple:
 	r, g, b = _hex_to_rgb(hex_value)
 	gb = g + b
 	gb_safe = max(gb, 1.0)
@@ -62,7 +62,7 @@ def _redness_score(hex_value):
 	return (gb_balance + gb_over_2r + penalty, gb_balance, gb_over_2r, -r)
 
 
-def _quantile(values, q):
+def _quantile(values: list, q: float) -> float:
 	if not values:
 		return 0.0
 	sorted_vals = sorted(values)
@@ -70,7 +70,7 @@ def _quantile(values, q):
 	return sorted_vals[index]
 
 
-def _max_m_for_hue(j, h, steps=12, m_hi=100.0, cache_key=None):
+def _max_m_for_hue(j: float, h: float, steps: int = 12, m_hi: float = 100.0, cache_key: tuple | None = None) -> float:
 	if cache_key in _MAX_M_CACHE:
 		return _MAX_M_CACHE[cache_key]
 
@@ -91,7 +91,7 @@ def _max_m_for_hue(j, h, steps=12, m_hi=100.0, cache_key=None):
 	return result
 
 
-def _m_for_target_ucs_r(j, h, target_ucs_r, max_m, steps=12):
+def _m_for_target_ucs_r(j: float, h: float, target_ucs_r: float, max_m: float, steps: int = 12) -> float:
 	lo = 0.0
 	hi = max_m
 	for _ in range(steps):
@@ -104,7 +104,7 @@ def _m_for_target_ucs_r(j, h, target_ucs_r, max_m, steps=12):
 	return hi
 
 
-def _shared_m_and_max_ms(hues, spec, mode):
+def _shared_m_and_max_ms(hues: list, spec: WheelSpec, mode: str) -> tuple:
 	max_ms = []
 	for hue in hues:
 		cache_key = (mode, round(spec.target_j, 2), round(hue, 1))
@@ -118,7 +118,7 @@ def _shared_m_and_max_ms(hues, spec, mode):
 	return shared_m, max_ms
 
 
-def _colors_for_hues(hues, spec, mode, apply_variation=True):
+def _colors_for_hues(hues: list, spec: WheelSpec, mode: str, apply_variation: bool = True) -> list:
 	shared_m, max_ms = _shared_m_and_max_ms(hues, spec, mode)
 
 	colors = []
@@ -151,7 +151,7 @@ def _colors_for_hues(hues, spec, mode, apply_variation=True):
 	return colors
 
 
-def _color_for_hue(hue, spec, mode, m_override=None):
+def _color_for_hue(hue: float, spec: WheelSpec, mode: str, m_override: float | None = None) -> str:
 	cache_key = (mode, round(spec.target_j, 2), round(hue, 1))
 	max_m = _max_m_for_hue(spec.target_j, hue, cache_key=cache_key)
 	if m_override is None:
@@ -166,17 +166,17 @@ def _color_for_hue(hue, spec, mode, m_override=None):
 
 
 def generate_color_wheel(
-	num_colors,
-	mode=None,
-	hue_layout="offset",
-	anchor_hue=0.0,
-	samples=24,
-	wheel_specs=None,
-	anchor_hex=None,
-	hues=None,
-	apply_variation=True,
-	rotate_to_anchor=True,
-):
+	num_colors: int,
+	mode: str | None = None,
+	hue_layout: str = "offset",
+	anchor_hue: float = 0.0,
+	samples: int = 24,
+	wheel_specs: dict | None = None,
+	anchor_hex: str | None = None,
+	hues: list | None = None,
+	apply_variation: bool = True,
+	rotate_to_anchor: bool = True,
+) -> list:
 	if num_colors <= 0:
 		raise ValueError("num_colors must be positive")
 
@@ -191,7 +191,7 @@ def generate_color_wheel(
 		if hue_layout == "anchor":
 			hues = _generate_hues_anchor(num_colors, anchor_hue)
 		elif hue_layout == "optimize":
-			def _score(hues_list):
+			def _score(hues_list: list) -> float:
 				values = [
 					_max_m_for_hue(spec.target_j, hue, cache_key=(mode, round(spec.target_j, 2), round(hue, 1)))
 					for hue in hues_list

@@ -1,23 +1,110 @@
 # Standard Library
+import os
 import re
+import shutil
 import inspect
+import tempfile
+import dataclasses
+import collections.abc
 from collections import defaultdict
 from qti_package_maker.common.tabulate_compat import tabulate
 
 # Pip3 Library
 
 # QTI Package Maker
+from qti_package_maker.common import media_assets
 from qti_package_maker.common import string_functions
 from qti_package_maker.assessment_items import item_types
+
+
+#============================================
+@dataclasses.dataclass
+class CollectedAssets:
+	"""
+	Derived result of ItemBank.collect_assets(); never durable state.
+
+	assets is the package-ready set of unique MediaAsset records (one per src,
+	output_name assigned across the whole bank). item_dependencies maps each
+	referencing item's crc16 to the MediaAsset records it references, in document
+	order and deduped per item. Both share the same MediaAsset objects (keyed by
+	src), so a writer can rewrite an item's srcs from item_dependencies while
+	packaging from assets.
+	"""
+	assets: list
+	item_dependencies: dict
+
+
+#============================================
+def _iter_field_strings(value: object) -> collections.abc.Iterator[str]:
+	"""
+	Yield every string leaf inside an item supporting-field value.
+
+	Item fields hold plain strings, lists of strings (choices, prompts, answers),
+	or dicts whose values are strings (answer maps). Non-string scalars (int,
+	float, bool) carry no HTML and are skipped.
+
+	Args:
+		value: a supporting-field value from an item's get_tuple().
+
+	Yields:
+		Each string leaf found within the value.
+	"""
+	# a bare string is a single HTML-bearing leaf
+	if isinstance(value, str):
+		yield value
+	# lists and tuples hold choices / prompts / answers; recurse into each element
+	elif isinstance(value, (list, tuple)):
+		for element in value:
+			yield from _iter_field_strings(element)
+	# answer maps carry their HTML in the dict values, not the keys
+	elif isinstance(value, dict):
+		for element in value.values():
+			yield from _iter_field_strings(element)
+
+
+#============================================
+def _iter_item_html_fields(item_cls: item_types.BaseItem) -> collections.abc.Iterator[str]:
+	"""
+	Yield every HTML-bearing string field of an assessment item.
+
+	The question text is always HTML-bearing; the remaining HTML lives in the
+	item's supporting fields (choices, prompts, answers, answer-map values,
+	ordered answers), which get_supporting_field_names()/get_tuple() enumerate
+	authoritatively per item type.
+
+	Args:
+		item_cls: the assessment item to scan.
+
+	Yields:
+		Each HTML-bearing string field of the item.
+	"""
+	# the question text is HTML-bearing on every item type
+	yield item_cls.question_text
+	# supporting fields carry the rest of the item's HTML content
+	for field_value in item_cls.get_tuple():
+		yield from _iter_field_strings(field_value)
+
 
 class ItemBank:
 	"""
 	A centralized storage system for assessment items using a dictionary keyed by CRC codes.
 	"""
-	def __init__(self, allow_mixed: bool = False):
+	def __init__(self, allow_mixed: bool = False, media_base_dir: str | None = None) -> None:
 		"""Initialize an empty item bank."""
 		# Boolean if mixed item types are allow in the same item bank
 		self.allow_mixed = allow_mixed
+		# Directory that local <img src> references resolve against. A ZIP reader
+		# points this at its extraction dir; add_image() spills bytes here. This is
+		# the only durable media state the bank retains; assets are otherwise
+		# derived fresh by collect_assets() on every call.
+		self.media_base_dir = media_base_dir
+		# True only when this bank itself created media_base_dir: either
+		# add_image()'s lazy tempfile.mkdtemp(), or a reader that called
+		# set_media_base_dir(path, owned=True) after creating its own extraction
+		# dir. Stays False for a constructor-supplied or directly-assigned
+		# media_base_dir, so cleanup() never deletes a directory this bank does
+		# not own.
+		self._owns_media_base_dir = False
 		# Dictionary to store items keyed by item_crc
 		self.items_dict_key_list = []
 		self.items_dict = {}
@@ -118,7 +205,7 @@ class ItemBank:
 		self.print_histogram_type("MA", "Multiple Answer (MA)")
 
 	#============================================
-	def print_histogram_type(self, item_type: str, title: str):
+	def print_histogram_type(self, item_type: str, title: str) -> None:
 		"""
 		Prints a formatted histogram for the given item type using tabulate.
 		Args:
@@ -219,13 +306,175 @@ class ItemBank:
 		return
 
 	#============================================
+	def add_image(self, src: str, data_bytes: bytes) -> str:
+		"""
+		Register in-memory image bytes for an item's <img src> reference.
+
+		Items reference images by their author-written src (e.g. "images/foo.png").
+		When the bytes come from memory rather than an on-disk file, they are
+		spilled to a temp file under media_base_dir so that collect_assets() picks
+		them up through the same uniform resolve path as file-authored images. A
+		media_base_dir is created lazily on first use via tempfile.mkdtemp(); the
+		bank marks itself as the owner of that lazily-created directory (see
+		cleanup()) so only a directory this method created is ever removed.
+
+		Args:
+			src: the in-content src the item references (relative path).
+			data_bytes: the raw image bytes to spill to disk.
+
+		Returns:
+			The absolute path the bytes were written to.
+
+		Raises:
+			ValueError: the src escapes media_base_dir.
+		"""
+		# a base directory is required to spill bytes into a uniform file path
+		if self.media_base_dir is None:
+			self.media_base_dir = tempfile.mkdtemp(prefix="qti_media_")
+			# only the lazily-created directory is owned; cleanup() may remove it
+			self._owns_media_base_dir = True
+		dest_path = media_assets.resolve_local_path(self.media_base_dir, src)
+		# create any intermediate directories the src path implies
+		os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+		# write the bytes so the uniform resolve path treats this like a real file
+		with open(dest_path, "wb") as file_pointer:
+			file_pointer.write(data_bytes)
+		return dest_path
+
+	#============================================
+	def set_media_base_dir(self, media_base_dir: str, *, owned: bool = False) -> None:
+		"""
+		Point this bank's local <img src> resolution at media_base_dir.
+
+		This is the ownership-aware alternative to assigning the media_base_dir
+		attribute directly. A reader that creates its own extraction directory
+		(for example unzipping a package into a fresh tempfile.mkdtemp()
+		directory) should call this with owned=True, so cleanup() removes that
+		directory once the caller is done with the returned bank. A reader that
+		points at a directory it does not control (for example the directory
+		already holding an on-disk source file) should leave owned=False (the
+		default), matching the caller-owned rule documented on cleanup().
+		Direct attribute assignment (`bank.media_base_dir = path`) remains
+		supported and stays caller-owned, for callers that only need to point at
+		an existing, externally-managed directory.
+
+		Args:
+			media_base_dir: the directory local <img src> references resolve against.
+			owned: True when this bank should delete media_base_dir on cleanup().
+
+		Raises:
+			ValueError: this bank already owns a different media_base_dir; replacing
+				it here would leak the previously owned directory without ever
+				removing it. Call cleanup() first.
+		"""
+		if self._owns_media_base_dir and self.media_base_dir != media_base_dir:
+			raise ValueError(
+				"Error: this bank already owns media_base_dir "
+				f"'{self.media_base_dir}'; call cleanup() before replacing it "
+				f"with '{media_base_dir}'."
+			)
+		self.media_base_dir = media_base_dir
+		self._owns_media_base_dir = owned
+
+	#============================================
+	def cleanup(self) -> None:
+		"""
+		Remove media_base_dir, but only when this bank created it itself.
+
+		Ownership rule: a media_base_dir supplied through the constructor, or
+		assigned directly as an attribute (for example a reader pointing this
+		bank at an existing, externally-managed directory), is caller-owned and
+		is never deleted here. Only a directory this bank created itself is
+		removed: add_image()'s lazily-created tempfile.mkdtemp() directory, or a
+		directory a reader passed to set_media_base_dir(path, owned=True) after
+		creating its own extraction dir. Idempotent: safe to call more than
+		once, and a no-op when the bank never created its own directory.
+		"""
+		if not self._owns_media_base_dir:
+			return
+		shutil.rmtree(self.media_base_dir)
+		self.media_base_dir = None
+		self._owns_media_base_dir = False
+
+	#============================================
+	def collect_assets(self) -> CollectedAssets:
+		"""
+		Scan every item's HTML and resolve each <img src> into package-ready records.
+
+		Purely derived: the whole set is recomputed on every call with no durable
+		per-asset registry. Each item's HTML-bearing fields are scanned for image
+		srcs, each src is resolved against media_base_dir exactly once, and
+		collision-safe output names are assigned across the whole collected set.
+
+		Returns:
+			A CollectedAssets carrying the unique package-ready assets and the
+			per-item dependency map (item_crc16 -> referenced MediaAsset records).
+
+		Raises:
+			ValueError: a local src with no media_base_dir, traversal, or bad mime.
+			FileNotFoundError: a referenced local image file does not exist.
+		"""
+		# one resolved MediaAsset per src; identity is the src, so it is reused
+		asset_by_src = {}
+		# per-item dependency records, keyed by the referencing item's crc16
+		dependencies_by_crc = {}
+		# the full list of resolved instances feeds assign_output_names once
+		all_resolved = []
+		for item_crc16 in self.items_dict_key_list:
+			item_cls = self.items_dict[item_crc16]
+			item_assets = []
+			seen_srcs = set()
+			for html_field in _iter_item_html_fields(item_cls):
+				for src in media_assets.scan_html_for_assets(html_field):
+					# resolve each distinct src once; reuse the record thereafter
+					if src not in asset_by_src:
+						asset_by_src[src] = media_assets.resolve_asset(src, self.media_base_dir)
+					asset = asset_by_src[src]
+					all_resolved.append(asset)
+					# record the per-item dependency in document order, deduped per item
+					if src not in seen_srcs:
+						seen_srcs.add(src)
+						item_assets.append(asset)
+			if item_assets:
+				dependencies_by_crc[item_crc16] = item_assets
+		# assign collision-safe output names once across the whole collected set
+		media_assets.assign_output_names(all_resolved)
+		# package-ready records: unique by src in deterministic order
+		unique_assets = [asset_by_src[src] for src in sorted(asset_by_src)]
+		collected = CollectedAssets(assets=unique_assets, item_dependencies=dependencies_by_crc)
+		return collected
+
+	#============================================
 	def merge(self, other: "ItemBank") -> "ItemBank":
 		"""
 		Merges two ItemBank objects, ensuring no duplicate items.
+
+		media_base_dir carry-forward: the merged bank resolves local <img src>
+		references against a surviving media_base_dir so a reader-set directory is
+		not silently dropped (QTIPackageInterface.read_package() merges every read
+		into self.item_bank via ItemBank.__add__). self.media_base_dir wins when
+		set, else other.media_base_dir; the result is None only when neither bank
+		has one. If BOTH banks carry a media_base_dir and the two dirs differ, this
+		raises ValueError naming both dirs rather than silently picking one: each
+		bank's items resolve their <img src> against that bank's own base directory,
+		and a single merged directory cannot serve both. Same-dir and one-sided
+		merges stay silent.
+
+		Ownership rule: the merged bank never takes ownership of the surviving
+		directory (merged_bank._owns_media_base_dir stays False). If that directory
+		was lazily created by add_image() on a source bank, that source bank keeps
+		ownership and remains responsible for cleanup(); the merged bank only
+		references it. This is the sound rule against cleanup()'s docstring, which
+		deletes a directory only when the calling bank owns it: a non-owning merged
+		bank can never rmtree a directory another bank still references, and the
+		single owning source bank frees it exactly once (no leak, no double-free).
+
 		Args:
 			other (ItemBank): Another ItemBank to merge with.
 		Returns:
 			ItemBank: A new ItemBank containing the union of assessment items.
+		Raises:
+			ValueError: both banks set media_base_dir to different directories.
 		"""
 		# Ensure that the object being merged is an instance of ItemBank
 		if not isinstance(other, ItemBank):
@@ -238,8 +487,20 @@ class ItemBank:
 				if self.first_item_type != other.first_item_type:
 					raise ValueError("Error: Mixing item types is not allowed. "
 						+ f"allowed type is '{self.first_item_type}', attempted to add '{other.first_item_type}'")
+		# Determine the media_base_dir the merged bank resolves local <img src> against.
+		# Both set to different dirs cannot share one base directory: fail loudly.
+		if (self.media_base_dir is not None and other.media_base_dir is not None
+				and self.media_base_dir != other.media_base_dir):
+			raise ValueError("Error: cannot merge ItemBanks with different media_base_dir values. "
+				+ f"self='{self.media_base_dir}', other='{other.media_base_dir}'")
+		# self wins when set, else other; None when neither bank has one
+		merged_media_base_dir = self.media_base_dir if self.media_base_dir is not None else other.media_base_dir
 		# Create a new merged ItemBank with the determined allow_mixed setting
 		merged_bank = ItemBank(allow_mixed=merged_allow_mixed)
+		# Carry the surviving media_base_dir forward. Ownership stays with the source
+		# bank (merged_bank._owns_media_base_dir keeps its False default), so the
+		# merged bank references but never deletes a directory a source bank owns.
+		merged_bank.media_base_dir = merged_media_base_dir
 		# Merge dictionaries, ensuring no duplicate items
 		merged_bank.items_dict = {**self.items_dict, **other.items_dict}
 		# Make a new list of keys
@@ -283,7 +544,7 @@ class ItemBank:
 		return len(self.items_dict)
 
 	#============================================
-	def __getitem__(self, index):
+	def __getitem__(self, index: int | slice) -> "item_types.BaseItem | ItemBank":
 		"""
 		Supports both direct indexing and slicing.
 		- If given an integer, returns the single item.
@@ -305,7 +566,7 @@ class ItemBank:
 			raise TypeError(f"Invalid index type: {type(index)}. Expected int or slice.")
 
 	#============================================
-	def __setitem__(self, index, item_cls):
+	def __setitem__(self, index: int, item_cls: item_types.BaseItem) -> None:
 		"""
 		Allows modifying the location of a key in the list order.
 		Only moves an existing item by its key.
@@ -363,13 +624,13 @@ class ItemBank:
 		return set(self.items_dict.keys()) == set(other.items_dict.keys())
 
 	#============================================
-	def __iter__(self):
+	def __iter__(self) -> collections.abc.Iterator:
 		"""Allows iteration over the items in insertion order."""
 		for key in self.items_dict_key_list:
 			# Yield the full item object
 			yield self.items_dict[key]
 
-def main():
+def main() -> None:
 	#==========================
 	# Basic Functionality Tests
 	#==========================

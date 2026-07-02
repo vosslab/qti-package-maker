@@ -14,7 +14,7 @@ import seaborn as sns
 _XKCD_RGB_TABLE = None
 
 
-def _normalize_hex(hex_color):
+def _normalize_hex(hex_color: str) -> str:
 	if not hex_color:
 		raise ValueError("hex_color must be a non-empty string")
 	if not hex_color.startswith("#"):
@@ -27,7 +27,7 @@ def _normalize_hex(hex_color):
 	return hex_color
 
 
-def _load_xkcd_rgb_table():
+def _load_xkcd_rgb_table() -> list:
 	global _XKCD_RGB_TABLE
 	if _XKCD_RGB_TABLE is None:
 		table = []
@@ -43,7 +43,7 @@ def _load_xkcd_rgb_table():
 	return _XKCD_RGB_TABLE
 
 
-def _rgb_distance_squared(rgb_a, rgb_b):
+def _rgb_distance_squared(rgb_a: tuple, rgb_b: tuple) -> int:
 	return (
 		(rgb_a[0] - rgb_b[0]) ** 2
 		+ (rgb_a[1] - rgb_b[1]) ** 2
@@ -51,7 +51,7 @@ def _rgb_distance_squared(rgb_a, rgb_b):
 	)
 
 
-def hex_to_best_xkcd_name(hex_color):
+def hex_to_best_xkcd_name(hex_color: str) -> str:
 	"""
 	Return the closest xkcd color name for the given hex color.
 	Uses an exact match fast path and falls back to nearest RGB distance.
@@ -72,7 +72,7 @@ def hex_to_best_xkcd_name(hex_color):
 	return best_name
 
 
-def hex_to_best_xkcd_name_with_distance(hex_color):
+def hex_to_best_xkcd_name_with_distance(hex_color: str) -> tuple:
 	"""
 	Return the closest xkcd name and squared RGB distance for a hex color.
 	"""
@@ -92,7 +92,7 @@ def hex_to_best_xkcd_name_with_distance(hex_color):
 	return best_name, best_dist or 0
 
 
-def rgb_to_best_xkcd_name(rgb):
+def rgb_to_best_xkcd_name(rgb: list | tuple) -> str:
 	"""
 	Return the closest xkcd color name for an RGB tuple (0-255 ints).
 	"""

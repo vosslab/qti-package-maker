@@ -7,11 +7,12 @@ import random
 
 # QTI Package Maker
 from qti_package_maker.assessment_items import item_bank
+from qti_package_maker.engines import base_engine
 from qti_package_maker.engines import engine_registration
 
 class QTIPackageInterface:
 	#=====================================================================
-	def __init__(self, package_name: str, verbose: bool = False, allow_mixed: bool = False):
+	def __init__(self, package_name: str, verbose: bool = False, allow_mixed: bool = False) -> None:
 		self.package_name = package_name.strip()
 		self.verbose = verbose
 		self.allow_mixed = allow_mixed
@@ -21,7 +22,7 @@ class QTIPackageInterface:
 		self._set_engine_data()
 
 	#=====================================================================
-	def _set_engine_data(self):
+	def _set_engine_data(self) -> None:
 		"""Loads engine data from ENGINE_REGISTRY into self.engine_data."""
 		if hasattr(self, "engine_data"):
 			raise AttributeError("engine_data already exists")
@@ -35,7 +36,7 @@ class QTIPackageInterface:
 			}
 
 	#=====================================================================
-	def init_engine(self, input_engine_name: str):
+	def init_engine(self, input_engine_name: str) -> base_engine.BaseEngine:
 		"""Retrieve the engine class based on the given engine name."""
 		input_engine_name_low = re.sub(r"[^a-z0-9]", "", input_engine_name.lower())
 		if not input_engine_name_low:
@@ -68,31 +69,31 @@ class QTIPackageInterface:
 		return engine_cls
 
 	#=====================================================================
-	def show_available_engines(self, tablefmt: str="fancy_outline"):
+	def show_available_engines(self, tablefmt: str = "fancy_outline") -> None:
 		"""
 		Print all registered engines and their capabilities in a formatted tabulate table.
 		"""
 		engine_registration.print_engine_table(tablefmt)
 
 	#=====================================================================
-	def get_available_engines(self):
+	def get_available_engines(self) -> list:
 		return list(self.engine_data.keys())
 
 	#=====================================================================
-	def show_available_item_types(self):
+	def show_available_item_types(self) -> None:
 		"""
 		Print all registered engines and their capabilities in a formatted tabulate table.
 		"""
 		self.item_bank.show_available_item_types()
 
 	#=====================================================================
-	def reset_item_bank(self):
+	def reset_item_bank(self) -> None:
 		# mostly for testing
 		del self.item_bank
 		self.item_bank = item_bank.ItemBank(self.allow_mixed)
 
 	#=====================================================================
-	def trim_item_bank(self, item_limit: int):
+	def trim_item_bank(self, item_limit: int) -> None:
 		if not item_limit:
 			return
 		if not isinstance(item_limit, int):
@@ -107,25 +108,25 @@ class QTIPackageInterface:
 		return
 
 	#=====================================================================
-	def summarize_item_bank(self):
+	def summarize_item_bank(self) -> None:
 		"""Print all registered engines and their capabilities."""
 		self.item_bank.summarize_items()
 
 	#=====================================================================
-	def print_item_bank_histogram(self):
+	def print_item_bank_histogram(self) -> None:
 		"""Print all registered engines and their capabilities."""
 		self.item_bank.print_histogram()
 
 	#=====================================================================
-	def get_available_item_types(self):
+	def get_available_item_types(self) -> list:
 		return self.item_bank.get_available_item_types()
 
 	#=====================================================================
-	def add_item(self, item_type: str, item_tuple: tuple):
+	def add_item(self, item_type: str, item_tuple: tuple) -> None:
 		self.item_bank.add_item(item_type, item_tuple)
 
 	#=====================================================================
-	def read_package(self, input_file: str, engine_name: str):
+	def read_package(self, input_file: str, engine_name: str) -> None:
 		"""
 		Reads an assessment package from the given input file and loads items into the item bank.
 		"""
@@ -162,7 +163,7 @@ class QTIPackageInterface:
 			)
 
 	#=====================================================================
-	def save_package(self, engine_name: str, outfile: str = None):
+	def save_package(self, engine_name: str, outfile: str = None) -> str | None:
 		"""
 		Saves the current item bank using the specified engine.
 		"""
@@ -187,7 +188,7 @@ class QTIPackageInterface:
 #============================================
 # If this script is run directly
 #============================================
-def main():
+def main() -> None:
 
 	# Parse arguments from the command line
 	#args = parse_arguments()

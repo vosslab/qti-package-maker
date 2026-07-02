@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# dist_clean.sh - wipe build artifacts, tool caches, and dependency installs.
+# dist_clean.sh - deep clean: wipe build artifacts, tool caches, and dependency
+# installs to return the repo to a distribution-clean checkout.
 #
-# Front door: run this directly as ./dist_clean.sh. It is the interface for
-# everyone, no npm knowledge required. In TypeScript repos the npm run clean
-# alias is an optional mirror that points right back at this script.
+# Front door: run this directly as ./devel/dist_clean.sh. This is the deep reset,
+# used when preparing the repo for distribution or forcing a clean dependency
+# reinstall. The lighter everyday build clean is devel/clean_build.sh (wired to
+# `npm run clean`), which leaves node_modules intact.
+#
+# Keeps package-lock.json: it is committed and drives reproducible `npm ci`.
 #
 # Universal across repo types (python, typescript, rust). Patterns that do
 # not exist in a given repo are silently skipped via `nullglob` + an
@@ -41,8 +45,9 @@ delete_if_exists dist dist-single _site build out
 delete_if_exists _bundle.js meta.json stats.html
 delete_if_exists **/*.tsbuildinfo
 
-# JS dependency installs and lockfile (forces clean reinstall on next npm install).
-delete_if_exists node_modules package-lock.json
+# JS dependency installs (forces clean reinstall on next npm install). Keeps
+# package-lock.json, which is committed and drives reproducible npm ci.
+delete_if_exists node_modules
 
 # JS/TS tool caches.
 delete_if_exists .cache .eslintcache .prettiercache .nyc_output

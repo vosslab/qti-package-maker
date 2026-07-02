@@ -1,19 +1,37 @@
 #!/usr/bin/env python3
 
+# Standard Library
 import os
 import datetime
+
+# Pip3 Library
 import lxml.etree
+
+# QTI Package Maker
+from qti_package_maker.common import media_assets
 
 #========================================================
 def generate_manifest(
 			package_name: str,
-			assessment_file_name_list: list,
-			version: str = "1.2"):
+			assessment_file_name_list: list[str],
+			version: str = "1.2",
+			assets: list[media_assets.MediaAsset] | None = None,
+			item_dependencies: dict[str, list[media_assets.MediaAsset]] | None = None,
+			) -> lxml.etree.ElementTree:
 	"""
 	Generates the imsmanifest.xml file as an lxml.etree ElementTree.
 
 	Args:
+		package_name: Display name of the package, written into the metadata title.
 		assessment_file_name_list (list[str]): List of assessment item file names.
+		version: QTI version string, e.g. "1.2" or "2.1".
+		assets: Optional list of resolved MediaAsset records to declare as
+			webcontent resources. None preserves the pre-image-support
+			manifest shape.
+		item_dependencies: Optional map of assessment file name (a member of
+			assessment_file_name_list) to the MediaAsset records that item
+			references, so each referencing item resource gets a `<dependency>`
+			pointing at the shared webcontent resource.
 
 	Returns:
 		lxml.etree.ElementTree: The generated XML tree for imsmanifest.xml.
@@ -31,13 +49,17 @@ def generate_manifest(
 
 	manifest = create_manifest_header()
 	metadata = create_metadata_section(package_name, version)
-	#organizations = lxml.etree.Element("organizations")
+	# Empty <organizations/> element; real Blackboard Learn exports carry this
+	# element (even when empty) before <resources>, matching
+	# SAMPLES/blackboard_learn_classic-qti21_export/imsmanifest.xml.
+	organizations = lxml.etree.Element("organizations")
 	sorted_file_list = sorted(assessment_file_name_list)
-	resources = create_resources_section(sorted_file_list, version)
+	resources = create_resources_section(
+		sorted_file_list, version, assets=assets, item_dependencies=item_dependencies)
 
 	# Add sections to the manifest
 	manifest.append(metadata)
-	#manifest.append(organizations)
+	manifest.append(organizations)
 	manifest.append(resources)
 
 	return lxml.etree.ElementTree(manifest)
@@ -58,8 +80,10 @@ def create_manifest_header() -> lxml.etree.Element:
 		"xsi": "http://www.w3.org/2001/XMLSchema-instance",
 	}
 
-	# Create the root element with namespaces and identifier attribute
-	manifest = lxml.etree.Element("manifest", nsmap=nsmap, identifier="main manifest")
+	# Create the root element with namespaces and identifier attribute. Must be
+	# a legal xs:ID token (no spaces); "main_manifest" is a clear, readable
+	# label rather than mirroring Blackboard's cryptic "man00001" convention.
+	manifest = lxml.etree.Element("manifest", nsmap=nsmap, identifier="main_manifest")
 
 	# Define the xsi:schemaLocation attribute with correct values
 	manifest.attrib["{http://www.w3.org/2001/XMLSchema-instance}schemaLocation"] = (
@@ -130,12 +154,65 @@ def create_metadata_section(package_name: str, version: str = "1.2") -> lxml.etr
 	return metadata
 
 #========================================================
-def create_resources_section(assessment_file_name_list: list, version: str = "1.2") -> lxml.etree.Element:
+def _build_webcontent_resources(
+			assets: list[media_assets.MediaAsset]) -> tuple[list[lxml.etree.Element], dict[int, str]]:
+	"""
+	Build one <resource type="webcontent"> + <file href> per asset.
+
+	Identifiers are minted in list order as `ccresNNNNN` (5-digit, 1-based),
+	matching `SAMPLES/blackboard_learn_classic-qti21_export` and
+	`ULTRA/image_test`. The href is the asset's collision-safe output_name,
+	written at the package root, matching those same samples.
+
+	Args:
+		assets: Resolved MediaAsset records to declare (identity is the src;
+			the caller is responsible for passing each shared asset once).
+
+	Returns:
+		Tuple of (webcontent resource elements in list order, a map from
+		`id(asset)` to its minted identifier so item resources can reference
+		it via `<dependency identifierref>`).
+	"""
+	webcontent_elements = []
+	identifier_by_asset_id = {}
+	for asset_index, asset in enumerate(assets, start=1):
+		identifier = f"ccres{asset_index:05d}"
+		# the same asset object is reused across items that share a src, so
+		# identity (id()) is the correct key -- MediaAsset is not hashable
+		identifier_by_asset_id[id(asset)] = identifier
+		webcontent_resource = lxml.etree.Element(
+			"resource",
+			href=asset.output_name,
+			identifier=identifier,
+			type="webcontent",
+		)
+		lxml.etree.SubElement(webcontent_resource, "file", href=asset.output_name)
+		webcontent_elements.append(webcontent_resource)
+	return webcontent_elements, identifier_by_asset_id
+
+#========================================================
+def create_resources_section(
+			assessment_file_name_list: list[str],
+			version: str = "1.2",
+			assets: list[media_assets.MediaAsset] | None = None,
+			item_dependencies: dict[str, list[media_assets.MediaAsset]] | None = None,
+			) -> lxml.etree.Element:
 	"""
 	Creates the resources section of the manifest, adding each assessment item.
 
 	Args:
 		assessment_file_name_list (list[str]): List of assessment item file names.
+		version (str): The version of QTI (default is "1.2").
+		assets: Optional list of resolved MediaAsset records. Each
+			distinct asset emits exactly one `<resource type="webcontent">` +
+			`<file href>`, placed before the item resources. None (the default)
+			preserves the pre-image-support manifest shape exactly, so existing
+			callers keep working unchanged.
+		item_dependencies: Optional map of assessment file name (a member of
+			assessment_file_name_list) to the MediaAsset records that item
+			references. A shared asset referenced by multiple items produces
+			one webcontent resource with one `<dependency>` on each referencing
+			item resource (pattern matches `SAMPLES` QTI 2.1 + `ULTRA/image_test`).
 
 	Returns:
 		lxml.etree.Element: The 'resources' element containing resource elements.
@@ -163,6 +240,17 @@ def create_resources_section(assessment_file_name_list: list, version: str = "1.
 	)
 	lxml.etree.SubElement(assessment_meta_resource, "file", href=meta_file_path)
 
+	# Webcontent resources are declared before the item resources, matching
+	# SAMPLES/blackboard_learn_classic-qti21_export and ULTRA/image_test.
+	identifier_by_asset_id: dict[int, str] = {}
+	if assets:
+		webcontent_elements, identifier_by_asset_id = _build_webcontent_resources(assets)
+		for webcontent_element in webcontent_elements:
+			resources.append(webcontent_element)
+	# item_dependencies is genuinely optional (an item may reference no assets)
+	if item_dependencies is None:
+		item_dependencies = {}
+
 	# Create individual assessment item resources
 	for file_name in assessment_file_name_list:
 		base_name = os.path.splitext(os.path.basename(file_name))[0]
@@ -180,6 +268,13 @@ def create_resources_section(assessment_file_name_list: list, version: str = "1.
 		# Also add reverse dependency in assessment_meta
 		lxml.etree.SubElement(assessment_meta_resource, "dependency", identifierref=base_name)
 
+		# Add one <dependency> per asset this item references (each asset's
+		# identifier was already minted, so a shared asset naturally produces
+		# one dependency per referencing item against the same identifier).
+		for asset in item_dependencies.get(file_name, []):
+			lxml.etree.SubElement(
+				resource, "dependency", identifierref=identifier_by_asset_id[id(asset)])
+
 		resources.append(resource)
 
 	# Append assessment_meta after all assessment items
@@ -188,7 +283,7 @@ def create_resources_section(assessment_file_name_list: list, version: str = "1.
 	return resources
 
 #========================================================
-def dummy_test_run():
+def dummy_test_run() -> None:
 	# Generate imsmanifest.xml
 	assessment_file_name_list = [
 		'qti21_items/assessmentItem00001.xml',

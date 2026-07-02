@@ -8,8 +8,11 @@ pool-export package:
 
 - the `questestinterop` > `assessment` > `section` pool wrapper (`res00002.dat`),
 - the `imsmanifest.xml` content-package manifest in Blackboard's `bb:` namespace,
-- the small fixed-content sidecar `.dat` resources (`res00001`, `res00003`
-  through `res00007`),
+- the small fixed-content sidecar `.dat` resources (`res00001`, `res00003`,
+  `res00004`, `res00006`, `res00007`),
+- the `res00005.dat` CSResourceLinks sidecar plus the per-image LOM sidecars
+  that wire embedded csfiles images to the pool (see the csfiles image
+  embedding section),
 - the plain-text `.bb-package-info` and `.bb-log-info` property/log files.
 
 It deliberately writes NO `.bb-package-sig`: that signature is computed
@@ -34,10 +37,14 @@ forgeability audit (docs/active_plans/audits/blackboard_export_zip_forgeability.
 """
 
 # Standard Library
+import os
 import time
 
 # PIP3 modules
 import lxml.etree
+
+# QTI Package Maker
+from qti_package_maker.engines.blackboard_export_zip import common_xml
 
 #============================================
 # Namespace and manifest constants
@@ -53,6 +60,12 @@ XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace"
 # resource `type=` attribute, not the filename.
 POOL_DAT_FILENAME = "res00002.dat"
 POOL_RESOURCE_TYPE = "assessment/x-bb-qti-pool"
+
+# The CSResourceLinks sidecar (res00005.dat) carries one <cms_resource_link>
+# per embedded csfiles image; the reader cross-checks every body xid token
+# against these entries (see build_csresourcelinks_dat and the csfiles image
+# embedding section).
+CSRESOURCELINKS_DAT_FILENAME = "res00005.dat"
 
 #============================================
 # Manifest resource table
@@ -79,11 +92,12 @@ _SIDECAR_RESOURCES = (
 # elements rather than copying the private course/server ids the real samples
 # contain. Each value is the inner XML body; build_sidecar_dat wraps it with the
 # XML declaration. res00001 (course settings) ships a neutral ULTRASTATUS stub.
+# res00005.dat (CSResourceLinks) is NOT listed here: it carries per-image
+# content built by build_csresourcelinks_dat, not a fixed body.
 _SIDECAR_DAT_BODIES = {
 	"res00001.dat": '<COURSE><ULTRASTATUS value="C"/></COURSE>',
 	"res00003.dat": "<ASSESSMENTCREATIONSETTINGS/>",
 	"res00004.dat": "<LEARNRUBRICS/>",
-	"res00005.dat": "<cms_resource_link_list/>",
 	"res00006.dat": "<STDS_ALIGNMENTS/>",
 	"res00007.dat": "<COURSERUBRICASSOCIATIONS/>",
 }
@@ -242,7 +256,7 @@ def build_manifest(pool_title: str) -> lxml.etree.Element:
 	"""
 	# Declare the bb: prefix and the xml: prefix used by xml:base attributes.
 	nsmap = {"bb": BB_NAMESPACE}
-	manifest = lxml.etree.Element("manifest", nsmap=nsmap, attrib={"identifier": "man00001"})
+	manifest = lxml.etree.Element("manifest", nsmap=nsmap, attrib={"identifier": "main_manifest"})
 	# Organizations are empty for a pool export.
 	lxml.etree.SubElement(manifest, "organizations")
 	resources = lxml.etree.SubElement(manifest, "resources")
@@ -318,13 +332,184 @@ def sidecar_dat_filenames() -> list[str]:
 	"""
 	Return the fixed-content sidecar `.dat` filenames the package must include.
 
-	This is res00001 plus res00003..res00007 -- every `.dat` except the pool
-	(res00002.dat), which the write path builds from the items via build_pool_wrapper.
+	This is res00001, res00003, res00004, res00006, res00007 -- every fixed-body
+	`.dat`. It excludes the pool (res00002.dat, built from the items via
+	build_pool_wrapper) and the CSResourceLinks sidecar (res00005.dat, built
+	per-image by build_csresourcelinks_dat).
 
 	Returns:
 		The sidecar filenames in res0000N order.
 	"""
 	return list(_SIDECAR_DAT_BODIES.keys())
+
+#============================================
+# csfiles image embedding
+#============================================
+# Blackboard's Original pool export carries item images through a proprietary,
+# manifest-untracked "csfiles" mechanism (confirmed from the real export under
+# SAMPLES/blackboard_learn_classic-bb_export and mirrored in the committed slice
+# tests/fixtures/bb_export_slice.zip). For each image the export:
+#   1. writes the binary to csfiles/home_dir/__xid-<n>_1.<ext>,
+#   2. embeds an <img src="@X@EmbeddedFile.requestUrlStub@X@bbcswebdav/xid-<n>_1">
+#      token in the item HTML (the item body, not the manifest),
+#   3. writes a LOM sidecar csfiles/home_dir/__xid-<n>_1.<ext>.xml whose
+#      <identifier> recovers the original course-relative filename,
+#   4. records one <cms_resource_link> in res00005.dat (CSResourceLinks) whose
+#      resourceId is the xid and whose parentId is the owning item's asi id.
+# The csfiles binaries and sidecars are deliberately NOT declared in
+# imsmanifest.xml (implicit bundling), exactly as the real export leaves them.
+# The reader (read_package.py) is the inverse of this wiring.
+#
+# Hotspot images use a different, manifest-tracked path: the QTI <matapplication
+# uri> element points at a file under the pool resource's own directory, declared
+# as a bb-namespace <file href> child of the res00002 manifest resource. The
+# write side does NOT emit hotspot images: no item_types class models a hotspot
+# response area, so no bank item can ever carry a <matapplication>. The reader
+# still handles the hotspot mechanism on import; this asymmetry is intentional.
+
+# csfiles binaries and their LOM sidecars live under this package subdirectory.
+CSFILES_HOME_SUBDIR = os.path.join("csfiles", "home_dir")
+# The LOM sidecar namespaces, matching the real __xid-<n>_1.jpg.xml sidecars.
+LOM_NAMESPACE = "http://www.imsglobal.org/xsd/imsmd_rootv1p2p1"
+XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance"
+LOM_SCHEMA_LOCATION = f"{LOM_NAMESPACE} imsmd_rootv1p2p1.xsd"
+# Every Blackboard content-collection xid carries a version suffix; exports use
+# "_1" for a first-version file, so minted tokens mirror that ("xid-<n>_1").
+_XID_VERSION_SUFFIX = "_1"
+# Neutral course context embedded in the LOM <identifier> path. The reader takes
+# only the basename after the '#', so this value is cosmetic on round-trip; it is
+# a generator marker, never a real Learn course id.
+_LOM_COURSE_CONTEXT = "qti_package_maker"
+# Neutral placeholder ids for CSResourceLinks entries. The real export carries
+# private Learn courseId / link-id PkIds here; the engine emits neutral markers
+# instead (the reader keys only on resourceId, never these).
+_CSRESOURCE_COURSE_ID = "_1_1"
+
+#============================================
+def make_xid_token(xid_number: int) -> str:
+	"""
+	Return the body src token identifier for a minted xid (e.g. "xid-7_1").
+
+	Args:
+		xid_number: The unique integer minted for one image.
+
+	Returns:
+		The "xid-<n>_1" token that appears after the CSFILES_SRC_PREFIX in the
+		item body HTML.
+	"""
+	return f"xid-{xid_number}{_XID_VERSION_SUFFIX}"
+
+#============================================
+def make_resource_id(xid_number: int) -> str:
+	"""
+	Return the CSResourceLinks resourceId for a minted xid (e.g. "7_1").
+
+	Args:
+		xid_number: The unique integer minted for one image.
+
+	Returns:
+		The "<n>_1" resourceId string cross-checked by the reader.
+	"""
+	return f"{xid_number}{_XID_VERSION_SUFFIX}"
+
+#============================================
+def csfiles_src_value(xid_number: int) -> str:
+	"""
+	Return the full `<img src>` token value the item body carries for an xid.
+
+	Args:
+		xid_number: The unique integer minted for one image.
+
+	Returns:
+		The complete src string
+		"@X@EmbeddedFile.requestUrlStub@X@bbcswebdav/xid-<n>_1".
+	"""
+	return common_xml.CSFILES_SRC_PREFIX + make_xid_token(xid_number)
+
+#============================================
+def csfiles_binary_name(xid_number: int, extension: str) -> str:
+	"""
+	Return the csfiles binary filename for a minted xid (e.g. "__xid-7_1.jpg").
+
+	Args:
+		xid_number: The unique integer minted for one image.
+		extension: The image file extension including the leading dot (".jpg").
+
+	Returns:
+		The "__xid-<n>_1<ext>" filename the reader locates by its "__<token>."
+		prefix.
+	"""
+	return f"__{make_xid_token(xid_number)}{extension}"
+
+#============================================
+def build_lom_sidecar(resource_id: str, original_name: str) -> bytes:
+	"""
+	Build a LOM `.xml` sidecar mapping a csfiles resourceId to its original name.
+
+	Mirrors the real `__xid-<n>_1.jpg.xml` sidecars: a `<lom>` carrying a
+	`relation/resource/identifier` whose text is
+	`"<resourceId>#/courses/<course>/<original_name>"`. The reader recovers the
+	original filename as the basename of the path portion after the `#`, so the
+	basename must be the plain filename the round-tripped `<img src>` should read.
+
+	Args:
+		resource_id: The CSResourceLinks resourceId (e.g. "7_1").
+		original_name: The plain image filename to recover (e.g. "cell.png").
+
+	Returns:
+		The LOM sidecar as UTF-8 XML bytes.
+	"""
+	nsmap = {None: LOM_NAMESPACE, "xsi": XSI_NAMESPACE}
+	lom = lxml.etree.Element(f"{{{LOM_NAMESPACE}}}lom", nsmap=nsmap)
+	lom.set(f"{{{XSI_NAMESPACE}}}schemaLocation", LOM_SCHEMA_LOCATION)
+	relation = lxml.etree.SubElement(lom, f"{{{LOM_NAMESPACE}}}relation")
+	resource = lxml.etree.SubElement(relation, f"{{{LOM_NAMESPACE}}}resource")
+	identifier = lxml.etree.SubElement(resource, f"{{{LOM_NAMESPACE}}}identifier")
+	# The reader partitions on '#' and takes the basename of the path part.
+	identifier.text = f"{resource_id}#/courses/{_LOM_COURSE_CONTEXT}/{original_name}"
+	return serialize_xml(lom)
+
+#============================================
+def build_csresourcelinks_dat(link_entries: list[tuple[str, str]]) -> bytes:
+	"""
+	Build the res00005.dat CSResourceLinks body from per-image link entries.
+
+	Emits one `<cms_resource_link>` per entry, shaped like the real export
+	(courseId / parentId / resourceId / storageType / aiState / id), using
+	neutral placeholder ids for every field except resourceId and parentId. An
+	empty entry list yields the minimal `<cms_resource_link_list/>` the engine
+	writes when a package carries no images.
+
+	Args:
+		link_entries: (parent_id, resource_id) pairs, one per embedded image; the
+			parent_id is the owning item's asi id, the resource_id is the xid.
+
+	Returns:
+		The res00005.dat contents as UTF-8 XML bytes.
+	"""
+	root = lxml.etree.Element("cms_resource_link_list")
+	for index, (parent_id, resource_id) in enumerate(link_entries):
+		link = lxml.etree.SubElement(root, "cms_resource_link")
+		# courseId carries a private Learn PkId in real exports; neutral here.
+		course = _add_text_child(link, "courseId", _CSRESOURCE_COURSE_ID)
+		course.set("data-type", "blackboard.data.course.Course")
+		# parentId ties the image to its owning item: a live Blackboard import
+		# matches it against that item's <bbmd_asi_object_id> (emitted by
+		# common_xml.build_itemmetadata from the same make_item_asi_object_id
+		# helper) to locate the image's parent. A parentId with no matching
+		# asi_object_id makes Learn drop the resource link and the embedded image.
+		# The round-trip reader keys on resourceId, not parentId.
+		parent = _add_text_child(link, "parentId", parent_id)
+		parent.set("parent_data_type", "asiobject")
+		# resourceId is the xid the reader cross-checks against the body token.
+		_add_text_child(link, "resourceId", resource_id)
+		_add_text_child(link, "storageType", "PUBLIC")
+		_add_text_child(link, "aiState", "No")
+		# id is a private link PkId in real exports; a neutral deterministic
+		# marker keeps the shape without copying server data.
+		link_id = _add_text_child(link, "id", f"_{index + 1}_1")
+		link_id.set("data-type", "blackboard.platform.contentsystem.data.CSResourceLink")
+	return serialize_xml(root)
 
 #============================================
 # .bb-* plain-text sidecar builders

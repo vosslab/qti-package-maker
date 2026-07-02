@@ -13,38 +13,38 @@ from qti_package_maker.engines.human_readable import write_item as human_write_i
 from qti_package_maker.engines.text2qti import write_item as text2qti_write_item
 
 
-def _make_num_item():
+def _make_num_item() -> item_types.NUM:
 	item = item_types.NUM("Approx pi?", 3.14, 0.0, True)
 	item.item_number = 1
 	return item
 
 
-def test_bbq_num_writer_zero_tolerance():
+def test_bbq_num_writer_zero_tolerance() -> None:
 	item = _make_num_item()
 	output = bbq_write_item.NUM(item)
 	assert "\t0.00000000" in output
 
 
-def test_text2qti_num_writer_zero_tolerance():
+def test_text2qti_num_writer_zero_tolerance() -> None:
 	item = _make_num_item()
 	output = text2qti_write_item.NUM(item)
 	assert "+- 0.0" in output
 
 
-def test_human_readable_num_writer_zero_tolerance():
+def test_human_readable_num_writer_zero_tolerance() -> None:
 	item = _make_num_item()
 	output = human_write_item.NUM(item)
 	assert "&pm;0.0" in output
 
 
-def test_html_selftest_num_writer_zero_tolerance():
+def test_html_selftest_num_writer_zero_tolerance() -> None:
 	item = _make_num_item()
 	output = html_write_item.NUM(item)
 	assert "numTolerance_" in output
 	assert " = 0.0" in output
 
 
-def test_canvas_qti_v1_2_num_writer_zero_tolerance():
+def test_canvas_qti_v1_2_num_writer_zero_tolerance() -> None:
 	item = _make_num_item()
 	output = canvas_write_item.NUM(item)
 	assert isinstance(output, lxml.etree._Element)
@@ -56,7 +56,7 @@ def test_canvas_qti_v1_2_num_writer_zero_tolerance():
 	assert varlte[0].text == "3.14"
 
 
-def test_blackboard_qti_v2_1_num_writer_zero_tolerance():
+def test_blackboard_qti_v2_1_num_writer_zero_tolerance() -> None:
 	item = _make_num_item()
 	output = bb_qti_write_item.NUM(item)
 	equal_nodes = output.xpath("//*[local-name()='equal']")

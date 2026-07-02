@@ -8,7 +8,7 @@ import importlib.metadata
 from qti_package_maker import package_interface
 
 #=====================================================
-def _check_version():
+def _check_version() -> None:
 	repo_version_file = os.path.join(os.path.dirname(__file__), '..', 'VERSION')
 	if not os.path.isfile(repo_version_file):
 		return  # Not running from repo, skip check
@@ -29,7 +29,7 @@ def _check_version():
 		raise SystemExit(1)
 
 #=====================================================
-def parse_args(format_shortcuts) -> argparse.Namespace:
+def parse_args(format_shortcuts: dict) -> argparse.Namespace:
 	"""
 	Parses command-line arguments.
 
@@ -92,7 +92,7 @@ def parse_args(format_shortcuts) -> argparse.Namespace:
 	return args
 
 #=====================================================
-def extract_core_name(bbq_file_name):
+def extract_core_name(bbq_file_name: str) -> str:
 	# Regular expression to match the core part
 	if '/' in bbq_file_name:
 		bbq_file_basename = os.path.basename(bbq_file_name)
@@ -106,7 +106,7 @@ def extract_core_name(bbq_file_name):
 
 #=====================================================
 #=====================================================
-def main():
+def main() -> None:
 	"""
 	Main function to handle the script execution logic.
 	"""
@@ -116,7 +116,6 @@ def main():
 	format_shortcuts = {
 		'canvas_qti_v1_2':        ('-1', 'qti12', 	"Set output format to Canvas QTI v1.2"),
 		'blackboard_qti_v2_1':    ('-2', 'qti21', 	"Set output format to Blackboard QTI v2.1"),
-		'bb_ultra_qti_v2_1':      ('-u', 'ultra',	"Set output format to Blackboard Ultra QTI v2.1"),
 		'human_readable':         ('-r', 'human', 	"Set output format to human-readable text"),
 		'bbq_text_upload':        ('-b', 'bbq',   	"Set output format to (B)lack(B)oard (Q)uestions"),
 		'html_selftest':          ('-s', 'selftest',	"Set output format to HTML self-test"),

@@ -1,5 +1,6 @@
 #built-in libraries
 import math
+import collections.abc
 
 #pypi libraries
 import colour
@@ -15,23 +16,23 @@ class RCPColorUtils:
 	- Uses CIECAM02 Colorfulness for more perceptually accurate saturation.
 	- Uses HSP Perceived Brightness for consistent luminance perception.
 	"""
-	def __init__(self):
+	def __init__(self) -> None:
 		# Define control points for RGB to RYB conversion
 		rgb_hues = np.array([-90, 0, 30, 60, 120, 240, 270, 360, 390])
 		ryb_hues = np.array([-60, 0, 60, 120, 180, 240, 300, 360, 420])
 		self.rgb_to_ryb_interp = interpolate.PchipInterpolator(rgb_hues, ryb_hues, extrapolate=False)
 		self.ryb_to_rgb_interp = interpolate.PchipInterpolator(ryb_hues, rgb_hues, extrapolate=False)
 
-	def rgb_to_ryb_hue(self, rgb_hue_deg):
+	def rgb_to_ryb_hue(self, rgb_hue_deg: float) -> float:
 		"""Convert an RGB color hue to its RYB hue equivalent."""
 		return float(self.rgb_to_ryb_interp(rgb_hue_deg))
 
-	def ryb_to_rgb_hue(self, ryb_hue_deg):
+	def ryb_to_rgb_hue(self, ryb_hue_deg: float) -> float:
 		"""Convert an RYB hue back to its RGB hue equivalent."""
 		return float(self.ryb_to_rgb_interp(ryb_hue_deg))
 
 	@staticmethod
-	def _validate_rgb(rgb):
+	def _validate_rgb(rgb: list | tuple | np.ndarray) -> None:
 		# **Step 1: Validate Input Format**
 		if not isinstance(rgb, (list, tuple, np.ndarray)) or len(rgb) != 3:
 			raise ValueError(f"Invalid RGB input: {rgb}. Expected a 3-element list/tuple/array.")
@@ -41,7 +42,7 @@ class RCPColorUtils:
 			raise ValueError(f"RGB values must be in [0,1] range, got: {rgb}")
 
 	@staticmethod
-	def _validate_hsl(hsl):
+	def _validate_hsl(hsl: list | tuple | np.ndarray) -> None:
 		# **Step 1: Validate Input Format**
 		if not isinstance(hsl, (list, tuple, np.ndarray)) or len(hsl) != 3:
 			raise ValueError(f"Invalid HSL input: {hsl}. Expected a 3-element list/tuple/array.")
@@ -50,14 +51,14 @@ class RCPColorUtils:
 		if any(c < 0 or c > 1 for c in hsl):
 			raise ValueError(f"HSL values must be in [0,1] range, got: {hsl}")
 
-	def perceived_brightness(self, rgb):
+	def perceived_brightness(self, rgb: list | tuple | np.ndarray) -> float:
 		"""Calculate perceived brightness using the HSP model."""
 		self._validate_rgb(rgb)
 		r, g, b = rgb
 		brightness = math.sqrt(0.299 * (r ** 2) + 0.587 * (g ** 2) + 0.114 * (b ** 2))
 		return brightness
 
-	def colorfulness(self, rgb, fl=1.0):
+	def colorfulness(self, rgb: list | tuple | np.ndarray, fl: float = 1.0) -> float:
 		"""
 		Compute colorfulness (M) using the CIECAM02 model.
 
@@ -111,21 +112,21 @@ class RCPColorUtils:
 
 		return M / 100.
 
-	def rgb_to_hsl(self, rgb):
+	def rgb_to_hsl(self, rgb: list | tuple | np.ndarray) -> tuple:
 		self._validate_rgb(rgb)
 		"""Convert RGB (0-255) to HSL (Hue 0-360, Saturation 0-100, Lightness 0-100)."""
 		r, g, b = rgb
 		h, l, s = colorsys.rgb_to_hls(r, g, b)
 		return (h, s, l)
 
-	def hsl_to_rgb(self, hsl):
+	def hsl_to_rgb(self, hsl: list | tuple | np.ndarray) -> tuple:
 		"""Convert HSL (Hue 0-360, Saturation 0-100, Lightness 0-100) to RGB (0-255)."""
 		self._validate_hsl(hsl)
 		h, s, l = hsl
 		r, g, b = colorsys.hls_to_rgb(h, l, s)
 		return r, g, b
 
-	def set_colorfulness(self, rgb, wanted_cfn, step_size=0.5, max_iterations=120):
+	def set_colorfulness(self, rgb: list | tuple | np.ndarray, wanted_cfn: float, step_size: float = 0.5, max_iterations: int = 120) -> tuple:
 		"""
 		Adjust saturation of an RGB color to match a target colorfulness.
 		- `rgb`: Input RGB color (0-1 range).
@@ -177,7 +178,7 @@ class RCPColorUtils:
 		# TODO: this function is incomplete - returns original HSL, not adjusted values
 		return self.hsl_to_rgb(h, s, l)
 
-	def set_perceived_brightness(self, rgb, wanted_pbr, step_size=0.001, max_iterations=100):
+	def set_perceived_brightness(self, rgb: list | tuple | np.ndarray, wanted_pbr: float, step_size: float = 0.001, max_iterations: int = 100) -> tuple:
 		"""
 		Adjust lightness of an RGB color to match a target perceived brightness.
 		- Starts from the current lightness and increases or decreases it iteratively.
@@ -202,7 +203,7 @@ class RCPColorUtils:
 
 		return self.hsl_to_rgb(hsl)
 
-def hue_to_rgb(hue_deg, rcp, target_cfn=0.20, target_pbr=0.75):
+def hue_to_rgb(hue_deg: float, rcp: RCPColorUtils, target_cfn: float = 0.20, target_pbr: float = 0.75) -> tuple:
 	"""
 	Convert a hue in degrees to an RGB color and adjust for colorfulness and perceived brightness.
 
@@ -225,7 +226,7 @@ def hue_to_rgb(hue_deg, rcp, target_cfn=0.20, target_pbr=0.75):
 
 	return final_rgb
 
-def generate_color_circle(hue_function, rcp, title, num_colors=12):
+def generate_color_circle(hue_function: collections.abc.Callable, rcp: RCPColorUtils, title: str, num_colors: int = 12) -> None:
 	"""Generate and display a color wheel based on a given hue conversion function."""
 	fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={'projection': 'polar'})
 	angles = np.linspace(0, 2 * np.pi, num_colors, endpoint=False)
@@ -251,7 +252,7 @@ if __name__ == '__main__':
 	# Generate and display RYB color circle
 	generate_color_circle(rcp.ryb_to_rgb_hue, rcp, "RYB Color Circle")
 
-def test_colorfulness(rcp):
+def test_colorfulness(rcp: RCPColorUtils) -> None:
 	test_colors = {
 		"Black": (0, 0, 0),
 		"White": (1, 1, 1),

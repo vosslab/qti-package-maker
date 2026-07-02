@@ -10,7 +10,7 @@ question_count = 0
 crc16_dict = {}
 
 #====================================================================
-def question_header_classic(question, N, big_question=None, crc16=None):
+def question_header_classic(question: str, N: int, big_question: str = None, crc16: str = None) -> str:
 	#global use_nocopy_script
 	if crc16 is None:
 		if big_question is not None:
@@ -56,7 +56,7 @@ def question_header(question: str, N: int, crc16: str = None) -> str:
 	return header
 
 #====================================================================
-def choice_header_classic(choice_text):
+def choice_header_classic(choice_text: str) -> str:
 	noisy_choice_text = anti_cheat.insert_hidden_terms(choice_text)
 	output = anti_cheat.add_no_click_div(noisy_choice_text)
 	return output
@@ -80,7 +80,7 @@ def choice_header(choice_text: str, index: int) -> str:
 	return anti_cheat.add_no_click_div(f"{label}. {noisy_choice_text}")
 
 #====================================================================
-def print_histogram():
+def print_histogram() -> None:
 	sys.stderr.write("=== Answer Choice Histogram ===\n")
 	keys = list(answer_histogram.keys())
 	keys.sort()

@@ -7,12 +7,17 @@ import lxml.html
 import lxml.etree
 
 #==============
-def create_assessment_item_header(question_crc16: str):
+def create_assessment_item_header(question_crc16: str) -> lxml.etree.Element:
 	"""
 	Create the root <assessmentItem> element with common namespaces and attributes.
 	"""
 	rand_crc16 = f"{random.randrange(16**4):04x}"
-	identifier = f"{question_crc16}_{rand_crc16}"
+	# "QUE_" prefix keeps this a legal xs:NCName (identifier.type in the QTI
+	# 2.1 schema): question_crc16/rand_crc16 are hex digits and could
+	# otherwise start with a digit, which xs:NCName forbids. The "QUE_"
+	# shape also matches the real item identifier prefix confirmed by
+	# SAMPLES/blackboard_learn_classic-qti21_export (e.g. "QUE__23221280_1").
+	identifier = f"QUE_{question_crc16}_{rand_crc16}"
 	item_title = identifier
 	# Define all required XML namespaces, including the missing ones
 	nsmap = {
@@ -117,7 +122,9 @@ def create_response_declaration_MATCH(prompts_list: list) -> lxml.etree.Element:
 	return response_declaration
 
 #==============
-def create_item_body(question_html_text: str, choices_list: list, max_choices: int, shuffle: bool=True):
+def create_item_body(
+		question_html_text: str, choices_list: list, max_choices: int, shuffle: bool=True
+		) -> lxml.etree.Element:
 	## IMPORTANT !!!
 	"""
 	Create the <itemBody> element with the question text and choices.
@@ -157,7 +164,7 @@ def create_item_body(question_html_text: str, choices_list: list, max_choices: i
 	return item_body
 
 #==============
-def create_item_body_FIB(question_html_text: str, choices_list: list):
+def create_item_body_FIB(question_html_text: str, choices_list: list) -> lxml.etree.Element:
 	## IMPORTANT !!!
 	"""
 	Create the <itemBody> element with the question text and choices.
@@ -181,7 +188,7 @@ def create_item_body_FIB(question_html_text: str, choices_list: list):
 
 #==============
 def create_item_body_MATCH(question_html_text: str, prompts_list: list, choices_list: list,
-		shuffle: bool=True):
+		shuffle: bool=True) -> lxml.etree.Element:
 	"""
 	Create the <itemBody> element for a matching interaction.
 	"""
@@ -334,7 +341,9 @@ def create_response_declaration_ORDER(ordered_answers_list: list) -> lxml.etree.
 	return response_declaration
 
 #==============
-def create_item_body_ORDER(question_html_text: str, ordered_answers_list: list, shuffle: bool=True):
+def create_item_body_ORDER(
+		question_html_text: str, ordered_answers_list: list, shuffle: bool=True
+		) -> lxml.etree.Element:
 	"""
 	Create the <itemBody> element for an ordering interaction.
 	"""
@@ -391,7 +400,7 @@ def create_response_declarations_MULTI_FIB(answer_map: dict) -> list:
 	return response_declarations
 
 #==============
-def create_item_body_MULTI_FIB(question_html_text: str, answer_map: dict):
+def create_item_body_MULTI_FIB(question_html_text: str, answer_map: dict) -> lxml.etree.Element:
 	"""
 	Create <itemBody> for MULTI_FIB, replacing [key] markers with textEntryInteraction.
 	"""
@@ -445,7 +454,7 @@ def create_response_declaration_NUM(answer_float: float) -> lxml.etree.Element:
 	return response_declaration
 
 #==============
-def create_item_body_NUM(question_html_text: str):
+def create_item_body_NUM(question_html_text: str) -> lxml.etree.Element:
 	"""
 	Create the <itemBody> element for numeric entry using a textEntryInteraction.
 	"""

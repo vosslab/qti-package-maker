@@ -13,7 +13,7 @@ import yaml
 #==========================
 # special loader with duplicate key checking
 class UniqueKeyLoader(yaml.SafeLoader):
-	def construct_mapping(self, node, deep=False):
+	def construct_mapping(self, node: yaml.MappingNode, deep: bool = False) -> dict:
 		mapping = {}
 		for key_node, value_node in node.value:
 			key = self.construct_object(key_node, deep=deep)
@@ -26,7 +26,7 @@ class UniqueKeyLoader(yaml.SafeLoader):
 		return super().construct_mapping(node, deep)
 
 #=======================
-def _safe_load_unique(yaml_text):
+def _safe_load_unique(yaml_text: str) -> object:
 	loader = UniqueKeyLoader(yaml_text)
 	try:
 		return loader.get_single_data()
@@ -34,7 +34,7 @@ def _safe_load_unique(yaml_text):
 		loader.dispose()
 
 #=======================
-def read_yaml_file(yaml_file, msg=True):
+def read_yaml_file(yaml_file: str, msg: bool = True) -> object:
 	if not os.path.exists(yaml_file):
 		raise FileNotFoundError(f"YAML file not found: {yaml_file}")
 	if msg is True:
@@ -60,11 +60,11 @@ base_replacement_rule_dict = {
 }
 
 #=======================
-def append_clear_font_space_to_text(string_text):
+def append_clear_font_space_to_text(string_text: str) -> str:
 	return f'<span style="font-family: sans-serif; letter-spacing: 1px;">{string_text}</span>'
 
 #=======================
-def append_clear_font_space_to_list(list_of_text_strings):
+def append_clear_font_space_to_list(list_of_text_strings: list) -> list:
 	new_list_of_text_strings = []
 	for string_text in list_of_text_strings:
 		new_string_text = append_clear_font_space_to_text(string_text)
@@ -72,7 +72,7 @@ def append_clear_font_space_to_list(list_of_text_strings):
 	return new_list_of_text_strings
 
 #=======================
-def applyReplacementRulesToText(text_string, replacement_rule_dict=None):
+def applyReplacementRulesToText(text_string: str, replacement_rule_dict: dict | None = None) -> str:
 	if not isinstance(text_string, str):
 		raise TypeError(f"value is not string: {text_string}")
 	if replacement_rule_dict is None:
@@ -88,7 +88,7 @@ def applyReplacementRulesToText(text_string, replacement_rule_dict=None):
 	return text_string
 
 #=======================
-def applyReplacementRulesToList(list_of_text_strings, replacement_rule_dict=None):
+def applyReplacementRulesToList(list_of_text_strings: list, replacement_rule_dict: dict | None = None) -> list:
 	if replacement_rule_dict is None:
 		print("no extra replacement rules found")
 		replacement_rule_dict = base_replacement_rule_dict

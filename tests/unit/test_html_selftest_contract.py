@@ -48,7 +48,9 @@ def _full_html(item_type: str, sample_items: dict) -> str:
 	return getattr(qti_package_maker.engines.html_selftest.write_item, item_type)(item_cls)
 
 #============================================
-def _build_item(item_type: str, item_tuple):
+def _build_item(
+	item_type: str, item_tuple: tuple
+) -> qti_package_maker.assessment_items.item_types.BaseItem:
 	"""Construct an assessment item object from a tuple of constructor args."""
 	if item_type == "MC":
 		return qti_package_maker.assessment_items.item_types.MC(*item_tuple)
@@ -71,7 +73,7 @@ def _build_item(item_type: str, item_tuple):
 #============================================
 
 @pytest.mark.parametrize("item_type", ["MC", "MA", "MATCH", "NUM", "FIB", "MULTI_FIB", "ORDER"])
-def test_contract_element_ids_present(sample_items, item_type):
+def test_contract_element_ids_present(sample_items: dict, item_type: str) -> None:
 	"""
 	Every engine must emit the element IDs and function name that selftest_progress.js
 	relies on: question_html_<crc>, result_<crc>, and checkAnswer_<crc>().
@@ -91,7 +93,7 @@ def test_contract_element_ids_present(sample_items, item_type):
 #============================================
 
 @pytest.mark.parametrize("item_type", ["MC", "MA", "NUM", "FIB", "MULTI_FIB"])
-def test_contract_correct_string_emitted(sample_items, item_type):
+def test_contract_correct_string_emitted(sample_items: dict, item_type: str) -> None:
 	"""
 	MC, MA, NUM, FIB, and MULTI_FIB (full-correct path) all emit the literal string
 	'CORRECT' in their generated JavaScript. selftest_progress.js checks for this
@@ -105,7 +107,7 @@ def test_contract_correct_string_emitted(sample_items, item_type):
 # Result-string contract: MATCH emits 'Total Score: ${score} out of ${possible}'
 #============================================
 
-def test_contract_match_total_score_string(sample_items):
+def test_contract_match_total_score_string(sample_items: dict) -> None:
 	"""
 	MATCH engine emits the JS template literal 'Total Score: ${score} out of ${possible}'.
 	selftest_progress.js matches 'Total Score: X out of Y' with X==Y for full-correct.
@@ -119,7 +121,7 @@ def test_contract_match_total_score_string(sample_items):
 # Result-string contract: ORDER emits 'Correct positions: ${correct} of ${total}'
 #============================================
 
-def test_contract_order_correct_positions_string(sample_items):
+def test_contract_order_correct_positions_string(sample_items: dict) -> None:
 	"""
 	ORDER engine emits the JS template literal 'Correct positions: ${correct} of ${total}'.
 	selftest_progress.js matches 'Correct positions: X of Y' with X==Y for full-correct.
@@ -133,7 +135,7 @@ def test_contract_order_correct_positions_string(sample_items):
 # Result-string contract: MULTI_FIB partial path emits 'Correct: ${correctCount} of ${inputs.length}'
 #============================================
 
-def test_contract_multi_fib_partial_correct_string(sample_items):
+def test_contract_multi_fib_partial_correct_string(sample_items: dict) -> None:
 	"""
 	MULTI_FIB emits 'Correct: ${correctCount} of ${inputs.length}' for the partial-correct
 	path. selftest_progress.js also checks for 'Correct: X of Y' to show partial feedback.

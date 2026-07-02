@@ -43,7 +43,7 @@ def build_MC(item: item_types.MC) -> lxml.etree.Element:
 	correct_ident = label_idents[correct_index]
 
 	item_el, _outer_flow, response_block = common_xml.build_item_skeleton(
-		"Multiple Choice", 1, item.question_text
+		"Multiple Choice", 1, item.question_text, item.item_crc16
 	)
 	response_lid = build_choice_response_lid(
 		response_ident, "Single", label_idents, item.choices_list

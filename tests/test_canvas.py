@@ -1,11 +1,12 @@
 # Standard Library
 import os
+import pathlib
 
 # QTI Package Maker
 import qti_package_maker.package_interface
 
 
-def test_canvas_output(tmp_cwd):
+def test_canvas_output(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = qti_package_maker.package_interface.QTIPackageInterface("dummy", allow_mixed=True)
 	qti_packer.show_available_item_types()
 	question_text = "What is your favorite color?"

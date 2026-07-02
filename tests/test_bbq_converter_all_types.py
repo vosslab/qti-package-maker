@@ -1,6 +1,7 @@
 # Standard Library
 import os
 import sys
+import pathlib
 import zipfile
 import subprocess
 
@@ -23,7 +24,7 @@ def assert_zip_has_manifest(zip_path: str) -> None:
 
 
 @pytest.mark.smoke
-def test_bbq_converter_all_types(tmp_path, sample_bbq_lines):
+def test_bbq_converter_all_types(tmp_path: pathlib.Path, sample_bbq_lines: list) -> None:
 	tests_dir = os.path.abspath(os.path.dirname(__file__))
 	repo_root = os.path.abspath(os.path.join(tests_dir, ".."))
 	converter = os.path.join(repo_root, "tools", "bbq_converter.py")

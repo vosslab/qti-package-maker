@@ -6,8 +6,9 @@ collect_ignore = ["e2e", "playwright"]
 
 # Standard Library
 import os
-import subprocess
 import sys
+import pathlib
+import subprocess
 
 # Pip3 Library
 import pytest
@@ -25,7 +26,7 @@ if REPO_ROOT not in sys.path:
 
 
 @pytest.fixture
-def sample_items():
+def sample_items() -> dict:
 	return {
 		"MC": ("What is your favorite color?", ["blue", "red", "yellow"], "blue"),
 		"MA": (
@@ -42,7 +43,7 @@ def sample_items():
 
 
 @pytest.fixture
-def sample_bbq_lines():
+def sample_bbq_lines() -> list:
 	return [
 		"MC\t2+2?\t3\tincorrect\t4\tcorrect",
 		"MA\tPrime numbers?\t2\tcorrect\t3\tcorrect\t4\tincorrect\t5\tcorrect",
@@ -55,7 +56,7 @@ def sample_bbq_lines():
 
 
 @pytest.fixture
-def tmp_cwd(tmp_path, monkeypatch):
+def tmp_cwd(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> pathlib.Path:
 	monkeypatch.chdir(tmp_path)
 	return tmp_path
 

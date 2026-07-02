@@ -7,7 +7,7 @@ import random
 import qti_package_maker.common.anti_cheat
 
 
-def test_insert_hidden_terms_skips_excluded_tags():
+def test_insert_hidden_terms_skips_excluded_tags() -> None:
 	random.seed(0)
 	term_adder = qti_package_maker.common.anti_cheat.AntiCheat(hidden_terms=True, no_click_div=False, anticopy_script=False)
 	term_adder.hidden_term_density = 1.0
@@ -23,14 +23,14 @@ def test_insert_hidden_terms_skips_excluded_tags():
 	assert "<code>print('This should not be changed')</code>" in modified_text
 
 
-def test_wrap_text_in_no_click_div():
+def test_wrap_text_in_no_click_div() -> None:
 	div_adder = qti_package_maker.common.anti_cheat.AntiCheat(hidden_terms=False, no_click_div=True, anticopy_script=False)
 	protected_text = div_adder.modify_string("Protected text")
 	assert protected_text.startswith("<div ")
 	assert protected_text.endswith("</div>")
 
 
-def test_insert_hidden_terms_density_zero_no_change():
+def test_insert_hidden_terms_density_zero_no_change() -> None:
 	random.seed(1)
 	term_adder = qti_package_maker.common.anti_cheat.AntiCheat(hidden_terms=True, no_click_div=False, anticopy_script=False)
 	term_adder.hidden_term_density = 0.0

@@ -8,7 +8,7 @@ from qti_package_maker.assessment_items import item_types
 from qti_package_maker.engines.text2qti import read_package
 
 
-def test_read_mc_multiline_stem_and_feedback():
+def test_read_mc_multiline_stem_and_feedback() -> None:
 	question_block = """1. What is 2+3?
 Consider basic math.
 a) 6
@@ -25,7 +25,7 @@ c) 7
 	assert item.choice_feedback["5"] == "correct"
 
 
-def test_read_ma_multiline_stem_and_feedback():
+def test_read_ma_multiline_stem_and_feedback() -> None:
 	question_block = """1. Which are primes?
 Choose all that apply.
 [ ] 4
@@ -41,7 +41,7 @@ Choose all that apply.
 	assert item.choice_feedback["3"] == "nice pick"
 
 
-def test_read_num_range_and_tolerance():
+def test_read_num_range_and_tolerance() -> None:
 	question_block = """1. What is sqrt(2)?
 = [1.4140, 1.4144]
 ... use a calculator
@@ -53,7 +53,7 @@ def test_read_num_range_and_tolerance():
 	assert item.answer_feedback == "use a calculator"
 
 
-def test_read_num_missing_tolerance_defaults():
+def test_read_num_missing_tolerance_defaults() -> None:
 	question_block = """1. Approx pi?
 = 3.14
 """
@@ -62,7 +62,7 @@ def test_read_num_missing_tolerance_defaults():
 	assert item.tolerance_float == 0.0
 
 
-def test_read_fib_multiple_answers_with_feedback():
+def test_read_fib_multiple_answers_with_feedback() -> None:
 	question_block = """1. Who lives at the North Pole?
 * Santa
 * Santa Claus
@@ -74,7 +74,7 @@ def test_read_fib_multiple_answers_with_feedback():
 	assert item.answer_feedback == "winter folklore"
 
 
-def test_split_questions_requires_blank_line_between_blocks():
+def test_split_questions_requires_blank_line_between_blocks() -> None:
 	text = """1. What is 2+2?
 *a) 4
 b) 3
@@ -88,7 +88,7 @@ b) 3
 	assert len(blocks) == 2
 
 
-def test_process_text_lines_rejects_mixed_when_disallowed():
+def test_process_text_lines_rejects_mixed_when_disallowed() -> None:
 	text = """1. What is 2+2?
 *a) 4
 b) 3
@@ -100,5 +100,5 @@ b) 3
 		read_package.process_text_lines(text, allow_mixed=False)
 
 
-def test_make_item_cls_from_block_unknown():
+def test_make_item_cls_from_block_unknown() -> None:
 	assert read_package.make_item_cls_from_block("Not a question block") is None

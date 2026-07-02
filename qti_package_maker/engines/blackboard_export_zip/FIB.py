@@ -35,7 +35,7 @@ def build_FIB(item: item_types.FIB) -> lxml.etree.Element:
 		The `<item>` element.
 	"""
 	item_el, _outer_flow, response_block = common_xml.build_item_skeleton(
-		"Fill in the Blank", 1, item.question_text
+		"Fill in the Blank", 1, item.question_text, item.item_crc16
 	)
 	# Single text-entry field keyed "response".
 	response_str = lxml.etree.SubElement(response_block, "response_str", ident="response")

@@ -4,16 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qti_package_maker"
-version = "26.06"
+version = "26.07"
 description = "A package to create, manage, and convert QTI packages for quizzes and assessments in Canvas, Blackboard, Moodle, and LibreTexts ADAPT."
 readme = "README.md"
 authors = [{ name = "Dr. Neil Voss"}]
-# License issue references (kept for notes but not included in metadata)
-# None of these work:
-# https://github.com/pypa/twine/issues/1216
-# license = { text = "GPL-3.0-or-later" }
-# license = "GPL-3.0-or-later"
-# license = { file = "LICENSE" }
 requires-python = ">=3.9"
 keywords = [
     "QTI", "quiz", "assessment", "test package",
@@ -28,7 +22,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Education",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Programming Language :: Python :: 3",
     "Topic :: Education :: Testing",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -43,7 +37,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-license-files = []
+license-files = ["LICENSE.LGPL_v3"]
 
 # This will include all sub-packages
 [tool.setuptools.packages.find]

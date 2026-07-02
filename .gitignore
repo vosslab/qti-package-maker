@@ -4,6 +4,8 @@ ULTRA/
 *.html
 *.zip
 *.xml
+# real committed fixture, not generated output
+!tests/fixtures/bb_export_slice.zip
 
 report_*.txt
 
@@ -18,4 +20,14 @@ sdist/
 *.egg
 *.egg-info/
 site/
+# === NODE / PLAYWRIGHT ===
+node_modules/
+npm-debug.log*
+test-results/
+playwright-report/
+.playwright/
+# === LOCAL DATA ===
+# local-only evidence and sample trees, not tracked
+SAMPLES/
+
 

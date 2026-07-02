@@ -11,7 +11,7 @@ def _choice_token(crc16_text: str, idx: int) -> str:
 	return f"{crc16_text}_{idx:03d}"
 
 #==============
-def generate_drag_and_drop_js(crc16_text: str):
+def generate_drag_and_drop_js(crc16_text: str) -> str:
 	js = "<script>\n"
 	js += f"function initDragAndDrop_{crc16_text}() {{\n"
 	js += f"  const container = document.getElementById('question_html_{crc16_text}');\n"
@@ -57,7 +57,7 @@ def generate_drag_and_drop_js(crc16_text: str):
 	return js
 
 #==============
-def generate_check_answers_js(crc16_text: str):
+def generate_check_answers_js(crc16_text: str) -> str:
 	"""
 	Build JavaScript that scores ordering answers and updates feedback.
 	The function name is suffixed with the item CRC to avoid collisions when multiple
@@ -103,7 +103,7 @@ def generate_check_answers_js(crc16_text: str):
 	return js
 
 #==============
-def generate_dropzones_table(crc16_text: str, ordered_answers_list: list):
+def generate_dropzones_table(crc16_text: str, ordered_answers_list: list) -> str:
 	table = "<table style=\"border: 1px solid var(--qti-border, #999999); border-collapse: collapse; width: 100%;\">\n"
 	table += "<thead><tr>"
 	table += "<th style=\"width: 30px;\"></th>"
@@ -124,7 +124,7 @@ def generate_dropzones_table(crc16_text: str, ordered_answers_list: list):
 	return table
 
 #==============
-def generate_choices_list(crc16_text: str, ordered_answers_list: list):
+def generate_choices_list(crc16_text: str, ordered_answers_list: list) -> str:
 	html = '<p style="font-style: italic; font-size: 14px; margin-top: 10px;">Drag each answer into the correct position:</p>\n'
 	html += '<ul style="list-style: none; padding: 0;">\n'
 	colors = [
@@ -151,7 +151,7 @@ def generate_choices_list(crc16_text: str, ordered_answers_list: list):
 	return html
 
 #==============
-def generate_core_html(crc16_text: str, question_text: str, ordered_answers_list: list):
+def generate_core_html(crc16_text: str, question_text: str, ordered_answers_list: list) -> str:
 	html = f"<div id=\"question_html_{crc16_text}\">\n"
 	html += html_functions.format_question_text(crc16_text, question_text)
 	html += generate_dropzones_table(crc16_text, ordered_answers_list)
@@ -163,7 +163,9 @@ def generate_core_html(crc16_text: str, question_text: str, ordered_answers_list
 	return html
 
 #==============
-def generate_html(item_number: int, crc16_text: str, question_text: str, ordered_answers_list: list):
+def generate_html(
+		item_number: int, crc16_text: str, question_text: str, ordered_answers_list: list
+		) -> str:
 	raw_html = generate_core_html(crc16_text, question_text, ordered_answers_list)
 	formatted_html = string_functions.format_html_lxml(raw_html)
 	full_html = formatted_html

@@ -35,29 +35,75 @@ pool entry raises; multiple pool resources are read into one combined ItemBank;
 an unparseable item is skipped with a warning naming its source; an unknown
 `bbmd_questiontype` is skipped with a warning naming the type and source item;
 duplicate `item_crc16` collisions are handled by `ItemBank` dedup (logged there).
+
+Image capture: a pool carries images through two independent
+mechanisms, both resolved before any item is parsed so extraction does not
+depend on which item types the dispatch table supports. The csfiles
+mechanism embeds `<img src="@X@EmbeddedFile.requestUrlStub@X@bbcswebdav/
+xid-<n>_1">` tokens directly in item HTML; each token is cross-checked
+against a `res00005.dat`-shaped CSResourceLinks resource, resolved to the
+binary at `csfiles/home_dir/__xid-<n>_1.<ext>`, and named from the LOM
+sidecar `csfiles/home_dir/__xid-<n>_1.<ext>.xml`. The hotspot mechanism wires
+a `<matapplication uri="<hash>/<file>">` element (manifest-tracked) to a file
+under the pool resource's own directory (its manifest `xml:base`). Every
+resolved binary is copied into one fresh, persistent extraction directory
+under its recovered plain filename (collision-safe); `ItemBank.media_base_dir`
+is pointed at that directory (via `set_media_base_dir(media_dir, owned=True)`,
+so the bank owns and will remove it) and each parsed item's HTML is rewritten
+from the `@X@...` token to the plain recovered filename, so an imported
+package takes on the same shape as file-authored input and flows through the
+identical derived resolver in `ItemBank.collect_assets()`.
+
+When a pool carries images, the returned bank owns its extraction directory;
+call `bank.cleanup()` once done with an image-bearing imported bank to remove
+that directory. Pools with no images (the common case) return a bank with no
+directory to clean up, so calling `cleanup()` unconditionally is always safe.
 """
 
 # Standard Library
 import os
+import re
+import shutil
 import zipfile
 import tempfile
+import collections.abc
 
 # PIP3 modules
+import lxml.html
 import lxml.etree
 
 # QTI Package Maker
 from qti_package_maker.assessment_items import item_bank
 from qti_package_maker.assessment_items import item_types
+from qti_package_maker.common import media_assets
+from qti_package_maker.engines.blackboard_export_zip import common_xml
 
 #============================================
 # Manifest / namespace constants
 #============================================
 # Blackboard's content-packaging namespace; the manifest declares it as `bb:`.
 BB_NAMESPACE = "http://www.blackboard.com/content-packaging/"
+# The W3C XML namespace that carries the `xml:base` attribute on a resource.
+XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace"
 # The manifest resource that carries the question pool.
 POOL_RESOURCE_TYPE = "assessment/x-bb-qti-pool"
+# The manifest resource that carries the csfiles xid -> item CSResourceLinks.
+CSRESOURCELINKS_RESOURCE_TYPE = "course/x-bb-csresourcelinks"
 # The manifest filename inside every pool package.
 MANIFEST_FILENAME = "imsmanifest.xml"
+
+#============================================
+# Image capture constants
+#============================================
+# Matches a whole csfiles token (the part after common_xml.CSFILES_SRC_PREFIX)
+# anywhere in raw pool text, capturing just the "xid-<n>_1" identifier.
+CSFILES_TOKEN_PATTERN = re.compile(
+	re.escape(common_xml.CSFILES_SRC_PREFIX) + r"(xid-\d+_\d+)")
+# csfiles binaries and their LOM sidecars live under this subdirectory of the
+# pool package root.
+CSFILES_HOME_SUBDIR = os.path.join("csfiles", "home_dir")
+# The LOM namespace on the `.jpg.xml` sidecar's <identifier> element.
+LOM_NAMESPACE = "http://www.imsglobal.org/xsd/imsmd_rootv1p2p1"
 
 #============================================
 # Public entry point
@@ -74,7 +120,9 @@ def read_items_from_file(infile: str, allow_mixed: bool = False) -> item_bank.It
 
 	Returns:
 		An ItemBank holding every parsed item from every pool resource in the
-		package.
+		package. When the pool carries images, the bank owns its media
+		extraction directory (see the module docstring); call
+		`item_bank.cleanup()` once done with the returned bank.
 	"""
 	# A ZIP needs extracting first; a directory is read in place.
 	if zipfile.is_zipfile(infile):
@@ -100,14 +148,41 @@ def _read_from_zip(zip_path: str, allow_mixed: bool) -> item_bank.ItemBank:
 		The parsed ItemBank.
 	"""
 	# Extract into a self-cleaning temp directory, then read it as a directory.
+	# Any recovered media is copied out to its own persistent directory before
+	# this temp directory is cleaned up (see _extract_pool_media).
 	with tempfile.TemporaryDirectory() as temp_dir:
 		with zipfile.ZipFile(zip_path, "r") as zip_file:
-			zip_file.extractall(temp_dir)
+			_safe_extract_zip(zip_file, temp_dir)
 		# Some exports nest the package one folder deep inside the ZIP; resolve
 		# to whichever directory actually holds the manifest.
 		pool_root = _find_manifest_root(temp_dir)
 		new_item_bank = _read_from_directory(pool_root, allow_mixed)
 	return new_item_bank
+
+#============================================
+def _safe_extract_zip(zip_file: zipfile.ZipFile, dest_dir: str) -> None:
+	"""
+	Extract every entry of zip_file into dest_dir, rejecting path traversal.
+
+	Every member's resolved destination path is validated to stay within
+	dest_dir BEFORE anything is written, so a malicious "../" entry name
+	(zip-slip) raises instead of writing outside the extraction directory.
+
+	Args:
+		zip_file: An open ZipFile to extract.
+		dest_dir: The directory every entry must resolve inside of.
+
+	Raises:
+		ValueError: a member's path would escape dest_dir.
+	"""
+	dest_abs = os.path.abspath(dest_dir)
+	for member in zip_file.infolist():
+		member_path = os.path.normpath(os.path.join(dest_abs, member.filename))
+		if member_path != dest_abs and not member_path.startswith(dest_abs + os.sep):
+			raise ValueError(
+				f"zip entry '{member.filename}' escapes the extraction directory"
+			)
+	zip_file.extractall(dest_abs)
 
 #============================================
 def _find_manifest_root(start_dir: str) -> str:
@@ -155,6 +230,15 @@ def _read_from_directory(pool_dir: str, allow_mixed: bool) -> item_bank.ItemBank
 			f"Manifest '{manifest_path}' declares no '{POOL_RESOURCE_TYPE}' resource"
 		)
 	new_item_bank = item_bank.ItemBank(allow_mixed)
+	# Extract every referenced image into a fresh persistent directory BEFORE
+	# parsing items, so extraction covers the whole pool regardless of which
+	# item types the dispatch table supports (see module docstring).
+	media_dir, src_map_fn = _extract_pool_media(pool_dir, manifest_path, pool_dat_names)
+	if media_dir is not None:
+		# This bank created media_dir (see _extract_pool_media); mark it owned
+		# so cleanup() removes it once the caller is done with the bank,
+		# instead of leaking one tempfile.mkdtemp() directory per read.
+		new_item_bank.set_media_base_dir(media_dir, owned=True)
 	# Read every pool resource into one combined bank.
 	for pool_dat_name in pool_dat_names:
 		pool_dat_path = os.path.join(pool_dir, pool_dat_name)
@@ -162,7 +246,7 @@ def _read_from_directory(pool_dir: str, allow_mixed: bool) -> item_bank.ItemBank
 			raise ValueError(
 				f"Manifest points to missing pool file '{pool_dat_name}' in '{pool_dir}'"
 			)
-		_parse_pool_into_bank(pool_dat_path, new_item_bank)
+		_parse_pool_into_bank(pool_dat_path, new_item_bank, src_map_fn)
 	return new_item_bank
 
 #============================================
@@ -198,20 +282,374 @@ def _find_pool_dat_filenames(manifest_path: str) -> list[str]:
 	return pool_dat_names
 
 #============================================
-def _parse_pool_into_bank(pool_dat_path: str, new_item_bank: item_bank.ItemBank) -> None:
+# Image capture
+#============================================
+#============================================
+def _extract_pool_media(
+	pool_dir: str,
+	manifest_path: str,
+	pool_dat_names: list[str],
+) -> tuple[str | None, collections.abc.Callable[[str], str]]:
+	"""
+	Extract every csfiles and hotspot image referenced by the pool(s).
+
+	Scans the raw pool text for csfiles tokens and the parsed pool tree for
+	`<matapplication>` elements, independent of whether the enclosing item's
+	`bbmd_questiontype` is dispatchable, so extraction covers the whole
+	package. When at least one image is found, every resolved binary is
+	copied into one fresh persistent directory under a collision-safe
+	recovered filename.
+
+	Args:
+		pool_dir: The pool package root (contains imsmanifest.xml).
+		manifest_path: Path to imsmanifest.xml.
+		pool_dat_names: The pool `.dat` filenames declared by the manifest.
+
+	Returns:
+		A tuple of (media_dir, src_map_fn). media_dir is None and src_map_fn
+		is the identity function when the pool carries no images at all
+		(existing no-image behavior stays untouched).
+	"""
+	# desired_name_by_key maps a stable identity (csfiles token or
+	# matapplication uri) to its recovered/label basename, before collision
+	# disambiguation; source_path_by_key maps the same identity to the
+	# on-disk file to copy.
+	desired_name_by_key: dict[str, str] = {}
+	source_path_by_key: dict[str, str] = {}
+	csfiles_tokens: set[str] = set()
+
+	for pool_dat_name in pool_dat_names:
+		pool_dat_path = os.path.join(pool_dir, pool_dat_name)
+		csfiles_tokens.update(_scan_csfiles_tokens(pool_dat_path))
+		pool_base_dir = _find_pool_resource_base_dir(manifest_path, pool_dat_name)
+		for uri, label in _scan_matapplication_refs(pool_dat_path):
+			if uri in source_path_by_key:
+				continue
+			source_path_by_key[uri] = _resolve_package_relative_path(
+				pool_dir, os.path.join(pool_base_dir, uri)
+			)
+			desired_name_by_key[uri] = label
+
+	if csfiles_tokens:
+		# Only require the CSResourceLinks resource to exist when a csfiles
+		# token was actually found; packages with no csfiles images (e.g. the
+		# minimal test manifests) need not declare or ship res00005.dat.
+		resource_id_set = _load_csresourcelinks_ids(manifest_path, pool_dir)
+		for token in csfiles_tokens:
+			resource_id = token[len("xid-"):]
+			if resource_id not in resource_id_set:
+				raise ValueError(
+					f"csfiles token '{token}' has no matching resourceId in the "
+					f"CSResourceLinks manifest resource"
+				)
+			binary_path, sidecar_path = _find_csfiles_files(pool_dir, token)
+			source_path_by_key[token] = binary_path
+			desired_name_by_key[token] = _recover_original_filename(sidecar_path)
+
+	if not desired_name_by_key:
+		return None, _identity_src_map
+
+	output_name_by_key = _assign_collision_safe_names(desired_name_by_key)
+	media_dir = tempfile.mkdtemp(prefix="qti_bbexport_media_")
+	for key, source_path in source_path_by_key.items():
+		dest_path = os.path.join(media_dir, output_name_by_key[key])
+		shutil.copyfile(source_path, dest_path)
+
+	token_to_output_name = {
+		token: output_name_by_key[token] for token in csfiles_tokens
+	}
+	src_map_fn = _make_csfiles_src_mapper(token_to_output_name)
+	return media_dir, src_map_fn
+
+#============================================
+def _scan_csfiles_tokens(pool_dat_path: str) -> set[str]:
+	"""
+	Find every distinct csfiles xid token referenced anywhere in a pool `.dat`.
+
+	Scans the raw file text rather than the parsed tree: the token text
+	itself carries no characters that need XML unescaping, so a plain regex
+	scan finds every reference regardless of which item encloses it (an item
+	whose `bbmd_questiontype` is not dispatchable is scanned all the same).
+
+	Args:
+		pool_dat_path: Path to a pool `.dat`.
+
+	Returns:
+		The distinct "xid-<n>_1" tokens found, e.g. {"xid-23446236_1"}.
+	"""
+	with open(pool_dat_path, "r", encoding="utf-8") as pool_file:
+		pool_text = pool_file.read()
+	return set(CSFILES_TOKEN_PATTERN.findall(pool_text))
+
+#============================================
+def _scan_matapplication_refs(pool_dat_path: str) -> list[tuple[str, str]]:
+	"""
+	Find every hotspot `<matapplication uri>` element in a pool `.dat`.
+
+	Args:
+		pool_dat_path: Path to a pool `.dat`.
+
+	Returns:
+		A list of (uri, label) pairs, in document order. label falls back to
+		the uri's basename when the element carries no `label` attribute.
+	"""
+	tree = lxml.etree.parse(pool_dat_path)
+	refs = []
+	for matapplication_el in tree.getroot().iter("matapplication"):
+		uri = matapplication_el.get("uri")
+		if not uri:
+			continue
+		label = matapplication_el.get("label") or os.path.basename(uri)
+		refs.append((uri, label))
+	return refs
+
+#============================================
+def _find_pool_resource_base_dir(manifest_path: str, pool_dat_name: str) -> str:
+	"""
+	Return the pool resource's `xml:base` directory (where its files live).
+
+	Real Blackboard exports declare `xml:base="res00002"` on the pool
+	resource; hotspot `<matapplication uri>` paths resolve relative to this
+	directory, not the package root. Falls back to the `.dat` filename's own
+	stem when no `xml:base` is declared (e.g. minimal test manifests).
+
+	Args:
+		manifest_path: Path to imsmanifest.xml.
+		pool_dat_name: The pool `.dat` filename (its resource is looked up by
+			`bb:file`).
+
+	Returns:
+		The base directory name the pool resource's own files resolve under.
+	"""
+	tree = lxml.etree.parse(manifest_path)
+	bb_file_attr = f"{{{BB_NAMESPACE}}}file"
+	xml_base_attr = f"{{{XML_NAMESPACE}}}base"
+	for resource in tree.getroot().iter("resource"):
+		if resource.get(bb_file_attr) != pool_dat_name:
+			continue
+		xml_base = resource.get(xml_base_attr)
+		if xml_base:
+			return xml_base
+		break
+	return os.path.splitext(pool_dat_name)[0]
+
+#============================================
+def _load_csresourcelinks_ids(manifest_path: str, pool_dir: str) -> set[str]:
+	"""
+	Read every `resourceId` declared by the manifest's CSResourceLinks resource.
+
+	Args:
+		manifest_path: Path to imsmanifest.xml.
+		pool_dir: The pool package root the CSResourceLinks `.dat` lives under.
+
+	Returns:
+		The set of resourceId strings (e.g. {"23446236_1", ...}); empty when
+		the manifest declares no CSResourceLinks resource.
+
+	Raises:
+		ValueError: the manifest declares a CSResourceLinks resource whose
+			`.dat` file is missing.
+	"""
+	tree = lxml.etree.parse(manifest_path)
+	bb_file_attr = f"{{{BB_NAMESPACE}}}file"
+	resource_ids: set[str] = set()
+	for resource in tree.getroot().iter("resource"):
+		if resource.get("type") != CSRESOURCELINKS_RESOURCE_TYPE:
+			continue
+		dat_filename = resource.get(bb_file_attr)
+		if not dat_filename:
+			continue
+		dat_path = os.path.join(pool_dir, dat_filename)
+		if not os.path.isfile(dat_path):
+			raise ValueError(
+				f"Manifest points to missing CSResourceLinks file '{dat_filename}' "
+				f"in '{pool_dir}'"
+			)
+		links_tree = lxml.etree.parse(dat_path)
+		for link_el in links_tree.getroot().iter("cms_resource_link"):
+			resource_id_el = link_el.find("resourceId")
+			if resource_id_el is not None and resource_id_el.text:
+				resource_ids.add(resource_id_el.text.strip())
+	return resource_ids
+
+#============================================
+def _find_csfiles_files(pool_dir: str, token: str) -> tuple[str, str]:
+	"""
+	Locate a csfiles binary and its LOM sidecar for one xid token.
+
+	Args:
+		pool_dir: The pool package root.
+		token: A "xid-<n>_1" token (as found by _scan_csfiles_tokens).
+
+	Returns:
+		A tuple of (binary_path, sidecar_path).
+
+	Raises:
+		FileNotFoundError: the csfiles home dir, the binary, or the sidecar
+			is missing.
+	"""
+	home_dir = os.path.join(pool_dir, CSFILES_HOME_SUBDIR)
+	if not os.path.isdir(home_dir):
+		raise FileNotFoundError(
+			f"csfiles token '{token}' referenced but '{home_dir}' does not exist"
+		)
+	binary_prefix = f"__{token}."
+	binary_path = None
+	# deterministic scan order so ties (should not occur) resolve predictably
+	for filename in sorted(os.listdir(home_dir)):
+		if filename.startswith(binary_prefix) and not filename.endswith(".xml"):
+			binary_path = os.path.join(home_dir, filename)
+			break
+	if binary_path is None:
+		raise FileNotFoundError(
+			f"csfiles binary not found for token '{token}' under '{home_dir}'"
+		)
+	sidecar_path = binary_path + ".xml"
+	if not os.path.isfile(sidecar_path):
+		raise FileNotFoundError(
+			f"LOM sidecar not found for token '{token}': '{sidecar_path}'"
+		)
+	return binary_path, sidecar_path
+
+#============================================
+def _recover_original_filename(sidecar_path: str) -> str:
+	"""
+	Recover the original course-relative filename from a LOM sidecar.
+
+	The sidecar's `<identifier>` element carries
+	`"<xid>#/courses/<course>/<original-name>"`; the recovered name is the
+	basename of the path portion after the `#`.
+
+	Args:
+		sidecar_path: Path to a `.jpg.xml` LOM sidecar.
+
+	Returns:
+		The recovered original filename, e.g. "image-1.jpg".
+
+	Raises:
+		ValueError: the sidecar has no identifier, or it names no file.
+	"""
+	tree = lxml.etree.parse(sidecar_path)
+	identifier_el = tree.getroot().find(f".//{{{LOM_NAMESPACE}}}identifier")
+	if identifier_el is None or not identifier_el.text:
+		raise ValueError(f"LOM sidecar '{sidecar_path}' has no identifier element")
+	identifier_text = identifier_el.text.strip()
+	_, _, path_part = identifier_text.partition("#")
+	source_path = path_part if path_part else identifier_text
+	original_name = os.path.basename(source_path)
+	if not original_name:
+		raise ValueError(
+			f"LOM sidecar '{sidecar_path}' identifier names no file: '{identifier_text}'"
+		)
+	return original_name
+
+#============================================
+def _resolve_package_relative_path(pool_dir: str, relative_path: str) -> str:
+	"""
+	Resolve a package-relative path, rejecting traversal outside pool_dir.
+
+	Mirrors the traversal check in `media_assets.resolve_asset` /
+	`ItemBank.add_image`: the resolved path must stay within pool_dir.
+
+	Args:
+		pool_dir: The pool package root.
+		relative_path: A path relative to pool_dir (e.g. a matapplication
+			uri under the pool resource's `xml:base` directory).
+
+	Returns:
+		The resolved absolute path.
+
+	Raises:
+		ValueError: the path escapes pool_dir.
+		FileNotFoundError: the resolved file does not exist.
+	"""
+	base_abs = os.path.abspath(pool_dir)
+	resolved_path = os.path.normpath(os.path.join(base_abs, relative_path))
+	if resolved_path != base_abs and not resolved_path.startswith(base_abs + os.sep):
+		raise ValueError(f"path '{relative_path}' escapes the package root '{pool_dir}'")
+	if not os.path.isfile(resolved_path):
+		raise FileNotFoundError(f"referenced file not found: {resolved_path}")
+	return resolved_path
+
+#============================================
+def _assign_collision_safe_names(desired_name_by_key: dict[str, str]) -> dict[str, str]:
+	"""
+	Assign deterministic, collision-safe output names for a set of keys.
+
+	Same disambiguation pattern as `media_assets.assign_output_names`: keys
+	are processed in sorted order, and a colliding basename gets a
+	deterministic `name(1).ext`, `name(2).ext`, ... suffix.
+
+	Args:
+		desired_name_by_key: mapping of a stable identity key to its desired
+			(possibly colliding) basename.
+
+	Returns:
+		A mapping of the same keys to disambiguated output names.
+	"""
+	used_names: set[str] = set()
+	output_name_by_key = {}
+	for key in sorted(desired_name_by_key):
+		base_name = desired_name_by_key[key]
+		candidate_name = base_name
+		collision_counter = 1
+		while candidate_name in used_names:
+			root, extension = os.path.splitext(base_name)
+			candidate_name = f"{root}({collision_counter}){extension}"
+			collision_counter += 1
+		used_names.add(candidate_name)
+		output_name_by_key[key] = candidate_name
+	return output_name_by_key
+
+#============================================
+def _make_csfiles_src_mapper(
+	token_to_output_name: dict[str, str],
+) -> collections.abc.Callable[[str], str]:
+	"""
+	Build the `<img src>` rewrite function for one pool's csfiles tokens.
+
+	Args:
+		token_to_output_name: mapping of "xid-<n>_1" token to its recovered,
+			collision-safe filename in the extraction directory.
+
+	Returns:
+		A callable mapping an in-content src to its rewritten src; any src
+		that is not a recognized csfiles token passes through unchanged.
+	"""
+	#----------------------------------------------------
+	def _map_src(old_src: str) -> str:
+		if not old_src.startswith(common_xml.CSFILES_SRC_PREFIX):
+			return old_src
+		token = old_src[len(common_xml.CSFILES_SRC_PREFIX):]
+		return token_to_output_name.get(token, old_src)
+	return _map_src
+
+#============================================
+def _identity_src_map(src: str) -> str:
+	"""Return src unchanged; used when a pool carries no images."""
+	return src
+
+#============================================
+def _parse_pool_into_bank(
+	pool_dat_path: str,
+	new_item_bank: item_bank.ItemBank,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> None:
 	"""
 	Parse every `<item>` in one pool `.dat` and add the items to the bank.
 
 	Args:
 		pool_dat_path: Path to a pool `.dat` (the `assessment/x-bb-qti-pool` XML).
 		new_item_bank: The ItemBank to add parsed items to.
+		src_map_fn: Rewrites `<img src>` values while extracting item HTML (the
+			identity function when the pool carries no images).
 	"""
 	tree = lxml.etree.parse(pool_dat_path)
 	root = tree.getroot()
 	dat_filename = os.path.basename(pool_dat_path)
 	# Each question is one <item>; iterate them in document order.
 	for item_index, item_el in enumerate(root.iter("item")):
-		item_cls = _parse_one_item(item_el, dat_filename, item_index)
+		item_cls = _parse_one_item(item_el, dat_filename, item_index, src_map_fn)
 		# A None result means the item was skipped (unknown type or malformed);
 		# the per-item helper already warned with the source name.
 		if item_cls is not None:
@@ -222,6 +660,7 @@ def _parse_one_item(
 	item_el: lxml.etree.Element,
 	dat_filename: str,
 	item_index: int,
+	src_map_fn: collections.abc.Callable[[str], str],
 ) -> item_types.BaseItem | None:
 	"""
 	Parse a single `<item>` element into an internal item, or skip it.
@@ -230,6 +669,7 @@ def _parse_one_item(
 		item_el: The `<item>` lxml element.
 		dat_filename: The pool `.dat` filename, used in warning messages.
 		item_index: The item's positional index, used in warning messages.
+		src_map_fn: Rewrites `<img src>` values while extracting item HTML.
 
 	Returns:
 		The parsed item instance, or None when the item is skipped (unknown
@@ -252,7 +692,7 @@ def _parse_one_item(
 	# A malformed item body raises during parsing; catch it narrowly so one bad
 	# item does not abort the whole pool, and name the source in the warning.
 	try:
-		item_cls = read_function(item_el)
+		item_cls = read_function(item_el, src_map_fn)
 	except (ValueError, IndexError, KeyError, AttributeError) as exc:
 		print(f"Warning: skipping malformed {source}: {exc}")
 		return None
@@ -262,7 +702,10 @@ def _parse_one_item(
 # Shared element-text extraction helpers
 #============================================
 #============================================
-def _smart_text(material_owner: lxml.etree.Element) -> str:
+def _smart_text(
+	material_owner: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> str:
 	"""
 	Read the HTML payload from the first SMART_TEXT material under an element.
 
@@ -273,24 +716,81 @@ def _smart_text(material_owner: lxml.etree.Element) -> str:
 	Args:
 		material_owner: An element whose subtree contains a
 			`mat_formattedtext` element (a flow, response_label, etc.).
+		src_map_fn: Rewrites any `<img src>` found in the recovered HTML (the
+			identity function when the pool carries no images).
 
 	Returns:
-		The un-escaped HTML string (empty string when the carrier is empty).
+		The un-escaped HTML string (empty string when the carrier is empty),
+		with `<img src>` values rewritten by src_map_fn.
 	"""
 	# The first SMART_TEXT carrier anywhere beneath this element holds the HTML.
 	mat = material_owner.find(".//mat_formattedtext")
 	if mat is None:
 		raise ValueError("no mat_formattedtext element found")
 	# lxml returns the un-escaped text; None text (empty element) reads as "".
-	return mat.text if mat.text is not None else ""
+	html_text = mat.text if mat.text is not None else ""
+	# Real Blackboard exports carry unclosed void elements (<br>, <img ...>),
+	# which item construction rejects (every HTML field is validated as XML);
+	# self-close them before any src rewriting.
+	html_text = _repair_html_void_elements(html_text)
+	# Cheap no-op when html_text carries no <img> tag; rewrites csfiles tokens
+	# to their recovered plain filenames otherwise.
+	return media_assets.rewrite_html_srcs(html_text, src_map_fn)
 
 #============================================
-def _question_html(item_el: lxml.etree.Element) -> str:
+def _repair_html_void_elements(html_str: str) -> str:
+	"""
+	Self-close unclosed void HTML elements so html_str parses as valid XML.
+
+	Real Blackboard-exported HTML writes void elements like `<br>` and
+	`<img src="...">` without a self-closing slash; `item_types` construction
+	validates every HTML field as XML (`validator.validate_html`), which
+	rejects them. Re-serializing through lxml.html repairs this, but the
+	lxml.html/libxml2 parser also normalizes markup while it does so: every
+	element and attribute name is lowercased (`<STRONG>` becomes `<strong>`,
+	`SRC=` becomes `src=`), and any decoded entity is re-escaped as an ASCII
+	numeric character reference (see the `&nbsp;` handling below). Attribute
+	VALUES, attribute order, and visible text content are preserved.
+
+	Args:
+		html_str: an HTML-bearing field (already src-rewritten).
+
+	Returns:
+		The same content with every void element self-closed and element/
+		attribute names lowercased; a payload with no `<` is returned
+		unchanged.
+	"""
+	# fast exit: plain text carries nothing to repair
+	if "<" not in html_str:
+		return html_str
+	# wrap so lxml.html parses a fragment, not a full document
+	wrapped = f"<div>{html_str}</div>"
+	root = lxml.html.fromstring(wrapped)
+	parts = []
+	# text before the first child sits on the wrapper's own .text; a named
+	# entity like &nbsp; decodes to a literal non-ASCII char during parsing
+	# (item construction requires ASCII), so re-escape it as a numeric ref.
+	if root.text:
+		parts.append(root.text.encode("ascii", "xmlcharrefreplace").decode("ascii"))
+	for child in root:
+		# encoding="ascii" both self-closes void elements (method="xml") and
+		# re-escapes any decoded entity (e.g. &nbsp;) as an ASCII-safe numeric
+		# character reference instead of a literal non-ASCII byte.
+		child_bytes = lxml.html.tostring(child, encoding="ascii", method="xml")
+		parts.append(child_bytes.decode("ascii"))
+	return "".join(parts)
+
+#============================================
+def _question_html(
+	item_el: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> str:
 	"""
 	Read the question HTML from an item's `QUESTION_BLOCK`.
 
 	Args:
 		item_el: The `<item>` element.
+		src_map_fn: Rewrites any `<img src>` found in the recovered HTML.
 
 	Returns:
 		The un-escaped question HTML.
@@ -299,7 +799,7 @@ def _question_html(item_el: lxml.etree.Element) -> str:
 	question_block = _find_flow_by_class(item_el, "QUESTION_BLOCK")
 	if question_block is None:
 		raise ValueError("no QUESTION_BLOCK flow found")
-	return _smart_text(question_block)
+	return _smart_text(question_block, src_map_fn)
 
 #============================================
 def _find_flow_by_class(parent: lxml.etree.Element, class_value: str) -> lxml.etree.Element | None:
@@ -362,12 +862,16 @@ def _choice_response_lid(item_el: lxml.etree.Element) -> lxml.etree.Element:
 	return response_lid
 
 #============================================
-def _read_choice_labels(response_lid: lxml.etree.Element) -> tuple[list[str], list[str]]:
+def _read_choice_labels(
+	response_lid: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> tuple[list[str], list[str]]:
 	"""
 	Read the choice idents and choice HTML texts from a choice `response_lid`.
 
 	Args:
 		response_lid: The choice `<response_lid>` element.
+		src_map_fn: Rewrites any `<img src>` found in each choice's HTML.
 
 	Returns:
 		A tuple of (label idents, choice HTML strings), index-aligned.
@@ -377,7 +881,7 @@ def _read_choice_labels(response_lid: lxml.etree.Element) -> tuple[list[str], li
 	# Each response_label is one choice; its ident keys scoring, its text is shown.
 	for response_label in response_lid.iter("response_label"):
 		label_idents.append(response_label.get("ident"))
-		choice_texts.append(_smart_text(response_label))
+		choice_texts.append(_smart_text(response_label, src_map_fn))
 	if not choice_texts:
 		raise ValueError("choice question has no response_label choices")
 	return label_idents, choice_texts
@@ -459,7 +963,10 @@ def _is_multiple_cardinality(response_lid: lxml.etree.Element) -> bool:
 	return response_lid.get("rcardinality") == "Multiple"
 
 #============================================
-def _read_choice_item(item_el: lxml.etree.Element) -> item_types.BaseItem:
+def _read_choice_item(
+	item_el: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> item_types.BaseItem:
 	"""
 	Read an MC or MA item, choosing the type from the response cardinality.
 
@@ -469,13 +976,14 @@ def _read_choice_item(item_el: lxml.etree.Element) -> item_types.BaseItem:
 
 	Args:
 		item_el: The `<item>` element.
+		src_map_fn: Rewrites any `<img src>` found in the item's HTML.
 
 	Returns:
 		An MC or MA item instance.
 	"""
-	question_html = _question_html(item_el)
+	question_html = _question_html(item_el, src_map_fn)
 	response_lid = _choice_response_lid(item_el)
-	label_idents, choice_texts = _read_choice_labels(response_lid)
+	label_idents, choice_texts = _read_choice_labels(response_lid, src_map_fn)
 	correct_idents = _correct_choice_idents(item_el)
 	# Map correct idents back to their choice texts via positional alignment.
 	ident_to_text = dict(zip(label_idents, choice_texts))
@@ -495,7 +1003,10 @@ def _read_choice_item(item_el: lxml.etree.Element) -> item_types.BaseItem:
 # Fill-in-the-blank readers (FIB / MULTI_FIB)
 #============================================
 #============================================
-def _read_FIB(item_el: lxml.etree.Element) -> item_types.FIB:
+def _read_FIB(
+	item_el: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> item_types.FIB:
 	"""
 	Read a Fill in the Blank item.
 
@@ -504,11 +1015,12 @@ def _read_FIB(item_el: lxml.etree.Element) -> item_types.FIB:
 
 	Args:
 		item_el: The `<item>` element.
+		src_map_fn: Rewrites any `<img src>` found in the question HTML.
 
 	Returns:
 		A FIB item instance.
 	"""
-	question_html = _question_html(item_el)
+	question_html = _question_html(item_el, src_map_fn)
 	resprocessing = _resprocessing(item_el)
 	answers_list = []
 	# Every non-incorrect branch carries one accepted answer for the response field.
@@ -523,7 +1035,10 @@ def _read_FIB(item_el: lxml.etree.Element) -> item_types.FIB:
 	return item_types.FIB(question_html, answers_list)
 
 #============================================
-def _read_MULTI_FIB(item_el: lxml.etree.Element) -> item_types.MULTI_FIB:
+def _read_MULTI_FIB(
+	item_el: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> item_types.MULTI_FIB:
 	"""
 	Read a Fill in the Blank Plus item.
 
@@ -533,11 +1048,12 @@ def _read_MULTI_FIB(item_el: lxml.etree.Element) -> item_types.MULTI_FIB:
 
 	Args:
 		item_el: The `<item>` element.
+		src_map_fn: Rewrites any `<img src>` found in the question HTML.
 
 	Returns:
 		A MULTI_FIB item instance.
 	"""
-	question_html = _question_html(item_el)
+	question_html = _question_html(item_el, src_map_fn)
 	resprocessing = _resprocessing(item_el)
 	# Find the correct branch holding the <and> of <or> blank groups.
 	correct_branch = None
@@ -564,7 +1080,10 @@ def _read_MULTI_FIB(item_el: lxml.etree.Element) -> item_types.MULTI_FIB:
 # Numeric reader (NUM)
 #============================================
 #============================================
-def _read_NUM(item_el: lxml.etree.Element) -> item_types.NUM:
+def _read_NUM(
+	item_el: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> item_types.NUM:
 	"""
 	Read a Numeric item.
 
@@ -577,11 +1096,12 @@ def _read_NUM(item_el: lxml.etree.Element) -> item_types.NUM:
 
 	Args:
 		item_el: The `<item>` element.
+		src_map_fn: Rewrites any `<img src>` found in the question HTML.
 
 	Returns:
 		A NUM item instance.
 	"""
-	question_html = _question_html(item_el)
+	question_html = _question_html(item_el, src_map_fn)
 	resprocessing = _resprocessing(item_el)
 	# The numeric correct branch is the one that is not titled "incorrect".
 	correct_branch = None
@@ -614,7 +1134,10 @@ def _read_NUM(item_el: lxml.etree.Element) -> item_types.NUM:
 # Matching reader (MATCH)
 #============================================
 #============================================
-def _read_MATCH(item_el: lxml.etree.Element) -> item_types.MATCH:
+def _read_MATCH(
+	item_el: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> item_types.MATCH:
 	"""
 	Read a Matching item, recovering the prompt->choice pairing.
 
@@ -632,11 +1155,12 @@ def _read_MATCH(item_el: lxml.etree.Element) -> item_types.MATCH:
 
 	Args:
 		item_el: The `<item>` element.
+		src_map_fn: Rewrites any `<img src>` found in the item's HTML.
 
 	Returns:
 		A MATCH item instance with prompts and choices in paired order.
 	"""
-	question_html = _question_html(item_el)
+	question_html = _question_html(item_el, src_map_fn)
 	# RIGHT_MATCH_BLOCK is a sibling of RESPONSE_BLOCK in the real samples but a
 	# child of it in the engine's own output; search the whole item so both
 	# placements resolve. There is exactly one RIGHT_MATCH_BLOCK per item.
@@ -647,7 +1171,7 @@ def _read_MATCH(item_el: lxml.etree.Element) -> item_types.MATCH:
 	if right_match_block is None:
 		raise ValueError("MATCH item has no RIGHT_MATCH_BLOCK")
 	# The right-side choice texts, indexed positionally as written.
-	choice_texts = _read_right_match_texts(right_match_block)
+	choice_texts = _read_right_match_texts(right_match_block, src_map_fn)
 
 	# Map each prompt's response_lid ident -> its correct label ident.
 	correct_ident_by_prompt = _match_correct_idents(item_el)
@@ -661,7 +1185,7 @@ def _read_MATCH(item_el: lxml.etree.Element) -> item_types.MATCH:
 			raise ValueError("MATCH prompt block has no response_lid")
 		prompt_lid_ident = prompt_response_lid.get("ident")
 		# The prompt's display text is its FORMATTED_TEXT_BLOCK (after the lid).
-		prompt_text = _match_prompt_text(prompt_block)
+		prompt_text = _match_prompt_text(prompt_block, src_map_fn)
 		# The label idents in this prompt, positionally aligned to the choices.
 		label_idents = [
 			label.get("ident")
@@ -687,12 +1211,16 @@ def _read_MATCH(item_el: lxml.etree.Element) -> item_types.MATCH:
 	return item_types.MATCH(question_html, prompts_list, choices_list)
 
 #============================================
-def _read_right_match_texts(right_match_block: lxml.etree.Element) -> list[str]:
+def _read_right_match_texts(
+	right_match_block: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> list[str]:
 	"""
 	Read the right-side choice texts from a `RIGHT_MATCH_BLOCK`, in order.
 
 	Args:
 		right_match_block: The `<flow class="RIGHT_MATCH_BLOCK">` element.
+		src_map_fn: Rewrites any `<img src>` found in each choice's HTML.
 
 	Returns:
 		The choice HTML strings, in document order.
@@ -700,7 +1228,7 @@ def _read_right_match_texts(right_match_block: lxml.etree.Element) -> list[str]:
 	choice_texts = []
 	# Each direct child flow class="Block" is one choice's formatted text.
 	for choice_flow in right_match_block.findall("flow"):
-		choice_texts.append(_smart_text(choice_flow))
+		choice_texts.append(_smart_text(choice_flow, src_map_fn))
 	if not choice_texts:
 		raise ValueError("RIGHT_MATCH_BLOCK has no choice texts")
 	return choice_texts
@@ -733,7 +1261,10 @@ def _match_prompt_blocks(presentation: lxml.etree.Element) -> list[lxml.etree.El
 	return prompt_blocks
 
 #============================================
-def _match_prompt_text(prompt_block: lxml.etree.Element) -> str:
+def _match_prompt_text(
+	prompt_block: lxml.etree.Element,
+	src_map_fn: collections.abc.Callable[[str], str],
+) -> str:
 	"""
 	Read a MATCH prompt's display text from its FORMATTED_TEXT_BLOCK.
 
@@ -742,6 +1273,7 @@ def _match_prompt_text(prompt_block: lxml.etree.Element) -> str:
 
 	Args:
 		prompt_block: The per-prompt `<flow class="Block">` element.
+		src_map_fn: Rewrites any `<img src>` found in the prompt's HTML.
 
 	Returns:
 		The un-escaped prompt HTML.
@@ -750,7 +1282,7 @@ def _match_prompt_text(prompt_block: lxml.etree.Element) -> str:
 	# child of the prompt block (not the one nested inside the response_lid).
 	for flow in prompt_block.findall("flow"):
 		if flow.get("class") == "FORMATTED_TEXT_BLOCK":
-			return _smart_text(flow)
+			return _smart_text(flow, src_map_fn)
 	raise ValueError("MATCH prompt block has no FORMATTED_TEXT_BLOCK display text")
 
 #============================================

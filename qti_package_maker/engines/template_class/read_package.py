@@ -8,7 +8,7 @@ from qti_package_maker.assessment_items import item_bank
 from qti_package_maker.assessment_items import item_types
 
 #=====================================================
-def read_MC(input_data):
+def read_MC(input_data: object) -> item_types.MC:
 	raise NotImplementedError("this is a template class, each engine must write their own function")
 	question_text = input_data
 	choices_list = input_data
@@ -17,7 +17,7 @@ def read_MC(input_data):
 	return item_cls
 
 #=====================================================
-def read_MA(input_data):
+def read_MA(input_data: object) -> item_types.MA:
 	raise NotImplementedError("this is a template class, each engine must write their own function")
 	question_text = input_data
 	choices_list = input_data
@@ -26,7 +26,7 @@ def read_MA(input_data):
 	return item_cls
 
 #=====================================================
-def read_MATCH(input_data):
+def read_MATCH(input_data: object) -> item_types.MATCH:
 	raise NotImplementedError("this is a template class, each engine must write their own function")
 	question_text = input_data
 	prompts_list = input_data
@@ -35,7 +35,7 @@ def read_MATCH(input_data):
 	return item_cls
 
 #=====================================================
-def read_NUM(input_data):
+def read_NUM(input_data: object) -> item_types.NUM:
 	raise NotImplementedError("this is a template class, each engine must write their own function")
 	question_text = input_data
 	answer_float = input_data
@@ -44,7 +44,7 @@ def read_NUM(input_data):
 	return item_cls
 
 #=====================================================
-def read_FIB(input_data):
+def read_FIB(input_data: object) -> item_types.FIB:
 	raise NotImplementedError("this is a template class, each engine must write their own function")
 	question_text = input_data
 	answers_list = input_data
@@ -52,7 +52,7 @@ def read_FIB(input_data):
 	return item_cls
 
 #=====================================================
-def read_MULTI_FIB(input_data):
+def read_MULTI_FIB(input_data: object) -> item_types.MULTI_FIB:
 	raise NotImplementedError("this is a template class, each engine must write their own function")
 	question_text = input_data
 	answer_map = input_data
@@ -60,7 +60,7 @@ def read_MULTI_FIB(input_data):
 	return item_cls
 
 #=====================================================
-def read_ORDER(input_data):
+def read_ORDER(input_data: object) -> item_types.ORDER:
 	raise NotImplementedError("this is a template class, each engine must write their own function")
 	question_text = input_data
 	ordered_answers_list = input_data
@@ -68,7 +68,7 @@ def read_ORDER(input_data):
 	return item_cls
 
 #=====================================================
-def make_item_cls_from_line(text_line: str):
+def make_item_cls_from_line(text_line: str) -> None:
 	raise NotImplementedError("this is a template class, each engine must write their own function")
 	return
 
@@ -90,7 +90,7 @@ def read_items_from_file(input_file: str, allow_mixed: bool=False) -> list:
 	return new_item_bank
 
 #=====================================================
-def main():
+def main() -> None:
 	# put some unit tests here
 	pass
 

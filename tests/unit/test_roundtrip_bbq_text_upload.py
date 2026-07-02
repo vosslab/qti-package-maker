@@ -1,4 +1,5 @@
 # Standard Library
+import pathlib
 
 # Pip3 Library
 
@@ -8,7 +9,7 @@ from qti_package_maker.engines.bbq_text_upload import write_item
 from qti_package_maker.engines.bbq_text_upload import read_package
 
 
-def _build_items():
+def _build_items() -> list:
 	return [
 		item_types.MC("MC question?", ["A", "B", "C"], "B"),
 		item_types.MA("MA question?", ["A", "B", "C", "D"], ["A", "D"]),
@@ -20,12 +21,12 @@ def _build_items():
 	]
 
 
-def _write_item_text(item_cls):
+def _write_item_text(item_cls: item_types.BaseItem) -> str:
 	writer = getattr(write_item, item_cls.item_type)
 	return writer(item_cls)
 
 
-def test_bbq_roundtrip_all_supported_types(tmp_path):
+def test_bbq_roundtrip_all_supported_types(tmp_path: pathlib.Path) -> None:
 	items = _build_items()
 	content = "".join(_write_item_text(item) for item in items)
 	infile = tmp_path / "bbq-roundtrip.txt"

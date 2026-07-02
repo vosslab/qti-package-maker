@@ -1,5 +1,5 @@
 
-def _plain_tabulate(rows, headers=()):
+def _plain_tabulate(rows: list, headers: tuple = ()) -> str:
 	rows = rows or []
 	headers = list(headers) if headers else []
 
@@ -22,7 +22,7 @@ def _plain_tabulate(rows, headers=()):
 		for i, cell in enumerate(r):
 			col_widths[i] = max(col_widths[i], len(cell))
 
-	def fmt_row(r):
+	def fmt_row(r: list) -> str:
 		return " | ".join(r[i].ljust(col_widths[i]) for i in range(col_count)).rstrip()
 
 	lines = []
@@ -40,6 +40,6 @@ def _plain_tabulate(rows, headers=()):
 try:
 	from tabulate import tabulate as tabulate  # type: ignore
 except ImportError:
-	def tabulate(rows, headers=(), tablefmt=None):  # noqa: ARG001
+	def tabulate(rows: list, headers: tuple = (), tablefmt: str | None = None) -> str:  # noqa: ARG001
 		return _plain_tabulate(rows, headers=headers)
 

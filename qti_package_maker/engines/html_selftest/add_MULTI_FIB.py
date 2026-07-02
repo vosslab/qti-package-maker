@@ -21,7 +21,7 @@ def _inject_blanks(question_text: str, answer_map: dict) -> str:
 	Replace [blank] markers in a MULTI_FIB stem with input elements.
 	"""
 	pattern = re.compile(r"\[([^\]]+)\]")
-	def repl(match):
+	def repl(match: re.Match) -> str:
 		key = match.group(1)
 		if key in answer_map:
 			return _make_input(key, answer_map[key])
@@ -29,7 +29,7 @@ def _inject_blanks(question_text: str, answer_map: dict) -> str:
 	return pattern.sub(repl, question_text)
 
 #==============
-def generate_core_html(crc16_text: str, question_text: str, answer_map: dict):
+def generate_core_html(crc16_text: str, question_text: str, answer_map: dict) -> str:
 	stem_with_inputs = _inject_blanks(question_text, answer_map)
 	html_content = f"<div id=\"question_html_{crc16_text}\">\n"
 	html_content += html_functions.format_question_text(crc16_text, stem_with_inputs)
@@ -94,7 +94,7 @@ def generate_javascript(crc16_text: str) -> str:
 	return js
 
 #==============
-def generate_html(item_number: int, crc16_text: str, question_text: str, answer_map: dict):
+def generate_html(item_number: int, crc16_text: str, question_text: str, answer_map: dict) -> str:
 	raw_html = generate_core_html(crc16_text, question_text, answer_map)
 	formatted_html = string_functions.format_html_lxml(raw_html)
 	full_html = formatted_html

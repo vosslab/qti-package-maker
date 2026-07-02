@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-def main():
+def main() -> None:
 	parser = argparse.ArgumentParser(description="Generate CAM16 color tables and red scans.")
 	parser.add_argument("--best-red", action="store_true", help="Report best red offsets and write red scan HTML.")
 	parser.add_argument("--scan-output", default="red_scan.html", help="Output file for red scan HTML.")

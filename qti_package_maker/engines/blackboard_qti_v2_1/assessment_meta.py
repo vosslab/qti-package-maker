@@ -89,7 +89,7 @@ def create_assessment_section(assessment_file_name_list: list) -> lxml.etree.Ele
 
 #==============
 #==============
-def dummy_test_run():
+def dummy_test_run() -> None:
 	# Generate assessment_meta00001.xml
 	assessment_file_name_list = [
 		'item_00001.xml',

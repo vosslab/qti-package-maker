@@ -37,7 +37,7 @@ def build_MULTI_FIB(item: item_types.MULTI_FIB) -> lxml.etree.Element:
 	blank_count = len(blank_keys)
 
 	item_el, _outer_flow, response_block = common_xml.build_item_skeleton(
-		"Fill in the Blank Plus", blank_count, item.question_text
+		"Fill in the Blank Plus", blank_count, item.question_text, item.item_crc16
 	)
 	# One text-entry field per blank, keyed by the blank label.
 	for blank_key in blank_keys:

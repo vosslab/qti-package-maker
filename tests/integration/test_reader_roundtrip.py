@@ -1,23 +1,25 @@
 # Standard Library
+import pathlib
 
 # Pip3 Library
 import pytest
 
 # QTI Package Maker
 from qti_package_maker import package_interface
+from qti_package_maker.assessment_items import item_bank
 from qti_package_maker.engines.bbq_text_upload import read_package as bbq_read_package
 from qti_package_maker.engines.okla_chrst_bqgen import read_package as okla_read_package
 from qti_package_maker.engines.text2qti import read_package as text2qti_read_package
 
 
-def _items_by_type(bank):
+def _items_by_type(bank: item_bank.ItemBank) -> dict:
 	items = {}
 	for item in bank.items_dict.values():
 		items.setdefault(item.item_type, []).append(item)
 	return items
 
 
-def test_bbq_text_upload_roundtrip_all_types(tmp_cwd):
+def test_bbq_text_upload_roundtrip_all_types(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = package_interface.QTIPackageInterface("bbq-roundtrip", verbose=False, allow_mixed=True)
 	qti_packer.add_item("MC", ("Pick a color.", ["red", "blue", "green"], "blue"))
 	qti_packer.add_item("MA", ("Select fruits.", ["apple", "carrot", "banana"], ["apple", "banana"]))
@@ -72,7 +74,9 @@ def test_bbq_text_upload_roundtrip_all_types(tmp_cwd):
 		("FIB", ("Capital of France?", ["Paris"]), (["Paris"],)),
 	],
 )
-def test_text2qti_roundtrip_single_item(tmp_cwd, item_type, item_tuple, expected):
+def test_text2qti_roundtrip_single_item(
+		tmp_cwd: pathlib.Path, item_type: str, item_tuple: tuple, expected: tuple
+		) -> None:
 	qti_packer = package_interface.QTIPackageInterface("text2qti-rt", verbose=False)
 	qti_packer.add_item(item_type, item_tuple)
 	outfile = qti_packer.save_package("text2qti")
@@ -88,7 +92,7 @@ def test_text2qti_roundtrip_single_item(tmp_cwd, item_type, item_tuple, expected
 		assert item.get_tuple() == expected
 
 
-def test_okla_chrst_bqgen_roundtrip(tmp_cwd):
+def test_okla_chrst_bqgen_roundtrip(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = package_interface.QTIPackageInterface("okla-rt", verbose=False, allow_mixed=True)
 	qti_packer.add_item("MC", ("What is 2+2?", ["3", "4"], "4"))
 	qti_packer.add_item("MA", ("Pick primes.", ["2", "3", "4"], ["2", "3"]))

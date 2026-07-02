@@ -1,17 +1,18 @@
 # Standard Library
+import pathlib
 import zipfile
 
 # QTI Package Maker
 import qti_package_maker.package_interface
 
 
-def _make_packer():
+def _make_packer() -> qti_package_maker.package_interface.QTIPackageInterface:
 	qti_packer = qti_package_maker.package_interface.QTIPackageInterface("engine-out", verbose=False, allow_mixed=True)
 	qti_packer.add_item("MC", ("What is 2 + 2?", ["3", "4"], "4"))
 	return qti_packer
 
 
-def test_canvas_qti_v1_2_output(tmp_cwd):
+def test_canvas_qti_v1_2_output(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = _make_packer()
 	outfile = qti_packer.save_package("canvas_qti_v1_2")
 	assert outfile
@@ -21,7 +22,7 @@ def test_canvas_qti_v1_2_output(tmp_cwd):
 		assert any(name.endswith(".xml") for name in names)
 
 
-def test_blackboard_qti_v2_1_output(tmp_cwd):
+def test_blackboard_qti_v2_1_output(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = _make_packer()
 	outfile = qti_packer.save_package("blackboard_qti_v2_1")
 	assert outfile
@@ -31,7 +32,7 @@ def test_blackboard_qti_v2_1_output(tmp_cwd):
 		assert any(name.endswith(".xml") for name in names)
 
 
-def test_human_readable_output(tmp_cwd):
+def test_human_readable_output(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = _make_packer()
 	outfile = qti_packer.save_package("human_readable")
 	assert outfile
@@ -40,7 +41,7 @@ def test_human_readable_output(tmp_cwd):
 	assert "What is 2 + 2?" in contents
 
 
-def test_html_selftest_output(tmp_cwd):
+def test_html_selftest_output(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = _make_packer()
 	outfile = qti_packer.save_package("html_selftest")
 	assert outfile
@@ -50,7 +51,7 @@ def test_html_selftest_output(tmp_cwd):
 	assert "What is 2 + 2?" in contents
 
 
-def test_bbq_text_upload_output(tmp_cwd):
+def test_bbq_text_upload_output(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = _make_packer()
 	outfile = qti_packer.save_package("bbq_text_upload")
 	assert outfile
@@ -60,7 +61,7 @@ def test_bbq_text_upload_output(tmp_cwd):
 	assert "correct" in contents
 
 
-def test_text2qti_output(tmp_cwd):
+def test_text2qti_output(tmp_cwd: pathlib.Path) -> None:
 	qti_packer = _make_packer()
 	outfile = qti_packer.save_package("text2qti")
 	assert outfile

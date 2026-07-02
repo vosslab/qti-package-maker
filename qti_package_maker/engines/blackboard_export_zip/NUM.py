@@ -34,7 +34,7 @@ def build_NUM(item: item_types.NUM) -> lxml.etree.Element:
 	upper_bound = item.answer_float + item.tolerance_float
 
 	item_el, _outer_flow, response_block = common_xml.build_item_skeleton(
-		"Numeric", 1, item.question_text
+		"Numeric", 1, item.question_text, item.item_crc16
 	)
 	# Numeric entry field keyed "response".
 	response_num = lxml.etree.SubElement(response_block, "response_num", ident="response")

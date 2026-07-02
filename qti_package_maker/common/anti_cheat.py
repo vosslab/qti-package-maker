@@ -9,6 +9,7 @@ import importlib.resources
 # QTI Package Maker
 import qti_package_maker
 from qti_package_maker.common import string_functions
+from qti_package_maker.assessment_items import item_types
 
 # =====================================================================================
 
@@ -22,7 +23,7 @@ class AntiCheat:
 	- Injects anti-copy JavaScript to block printing and screenshots.
 	"""
 
-	def __init__(self, hidden_terms=True, no_click_div=True, anticopy_script=False):
+	def __init__(self, hidden_terms: bool = True, no_click_div: bool = True, anticopy_script: bool = False) -> None:
 		"""
 		Initializes anti-cheating settings.
 		"""
@@ -46,7 +47,7 @@ class AntiCheat:
 
 	# ============= MODIFY ITEM TYPE CLASS =================
 
-	def modify_item_cls(self, item_cls):
+	def modify_item_cls(self, item_cls: item_types.BaseItem) -> item_types.BaseItem:
 		"""
 		Applies anti-cheating modifications to an assessment item.
 
@@ -79,13 +80,13 @@ class AntiCheat:
 
 	# ============= MODIFY STRINGS/LISTS =============
 
-	def modify_list(self, string_list):
+	def modify_list(self, string_list: list) -> list:
 		"""
 		Applies anti-cheating modifications to a list of strings.
 		"""
 		return [self.modify_string(text) for text in string_list]
 
-	def modify_string(self, string_text):
+	def modify_string(self, string_text: str) -> str:
 		"""
 		Applies anti-cheating modifications to a single string.
 
@@ -110,7 +111,7 @@ class AntiCheat:
 	# Anti-Copy JavaScript: Disables printing, copying, and screenshots
 	# =======================================================================
 
-	def get_anticopy_js_function(self):
+	def get_anticopy_js_function(self) -> str:
 		"""
 		Generates JavaScript to prevent various forms of content theft.
 
@@ -142,7 +143,7 @@ class AntiCheat:
 	# =======================================================================
 
 	# ============
-	def _load_hidden_term_bank(self):
+	def _load_hidden_term_bank(self) -> None:
 		"""
 		Loads a list of hidden words from a predefined file.
 
@@ -219,7 +220,7 @@ class AntiCheat:
 # Anti-Copy Protection: Prevents text selection, copying, right-clicking
 # =======================================================================
 
-def wrap_text_in_no_click_div(string_text):
+def wrap_text_in_no_click_div(string_text: str) -> str:
 	"""
 	Wraps the given text in a non-clickable <div> to prevent copying, selecting, and right-clicking.
 
@@ -249,7 +250,7 @@ def wrap_text_in_no_click_div(string_text):
 	return output
 
 # ============
-def main():
+def main() -> None:
 	"""
 	Unit test for the AntiCheat class.
 	"""

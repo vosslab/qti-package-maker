@@ -46,7 +46,7 @@ def generate_assessment_meta(package_name: str) -> lxml.etree.ElementTree:
 	return lxml.etree.ElementTree(quiz)
 
 #==============
-def dummy_test_run():
+def dummy_test_run() -> None:
 	"""
 	Run a test generation of assessment_meta.xml with a sample package name.
 	"""

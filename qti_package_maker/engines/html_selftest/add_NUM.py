@@ -3,7 +3,9 @@ from qti_package_maker.common import string_functions
 from qti_package_maker.engines.html_selftest import html_functions
 
 #==============
-def generate_core_html(crc16_text: str, question_text: str, answer_float: float, tolerance_float: float=None):
+def generate_core_html(
+		crc16_text: str, question_text: str, answer_float: float, tolerance_float: float | None=None
+		) -> str:
 	html_content = f"<div id=\"question_html_{crc16_text}\">\n"
 	html_content += html_functions.format_question_text(crc16_text, question_text)
 	html_content += "<div>\n"
@@ -79,7 +81,10 @@ def generate_javascript(crc16_text: str, answer_float: float, tolerance_float: f
 	return js
 
 #==============
-def generate_html(item_number: int, crc16_text: str, question_text: str, answer_float: float, tolerance_float: float, tolerance_message=True):
+def generate_html(
+		item_number: int, crc16_text: str, question_text: str, answer_float: float,
+		tolerance_float: float, tolerance_message: bool=True
+		) -> str:
 	raw_html = generate_core_html(crc16_text, question_text, answer_float, tolerance_float)
 	formatted_html = string_functions.format_html_lxml(raw_html)
 	full_html = formatted_html

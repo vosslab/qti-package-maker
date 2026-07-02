@@ -1,6 +1,7 @@
 ENGINE_NAME = "html_selftest"
 
 #from qti_package_maker.common import string_functions
+from qti_package_maker.assessment_items import item_types
 from qti_package_maker.engines.html_selftest import add_MC
 from qti_package_maker.engines.html_selftest import add_MA
 from qti_package_maker.engines.html_selftest import add_MATCH
@@ -17,7 +18,7 @@ def _wrap_selftest_html(html_text: str) -> str:
 	return html_functions.escape_non_ascii(wrapped)
 
 #==============================================================
-def MC(item_cls):
+def MC(item_cls: item_types.MC) -> str:
 	#item_number: int, item_crc16: str, question_text: str, choices_list: list, answer_text: str):
 	"""Render an MC item as HTML self-test content."""
 	html_text = add_MC.generate_html(
@@ -30,7 +31,7 @@ def MC(item_cls):
 	return _wrap_selftest_html(html_text)
 
 #==============================================================
-def MA(item_cls):
+def MA(item_cls: item_types.MA) -> str:
 	#item_number: int, item_crc16: str, question_text: str, choices_list: list, answers_list: list):
 	"""Render an MA item as HTML self-test content."""
 	html_text = add_MA.generate_html(
@@ -43,7 +44,7 @@ def MA(item_cls):
 	return _wrap_selftest_html(html_text)
 
 #==============================================================
-def MATCH(item_cls):
+def MATCH(item_cls: item_types.MATCH) -> str:
 	#item_number: int, item_crc16: str, question_text: str, prompts_list: list, choices_list: list):
 	"""Render a MATCH item as HTML self-test content."""
 	html_text = add_MATCH.generate_html(
@@ -56,7 +57,7 @@ def MATCH(item_cls):
 	return _wrap_selftest_html(html_text)
 
 #==============================================================
-def NUM(item_cls):
+def NUM(item_cls: item_types.NUM) -> str:
 	#item_number: int, item_crc16: str,
 	#question_text: str, answer_float: float, tolerance_float: float, tolerance_message=True):
 	"""Render a NUM item as HTML self-test content."""
@@ -71,7 +72,7 @@ def NUM(item_cls):
 	return _wrap_selftest_html(html_text)
 
 #==============================================================
-def FIB(item_cls):
+def FIB(item_cls: item_types.FIB) -> str:
 	#item_number: int, item_crc16: str, question_text: str, answers_list: list):
 	"""Render a FIB item as HTML self-test content."""
 	html_text = add_FIB.generate_html(
@@ -84,7 +85,7 @@ def FIB(item_cls):
 
 #==============================================================
 # Create a Fill-in-the-Blank (Multiple Blanks) question using answer mapping.
-def MULTI_FIB(item_cls):
+def MULTI_FIB(item_cls: item_types.MULTI_FIB) -> str:
 	#item_number: int, item_crc16: str, question_text: str, answer_map: dict) -> str:
 	"""Render a MULTI_FIB item as HTML self-test content."""
 	html_text = add_MULTI_FIB.generate_html(
@@ -96,7 +97,7 @@ def MULTI_FIB(item_cls):
 	return _wrap_selftest_html(html_text)
 
 #==============================================================
-def ORDER(item_cls):
+def ORDER(item_cls: item_types.ORDER) -> str:
 	#item_number: int, item_crc16: str, question_text: str, ordered_answers_list: list):
 	"""Render an ORDER item as HTML self-test content."""
 	html_text = add_ORDER.generate_html(

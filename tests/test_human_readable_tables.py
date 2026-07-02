@@ -1,8 +1,11 @@
+# Standard Library
+import pathlib
+
 # QTI Package Maker
 import qti_package_maker.package_interface
 
 
-def test_human_readable_tables(tmp_path):
+def test_human_readable_tables(tmp_path: pathlib.Path) -> None:
 	qti_packer = qti_package_maker.package_interface.QTIPackageInterface("human-table", verbose=False, allow_mixed=True)
 	question_text = (
 		"<p>Use the table below.</p>"

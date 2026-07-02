@@ -9,7 +9,7 @@ from qti_package_maker.engines.html_selftest import javascript_functions
 
 #==============
 # This function generates HTML for a multiple-answer question.
-def generate_core_html(crc16_text: str, question_text: str, choices_list: list, answers_list: list):
+def generate_core_html(crc16_text: str, question_text: str, choices_list: list, answers_list: list) -> str:
 	"""
 	Build the HTML body for an MA item (no script).
 	"""
@@ -57,7 +57,7 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 	# Return the complete HTML content
 	return html_content
 
-def generate_javascript(crc16_text) -> str:
+def generate_javascript(crc16_text: str) -> str:
 	"""
 	Build JavaScript that checks multiple-answer selections.
 	The function name is suffixed with the item CRC to avoid collisions when multiple
@@ -128,7 +128,9 @@ def generate_javascript(crc16_text) -> str:
 
 #==============
 
-def generate_html(item_number: int, crc16_text: str, question_text: str, choices_list: list, answer_text: str):
+def generate_html(
+		item_number: int, crc16_text: str, question_text: str, choices_list: list, answer_text: str
+		) -> str:
 	"""
 	Return formatted HTML plus the MA answer-check script.
 	"""

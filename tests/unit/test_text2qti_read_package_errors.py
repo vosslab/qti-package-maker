@@ -7,7 +7,7 @@ import pytest
 from qti_package_maker.engines.text2qti import read_package
 
 
-def test_read_mc_multiple_correct_raises():
+def test_read_mc_multiple_correct_raises() -> None:
 	question_block = """1. What is 2+2?
 *a) 4
 b) 3
@@ -17,7 +17,7 @@ b) 3
 		read_package.read_MC(question_block, 1)
 
 
-def test_read_num_invalid_format_raises():
+def test_read_num_invalid_format_raises() -> None:
 	question_block = """1. What is 2+2?
 = not-a-number
 """
@@ -25,7 +25,7 @@ def test_read_num_invalid_format_raises():
 		read_package.read_NUM(question_block, 1)
 
 
-def test_read_num_with_underscores():
+def test_read_num_with_underscores() -> None:
 	question_block = """1. What is 1000?
 = 1_000
 """
@@ -34,7 +34,7 @@ def test_read_num_with_underscores():
 	assert item.tolerance_float == 0.0
 
 
-def test_read_fib_requires_answer():
+def test_read_fib_requires_answer() -> None:
 	question_block = """1. Who lives at the North Pole?
 ... hint only
 """

@@ -6,7 +6,7 @@ from qti_package_maker.assessment_items import item_bank
 from qti_package_maker.assessment_items import item_types
 
 
-def _split_blocks(text: str):
+def _split_blocks(text: str) -> list:
 	blocks = []
 	current = []
 	for line in text.splitlines():
@@ -21,14 +21,14 @@ def _split_blocks(text: str):
 	return blocks
 
 
-def _parse_choice_line(line: str):
+def _parse_choice_line(line: str) -> tuple | None:
 	match = re.match(r"(\*?)([a-zA-Z])[\)\.]?\s*(.+)", line.strip())
 	if not match:
 		return None
 	return bool(match.group(1)), match.group(3).strip()
 
 
-def _read_mc_ma(block: str, item_number: int):
+def _read_mc_ma(block: str, item_number: int) -> item_types.BaseItem | None:
 	lines = block.strip().split("\n")
 	stem = re.sub(r"^\d+\.\s*", "", lines[0]).strip()
 	choices = []
@@ -51,7 +51,7 @@ def _read_mc_ma(block: str, item_number: int):
 	return item
 
 
-def _read_fib(block: str, item_number: int):
+def _read_fib(block: str, item_number: int) -> item_types.BaseItem | None:
 	lines = block.strip().split("\n")
 	stem = re.sub(r"^blank\s*\d*\.\s*", "", lines[0], flags=re.IGNORECASE).strip()
 	answers = []
@@ -69,7 +69,7 @@ def _read_fib(block: str, item_number: int):
 	return item
 
 
-def _read_match(block: str, item_number: int):
+def _read_match(block: str, item_number: int) -> item_types.BaseItem | None:
 	lines = block.strip().split("\n")
 	stem = re.sub(r"^match\s*\d*\.\s*", "", lines[0], flags=re.IGNORECASE).strip()
 	prompts = []
@@ -90,7 +90,7 @@ def _read_match(block: str, item_number: int):
 	return item
 
 
-def read_items_from_file(infile: str, allow_mixed: bool = False):
+def read_items_from_file(infile: str, allow_mixed: bool = False) -> item_bank.ItemBank:
 	with open(infile, "r", encoding="utf-8") as f:
 		content = f.read()
 	blocks = _split_blocks(content)

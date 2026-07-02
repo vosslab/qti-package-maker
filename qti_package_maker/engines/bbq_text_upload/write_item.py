@@ -9,6 +9,7 @@ import random
 
 # QTI Package Maker (if applicable, add specific imports here)
 from qti_package_maker.common import string_functions
+from qti_package_maker.assessment_items import item_types
 
 shuffle = False
 letters = 'ABCDEFGHJKMNPQRSTUWXYZ'
@@ -16,6 +17,11 @@ letters = 'ABCDEFGHJKMNPQRSTUWXYZ'
 """
 Render assessment items into Blackboard "BBQ" text upload format.
 Refer to the Blackboard upload format documentation for field layout and rules.
+
+Any <img> tag inside item HTML is carried through verbatim (clean_text_for_bbq
+only normalizes whitespace); BBQ text upload has no channel to carry image
+files, so EngineClass.save_package emits one itemized warning per referenced
+image via qti_package_maker.common.media_assets.apply_media_policy.
 """
 
 #==============================================================
@@ -26,7 +32,7 @@ def insert_prefix_inside_div(html: str, prefix: str) -> str:
 	return re.sub(r'(<div[^>]*>)', r'\1' + f'{prefix}. ', html, count=1)
 
 #==============================================================
-def clean_text_for_bbq(text):
+def clean_text_for_bbq(text: str) -> str:
 	# Remove newlines
 	text = text.replace('\n', ' ')
 	# Remove tabs
@@ -37,7 +43,7 @@ def clean_text_for_bbq(text):
 
 #==============================================================
 # Create a Multiple Choice (Single Answer; Radio Buttons) question.
-def MC(item_cls):
+def MC(item_cls: item_types.MC) -> str:
 	#item_number: int, item_cls.item_crc16: str, item_cls.question_text: str, item_cls.choices_list: list, answer_text: str) -> str:
 	"""Render an MC item in BBQ text upload format."""
 	# Initialize the question format with MC (Multiple Choice) identifier
@@ -62,7 +68,7 @@ def MC(item_cls):
 
 #==============================================================
 # Create a Multiple Answer (Checkboxes) question.
-def MA(item_cls):
+def MA(item_cls: item_types.MA) -> str:
 	#item_number: int, item_cls.item_crc16: str, item_cls.question_text: str, item_cls.choices_list: list, item_cls.answers_list: list) -> str:
 	"""Render an MA item in BBQ text upload format."""
 	# Initialize the question format with MC (Multiple Answer) identifier
@@ -86,7 +92,7 @@ def MA(item_cls):
 
 #==============================================================
 # Create a Matching question where users match items from two lists.
-def MATCH(item_cls):
+def MATCH(item_cls: item_types.MATCH) -> str:
 	#item_number: int, item_cls.item_crc16: str, item_cls.question_text: str, item_cls.prompts_list: list, item_cls.choices_list: list) -> str:
 	"""Render a MATCH item in BBQ text upload format."""
 	# Initialize the question format with MAT (Matching) identifier
@@ -107,7 +113,7 @@ def MATCH(item_cls):
 
 #==============================================================
 # Create a Numerical question with an accepted tolerance range.
-def NUM(item_cls):
+def NUM(item_cls: item_types.NUM) -> str:
 	#item_number: int, item_cls.item_crc16: str,
 	#item_cls.question_text: str, answer_float: float, tolerance_float: float, tol_message: bool=True) -> str:
 	"""Render a NUM item in BBQ text upload format."""
@@ -134,7 +140,7 @@ def NUM(item_cls):
 
 #==============================================================
 # Create a Fill-in-the-Blank (Single Blank) question.
-def FIB(item_cls):
+def FIB(item_cls: item_types.FIB) -> str:
 	#item_number: int, item_cls.item_crc16: str, item_cls.question_text: str, item_cls.answers_list: list) -> str:
 	"""Render a FIB item in BBQ text upload format."""
 	# Initialize the question format with FIB (Fill in the Blank) identifier
@@ -150,7 +156,7 @@ def FIB(item_cls):
 
 #==============================================================
 # Create a Fill-in-the-Blank (Multiple Blanks) question using answer mapping.
-def MULTI_FIB(item_cls):
+def MULTI_FIB(item_cls: item_types.MULTI_FIB) -> str:
 	#item_number: int, item_cls.item_crc16: str, item_cls.question_text: str, answer_map: dict) -> str:
 	"""Render a MULTI_FIB item in BBQ text upload format."""
 	# Initialize the question format with FIB_PLUS identifier
@@ -172,7 +178,7 @@ def MULTI_FIB(item_cls):
 
 #==============================================================
 # Create an Ordered List question where users arrange items in a correct sequence.
-def ORDER(item_cls):
+def ORDER(item_cls: item_types.ORDER) -> str:
 	#item_number: int, item_cls.item_crc16: str, item_cls.question_text: str, ordered_answers_list: list) -> str:
 	"""Render an ORDER item in BBQ text upload format."""
 	# Initialize the question format with ORD (Ordered List) identifier

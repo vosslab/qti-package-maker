@@ -7,13 +7,14 @@
 from qti_package_maker.engines import base_engine
 from qti_package_maker.engines.template_class import write_item
 from qti_package_maker.engines.template_class import read_package
+from qti_package_maker.assessment_items.item_bank import ItemBank
 
 class EngineClass(base_engine.BaseEngine):
 	"""
 	Template engine class for developers to use as a reference.
 	This engine is not registered for real use.
 	"""
-	def __init__(self, package_name: str, verbose: bool = False):
+	def __init__(self, package_name: str, verbose: bool = False) -> None:
 		"""
 		Initialize the template engine with the package name.
 		Args:
@@ -28,7 +29,7 @@ class EngineClass(base_engine.BaseEngine):
 		self.validate_write_item_module()
 
 	#============================================
-	def read_items_from_file(self, infile: str):
+	def read_items_from_file(self, infile: str) -> ItemBank:
 		"""
 		Template placeholder for a reader implementation.
 		"""
@@ -37,7 +38,7 @@ class EngineClass(base_engine.BaseEngine):
 		return new_item_bank
 
 	#==============
-	def save_package(self, item_bank, outfile: str = None):
+	def save_package(self, item_bank: ItemBank, outfile: str | None = None) -> str:
 		"""
 		Template placeholder for a writer implementation.
 		"""

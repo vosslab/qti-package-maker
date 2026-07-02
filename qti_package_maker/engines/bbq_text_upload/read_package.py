@@ -1,5 +1,6 @@
 
 # Standard Library
+import os
 
 # Pip3 Library
 
@@ -13,7 +14,7 @@ See the Blackboard upload format documentation for field layout and question typ
 """
 
 #=====================================================
-def read_MC(parts):
+def read_MC(parts: list[str]) -> item_types.MC:
 	question_text = parts[1].strip()
 	choices_list = parts[2::2]
 	correct_status = [element.lower() for element in parts[3::2]]
@@ -23,7 +24,7 @@ def read_MC(parts):
 	return item_cls
 
 #=====================================================
-def indices(lst, element):
+def indices(lst: list[str], element: str) -> list[int]:
 	result = []
 	for i, x in enumerate(lst):
 		if x == element:
@@ -31,7 +32,7 @@ def indices(lst, element):
 	return result
 
 #=====================================================
-def read_MA(parts):
+def read_MA(parts: list[str]) -> item_types.MA:
 	question_text = parts[1].strip()
 	choices_list = parts[2::2]
 	correct_status = [element.lower() for element in parts[3::2]]
@@ -41,7 +42,7 @@ def read_MA(parts):
 	return item_cls
 
 #=====================================================
-def read_MATCH(parts):
+def read_MATCH(parts: list[str]) -> item_types.MATCH:
 	question_text = parts[1].strip()
 	#MAT TAB question text TAB answer text TAB matching text TAB answer two text TAB matching two text
 	prompts_list = parts[2::2]
@@ -50,21 +51,21 @@ def read_MATCH(parts):
 	return item_cls
 
 #=====================================================
-def read_ORDER(parts):
+def read_ORDER(parts: list[str]) -> item_types.ORDER:
 	question_text = parts[1].strip()
 	ordered_answers_list = parts[2:]  # All subsequent fields are answers in order
 	item_cls = item_types.ORDER(question_text, ordered_answers_list)
 	return item_cls
 
 #=====================================================
-def read_FIB(parts):
+def read_FIB(parts: list[str]) -> item_types.FIB:
 	question_text = parts[1].strip()
 	answers_list = parts[2:]  # All subsequent fields are valid answers
 	item_cls = item_types.FIB(question_text, answers_list)
 	return item_cls
 
 #=====================================================
-def read_MULTI_FIB(parts):
+def read_MULTI_FIB(parts: list[str]) -> item_types.MULTI_FIB:
 	# Extract the main question text
 	question_text = parts[1].strip()
 	# Dictionary to store variable names and their corresponding answer lists
@@ -97,7 +98,7 @@ def read_MULTI_FIB(parts):
 	return item_cls
 
 #=====================================================
-def read_NUM(parts):
+def read_NUM(parts: list[str]) -> item_types.NUM:
 	question_text = parts[1].strip()
 	answer_float = float(parts[2].strip())  # Convert answer to float
 	if len(parts) <= 3 or parts[3].strip() == "":
@@ -121,7 +122,7 @@ question_function_map = {
 }
 
 #=====================================================
-def make_item_cls_from_line(text_line: str):
+def make_item_cls_from_line(text_line: str) -> item_types.BaseItem | None:
 	# Remove leading/trailing whitespace
 	text_line = text_line.strip()
 	# Skip blank lines to avoid processing empty lines
@@ -144,11 +145,18 @@ def make_item_cls_from_line(text_line: str):
 
 #=====================================================
 #=====================================================
-def read_items_from_file(input_file: str, allow_mixed: bool=False) -> list:
+def read_items_from_file(input_file: str, allow_mixed: bool = False) -> item_bank.ItemBank:
 	"""
 	Read a BBQ text upload file and return an ItemBank.
+
+	The bank's media_base_dir is set to the input file's directory, so any
+	relative <img src> referenced in item HTML (e.g. "images/foo.jpg") later
+	resolves purely by derivation through ItemBank.collect_assets(). No
+	per-item media state is attached here; a missing local image only
+	surfaces (naming the src) when collect_assets() is called downstream.
 	"""
-	new_item_bank = item_bank.ItemBank(allow_mixed)
+	media_base_dir = os.path.dirname(os.path.abspath(input_file))
+	new_item_bank = item_bank.ItemBank(allow_mixed, media_base_dir=media_base_dir)
 	# Step 1: Read and process questions from the input file
 	with open(input_file, 'r') as f:
 		for line_num, line in enumerate(f, start=1):
@@ -165,7 +173,7 @@ def read_items_from_file(input_file: str, allow_mixed: bool=False) -> list:
 	return new_item_bank
 
 #=====================================================
-def main():
+def main() -> None:
 	# Sample question lines
 	good_question_lines = [
 		"MC\t2+2?\t3\tincorrect\t4\tcorrect",

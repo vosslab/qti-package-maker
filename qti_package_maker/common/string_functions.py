@@ -35,7 +35,7 @@ def _has_visible_border(style: str) -> bool:
 	return True
 
 #==========================
-def _detect_tablefmt(table_el) -> str:
+def _detect_tablefmt(table_el: lxml.html.HtmlElement) -> str:
 	"""
 	Choose a tabulate format based on the HTML table's border attributes.
 
@@ -104,7 +104,7 @@ def _html_table_to_text(table_html: str) -> str:
 	if header_tr is None and trs and trs[0].xpath("./th"):
 		header_tr = trs[0]
 
-	def extract_row_cells(tr_el):
+	def extract_row_cells(tr_el: lxml.html.HtmlElement) -> list:
 		cells = tr_el.xpath("./th|./td")
 		out = []
 		for cell in cells:
@@ -347,7 +347,7 @@ def make_question_pretty(question: str) -> str:
 	)
 
 	#==========================
-	def repl_table(match):
+	def repl_table(match: re.Match) -> str:
 		nonlocal table_count
 		token = f"__QTI_TABLE_{table_count}__"
 		table_count += 1
@@ -427,11 +427,11 @@ def convert_sub_sup(pretty_question: str) -> str:
 	)
 
 	# Convert <sub> tags
-	def subscript_replace(match):
+	def subscript_replace(match: re.Match) -> str:
 		return match.group(1).translate(subscript_map)
 
 	# Convert <sup> tags
-	def superscript_replace(match):
+	def superscript_replace(match: re.Match) -> str:
 		return match.group(1).translate(superscript_map)
 
 	# Replace <sub> and <sup> content using regex
@@ -480,7 +480,7 @@ def html_color_text(text: str, hex_code: str) -> str:
 	return f'<span style="color: #{hex_code};">{text}</span>'
 
 #=====================
-def generate_gene_letters(num_genes: int, shift: int=-1, clear: bool=False) -> str:
+def generate_gene_letters(num_genes: int, shift: int = -1, clear: bool = False) -> str:
 	"""
 	Generate a string of unique gene letters based on deterministic or random selection.
 	"""

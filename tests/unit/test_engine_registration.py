@@ -6,7 +6,7 @@
 import qti_package_maker.engines.engine_registration
 
 
-def test_engine_registry_includes_expected_engines():
+def test_engine_registry_includes_expected_engines() -> None:
 	qti_package_maker.engines.engine_registration.register_engines()
 	available = set(qti_package_maker.engines.engine_registration.ENGINE_REGISTRY.keys())
 	expected = {
@@ -20,7 +20,7 @@ def test_engine_registry_includes_expected_engines():
 	assert expected.issubset(available)
 
 
-def test_engine_read_write_flags():
+def test_engine_read_write_flags() -> None:
 	qti_package_maker.engines.engine_registration.register_engines()
 	canvas = qti_package_maker.engines.engine_registration.ENGINE_REGISTRY["canvas_qti_v1_2"]
 	blackboard = qti_package_maker.engines.engine_registration.ENGINE_REGISTRY["blackboard_qti_v2_1"]
@@ -34,19 +34,19 @@ def test_engine_read_write_flags():
 	assert bbq["can_write"] is True
 
 
-def test_engine_registry_names_match_keys():
+def test_engine_registry_names_match_keys() -> None:
 	qti_package_maker.engines.engine_registration.register_engines()
 	for key, info in qti_package_maker.engines.engine_registration.ENGINE_REGISTRY.items():
 		assert info["engine_name"] == key
 
 
-def test_is_method_implemented_detects_stub():
+def test_is_method_implemented_detects_stub() -> None:
 	class DummyImplemented:
-		def do_work(self):
+		def do_work(self) -> str:
 			return "ok"
 
 	class DummyNotImplemented:
-		def do_work(self):
+		def do_work(self) -> None:
 			raise NotImplementedError
 
 	assert qti_package_maker.engines.engine_registration.is_method_implemented(DummyImplemented, "do_work") is True

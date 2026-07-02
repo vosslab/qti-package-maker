@@ -131,7 +131,9 @@ Required methods:
   - set `self.write_item` to your `write_item` module
   - call `self.validate_write_item_module()`
 - `save_package(self, item_bank, outfile: str = None)`
-  - iterate over `self.process_item_bank(item_bank)`
+  - render with `self.process_item_bank(item_bank)` (the single shared render
+    loop); pass `item_transform_fn` / `post_render_fn` for media handling
+    instead of re-implementing the loop (see "Media and image contract")
   - write outputs to a file (or ZIP) using `self.get_outfile_name(...)`
   - for bundle formats, write to a temp folder, zip the folder, then return the zip path
 - `read_items_from_file(self, infile: str, allow_mixed: bool = False)`
@@ -185,6 +187,86 @@ python3 -m qti_package_maker.engines.engine_registration
 - Rule of thumb: keep format-specific parsing and rendering in the engine, and put
   shared helpers in `qti_package_maker/common/`.
 
+## Media and image contract
+
+Every engine declares a `media_policy` class attribute and routes referenced
+images through the shared layer in `qti_package_maker/common/media_assets.py`.
+Do not write a private image scanner, regex, or policy branch in an engine.
+See the per-engine behavior table in [ENGINES.md](ENGINES.md).
+
+### media_policy values
+
+Set one of these four values on your `EngineClass` (the `BaseEngine` default is
+`media_assets.POLICY_REFERENCE_WARN`):
+
+| Value | Use when |
+| --- | --- |
+| `media_assets.POLICY_PACKAGE` | The format can carry image bytes (a ZIP, or HTML with inlined data URIs). |
+| `media_assets.POLICY_REFERENCE_WARN` | The format keeps a working `<img>`/link reference the user supplies the file for. |
+| `media_assets.POLICY_PLACEHOLDER_WARN` | The format has no image channel; substitute a readable `[image: name.ext]` placeholder. |
+| `media_assets.POLICY_FAIL` | Any referenced image must raise `MediaPolicyError`. |
+
+### Applying the policy
+
+- Collect an item's images with `item_bank.collect_assets()`, then read the
+  per-item list from `collected_assets.item_dependencies[item_cls.item_crc16]`.
+- Call `media_assets.apply_media_policy(self.media_policy, item_assets,
+  self.name, item_cls.item_crc16)` once per item. It returns a
+  `MediaPolicyDecision` with a `warnings` list and a `placeholders` map, and it
+  is the single warning channel: print each warning rather than emitting your
+  own. The external, data-uri, and SVG cautions all come from here, so every
+  engine surfaces them identically.
+- Rewrite `<img src>` only on writer output, never on the bank's stored item.
+  Use `media_assets.rewrite_item_media(item_cls, src_map_fn)` (deep-copies then
+  rewrites) or `media_assets.rewrite_html_srcs(html, src_map_fn)` for a single
+  string. A file-packaging engine that must reject data URIs calls
+  `media_assets.raise_on_data_uri_assets(item_assets, self.name,
+  item_cls.item_crc16)`.
+
+### Injecting media into the shared render loop
+
+`BaseEngine.process_item_bank` is the one render loop for every engine: it
+iterates the bank, resolves each item's write function, warns and skips unknown
+types, and drops `None` renders. Do not copy this loop into your engine to slip
+in a media step. Instead pass one of its two optional hooks:
+
+- `item_transform_fn(item_cls) -> item_cls` runs BEFORE the write function and
+  returns the item to render (usually a rewritten deep copy). Use it for src
+  rewrites (`media_assets.rewrite_item_media`) and clone-before-render
+  placeholder or description substitution.
+- `post_render_fn(item_cls, item_engine_data) -> item_engine_data` runs AFTER
+  the write function on the rendered output, keyed on the ORIGINAL item. Use it
+  only when the substitution must happen on already-rendered text (for example
+  a plain-text format that has no image markup channel).
+
+Build the hook with `functools.partial` to bind per-bank state (the collected
+assets, an output `media/` dir, a copied-name set) and keep the hook a plain
+`item_cls`- or output-keyed callable. `moodle_aiken` and `okla_chrst_bqgen` use
+`post_render_fn`; `human_readable`, `canvas_qti_v1_2`, and
+`blackboard_export_zip` use `item_transform_fn`. Engines that also collect side
+data (Canvas's packaged assets) compute it in `save_package` around the loop, so
+the transform stays a pure per-item function.
+
+When you build a per-item `{in_content_src: writer_output_src}` map, wrap it with
+`media_assets.make_src_map_fn(src_map)` rather than hand-rolling a lookup
+closure; hand the result to `rewrite_item_media`.
+
+### Two authoring traps
+
+1. If your engine has a pretty-print or sanitize step that strips HTML tags,
+   substitute placeholders on a cloned item BEFORE rendering, not after. A
+   post-render substitution has nothing to match because the tags are already
+   gone. Clone with `item_cls.copy()`, rewrite its HTML-bearing fields (use
+   `get_supporting_field_names()` to find them), then render the clone; leave
+   the bank's item untouched. The `human_readable` engine follows this
+   clone-before-render pattern because its pretty-printer strips all tags.
+2. Use the shared `media_assets.IMG_TAG_PATTERN` and
+   `media_assets.SRC_ATTR_PATTERN` when you must match `<img>` or `src=` in
+   text. Never copy a private regex: a bare `src` pattern also matches
+   `data-src=`/`lazy-src=` and silently rewrites the wrong attribute.
+   `SRC_ATTR_PATTERN` uses a negative lookbehind so only a real `src=`
+   attribute matches.
+
 ## Item type mapping
 Use these item fields when parsing or writing. Attribute names are illustrative; confirm
 exact names in the item type classes.
@@ -219,6 +301,19 @@ Target notes:
 - `tests/integration/test_engine_outputs.py` checks structural validity of outputs.
 - `tests/integration/test_reader_roundtrip.py` checks read then write roundtrips.
 
+## Package cross-reference integrity
+
+A new packaging engine's output should pass the shared cross-reference
+integrity check in `qti_package_maker/common/package_integrity.py`. Structure
+and roundtrip tests do not catch a schema-plausible package with dangling
+identifiers (for example a `correctResponse` id that no choice declares, a
+manifest dependency pointing at nothing, or a Blackboard export whose resource
+link `parentId` names an item the pool never emitted). Call
+`package_integrity.check_package(zip_or_dir)` on your saved package; an empty
+return means clean. The check dispatches by package shape rather than engine
+name, so add a parametrized case to
+`tests/integration/test_package_cross_references.py` and assert no violations.
+
 | Goal | Command | Notes |
 | --- | --- | --- |
 | Run all engine tests | `pytest -q tests/test_all_engines.py` | baseline smoke |
@@ -237,6 +332,5 @@ Target notes:
 | CRC or metadata lost | not using `add_item_cls` | rebuild `ItemBank` with `add_item_cls` |
 
 ## References
-- [CODE_DESIGN.md](CODE_DESIGN.md)
 - [DEVELOPMENT.md](DEVELOPMENT.md)
 - `qti_package_maker/engines/template_class/`

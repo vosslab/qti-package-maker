@@ -67,7 +67,7 @@ extra_light_color_wheel = {
 }
 
 #====================================================================
-def get_indices_for_color_wheel(num_colors, color_wheel_length):
+def get_indices_for_color_wheel(num_colors: int, color_wheel_length: int) -> list:
 	"""
 	Selects `num_colors` indices from a circular list of `color_wheel_length` items while ensuring
 	that the selected indices are evenly spaced or satisfy other constraints depending on edge cases.
@@ -146,7 +146,7 @@ def get_indices_for_color_wheel(num_colors, color_wheel_length):
 	return selected_indices
 
 #====================================================================
-def default_color_wheel(num_colors, color_wheel=dark_color_wheel):
+def default_color_wheel(num_colors: int, color_wheel: dict = dark_color_wheel) -> list:
 	color_wheel_length = len(color_wheel)
 	print(f"num_colors = {num_colors}; color_wheel_length = {color_wheel_length}")
 	selected_indices = get_indices_for_color_wheel(num_colors, color_wheel_length)
@@ -158,7 +158,7 @@ def default_color_wheel(num_colors, color_wheel=dark_color_wheel):
 	return selected_colors_rgb
 
 #====================================================================
-def light_and_dark_color_wheel(num_colors, dark_color_wheel=dark_color_wheel, light_color_wheel=light_color_wheel):
+def light_and_dark_color_wheel(num_colors: int, dark_color_wheel: dict = dark_color_wheel, light_color_wheel: dict = light_color_wheel) -> tuple:
 	color_wheel_length = min(len(dark_color_wheel), len(light_color_wheel))
 	selected_indices = get_indices_for_color_wheel(num_colors, color_wheel_length)
 
@@ -175,7 +175,7 @@ def light_and_dark_color_wheel(num_colors, dark_color_wheel=dark_color_wheel, li
 #====================================================================
 #====================================================================
 #====================================================================
-def _generate_table_td(bg_hex_color, text_hex_color, text="this is a test"):
+def _generate_table_td(bg_hex_color: str, text_hex_color: str, text: str = "this is a test") -> str:
 	"""
 	Generates an HTML table cell (<td>) with the specified background and text color.
 	"""
@@ -185,7 +185,7 @@ def _generate_table_td(bg_hex_color, text_hex_color, text="this is a test"):
 	return td_cell
 
 #====================================================================
-def write_html_color_table(filename, num_colors=None):
+def write_html_color_table(filename: str, num_colors: int | None = None) -> None:
 	"""
 	Generates an HTML table displaying various color combinations.
 	"""
@@ -248,14 +248,14 @@ def write_html_color_table(filename, num_colors=None):
 	print(f"HTML color table saved as {filename}")
 
 #====================================================================
-def default_color_wheel_calc(num_colors=4):
+def default_color_wheel_calc(num_colors: int = 4) -> list:
 	degree_step = int(360 / float(num_colors))
 	r,g,b = (255, 0, 0)
 	color_wheel = make_color_wheel(r,g,b, degree_step)
 	return color_wheel
 
 #====================================================================
-def make_color_wheel(r, g, b, degree_step=40): # Assumption: r, g, b in [0, 255]
+def make_color_wheel(r: int, g: int, b: int, degree_step: int = 40) -> list: # Assumption: r, g, b in [0, 255]
 	# Convert to [0, 1]
 	r, g, b = r/255., g/255., b/255.
 	#print('rgb: {0:.2f}, {1:.2f}, {2:.2f}'.format(r, g, b))
@@ -283,14 +283,14 @@ def make_color_wheel(r, g, b, degree_step=40): # Assumption: r, g, b in [0, 255]
 	return wheel
 
 #====================================================================
-def _cubic(t, a, b):
+def _cubic(t: float, a: float, b: float) -> float:
 	if not (0 <= t <= 1):
 		raise ValueError(f"Invalid t value: {t}. Must be between 0 and 1.")
 	weight = t * t * (3 - 2*t)
 	return a + weight * (b - a)
 
 #====================================================================
-def _ryb_to_rgb(r, y, b): # Assumption: r, y, b in [0, 1]
+def _ryb_to_rgb(r: float, y: float, b: float) -> tuple: # Assumption: r, y, b in [0, 1]
 	# red
 	x0, x1 = _cubic(b, 1.0, 0.163), _cubic(b, 1.0, 0.0)
 	x2, x3 = _cubic(b, 1.0, 0.5), _cubic(b, 1.0, 0.2)
@@ -324,7 +324,7 @@ def min_difference(numbers: list) -> int:
 	return min(differences)
 
 #====================================================================
-def main():
+def main() -> None:
 	"""
 	Main function to test the color wheel functions.
 	"""

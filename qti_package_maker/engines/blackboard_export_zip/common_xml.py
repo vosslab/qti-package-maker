@@ -24,6 +24,15 @@ import lxml.etree
 from qti_package_maker.common import string_functions
 
 #============================================
+# Shared csfiles src prefix
+#============================================
+# The literal src prefix Blackboard prepends to every embedded csfiles xid
+# token. The write side (assessment_meta.py) uses this to build <img src>
+# values; the read side (read_package.py) uses it to recognize and strip
+# those same tokens when recovering embedded media on import.
+CSFILES_SRC_PREFIX = "@X@EmbeddedFile.requestUrlStub@X@bbcswebdav/"
+
+#============================================
 # Table whitespace sanitation for Blackboard Ultra
 #============================================
 # Blackboard Ultra's question-expand HTML renderer crashes ("Oops! Something
@@ -107,6 +116,34 @@ def sanitize_question_html(html_payload: str) -> str:
 
 # Number of CRC16 chunks to concatenate for a full-length (32 hex char) ident.
 _IDENT_CHUNKS = 8
+
+# Every Blackboard ASI object id carries a version suffix; exports use "_1" for a
+# first-version object, so minted item asi ids mirror that ("_<int>_1").
+_ASI_OBJECT_VERSION_SUFFIX = "_1"
+
+#============================================
+def make_item_asi_object_id(item_crc16: str) -> str:
+	"""
+	Derive a deterministic `bbmd_asi_object_id`-shaped id for an item.
+
+	Blackboard names each pool item by an ASI object id in the `_<int>_1` shape
+	(for example `_23221280_1` in the real export). The engine emits this id BOTH
+	as the item's `<bbmd_asi_object_id>` (the first `<itemmetadata>` child) and as
+	the `parentId` of every `res00005.dat` CSResourceLinks entry for that item's
+	images. Both callers must agree byte-for-byte, or a live Blackboard import
+	cannot locate the resource-link parent and drops the embedded image; deriving
+	the id here from the item CRC16 keeps the two sides in lockstep.
+
+	Args:
+		item_crc16: The item's CRC16 string (e.g. "1a2b_3c4d").
+
+	Returns:
+		A deterministic `_<digits>_1` id shaped like a real Learn asi object id.
+	"""
+	# Collapse the underscore and read the hex CRC as one integer for an
+	# all-digits, deterministic asi object id in the "_<n>_1" shape.
+	crc_int = int(str(item_crc16).replace("_", ""), 16)
+	return f"_{crc_int}{_ASI_OBJECT_VERSION_SUFFIX}"
 
 #============================================
 def make_ident(item_crc16: str, role: str, index: int) -> str:
@@ -210,23 +247,41 @@ def build_question_block(question_html: str) -> lxml.etree.Element:
 	return question_block
 
 #============================================
-def build_itemmetadata(question_type: str, absolutescore_max: int) -> lxml.etree.Element:
+def build_itemmetadata(
+	question_type: str,
+	absolutescore_max: int,
+	item_crc16: str,
+) -> lxml.etree.Element:
 	"""
 	Build the `<itemmetadata>` block with Blackboard `bbmd_*` / `qmd_*` fields.
 
-	The field set mirrors the real sample pools: the `bbmd_questiontype` element
-	value is the type marker the reader keys on, and `qmd_absolutescore_max` is
-	the score weight (1 for single-point types, blank count for MULTI_FIB).
+	The field set mirrors the real sample pools: the `bbmd_asi_object_id` element
+	is the item's ASI object id (the first child, matching the real export), the
+	`bbmd_questiontype` element value is the type marker the reader keys on, and
+	`qmd_absolutescore_max` is the score weight (1 for single-point types, blank
+	count for MULTI_FIB).
+
+	The `bbmd_asi_object_id` is load-bearing for embedded images: a live
+	Blackboard import matches each `res00005.dat` CSResourceLinks `parentId`
+	against it to locate the image's owning item. It is derived from the item
+	CRC16 via `make_item_asi_object_id`, the same helper the engine's link-entry
+	builder uses for `parentId`, so both sides always agree.
 
 	Args:
 		question_type: The `bbmd_questiontype` element value
 			(e.g. "Multiple Choice", "Numeric").
 		absolutescore_max: The maximum absolute score (1, or blank count).
+		item_crc16: The item's CRC16 string, used to derive the deterministic
+			`bbmd_asi_object_id` that CSResourceLinks `parentId` cross-references.
 
 	Returns:
 		The `<itemmetadata>` element.
 	"""
 	itemmetadata = lxml.etree.Element("itemmetadata")
+	# bbmd_asi_object_id is the item's ASI object id and the FIRST child, matching
+	# the real export. CSResourceLinks parentId cross-references this exact value,
+	# so a live Blackboard import can locate each embedded image's owning item.
+	_add_text_child(itemmetadata, "bbmd_asi_object_id", make_item_asi_object_id(item_crc16))
 	# bbmd_asitype/assessmenttype mark this as a pool item, matching the samples.
 	_add_text_child(itemmetadata, "bbmd_asitype", "Item")
 	_add_text_child(itemmetadata, "bbmd_assessmenttype", "Pool")
@@ -482,6 +537,7 @@ def build_item_skeleton(
 	question_type: str,
 	absolutescore_max: int,
 	question_html: str,
+	item_crc16: str,
 ) -> tuple[lxml.etree.Element, lxml.etree.Element, lxml.etree.Element]:
 	"""
 	Build the shared per-item skeleton every Blackboard pool builder starts with.
@@ -496,6 +552,8 @@ def build_item_skeleton(
 		question_type: The `bbmd_questiontype` marker (e.g. "Multiple Choice").
 		absolutescore_max: The `qmd_absolutescore_max` weight (1, or blank count).
 		question_html: The question text HTML.
+		item_crc16: The item's CRC16 string, threaded into `build_itemmetadata`
+			to stamp the item's `bbmd_asi_object_id` (the CSResourceLinks parent).
 
 	Returns:
 		A `(item_el, outer_flow, response_block)` tuple:
@@ -505,7 +563,7 @@ def build_item_skeleton(
 		- response_block: the `<flow class="RESPONSE_BLOCK">` for response fields.
 	"""
 	item_el = _new_item_element()
-	item_el.append(build_itemmetadata(question_type, absolutescore_max))
+	item_el.append(build_itemmetadata(question_type, absolutescore_max, item_crc16))
 
 	# Presentation: question block + a response block, both under one outer flow.
 	presentation = lxml.etree.SubElement(item_el, "presentation")

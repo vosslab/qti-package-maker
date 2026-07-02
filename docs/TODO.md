@@ -10,6 +10,21 @@ Backlog items with concrete, actionable next steps. Grouped by topic.
 - Avoid mutating ItemBank order in BaseEngine.process_random_item_from_item_bank.
 - Avoid mutating choices_list in BBQ writer when shuffle is enabled.
 - Normalize text cleanup (strip &nbsp;, collapse whitespace, remove extra CRC prefixes) in one helper.
+- Delete the dead `question_header_classic` and `choice_header_classic` in
+  `qti_package_maker/common/franken_bptools.py`: they call nonexistent
+  AntiCheat methods and have zero callers.
+- Review the root `.gitignore` blanket `*.xml` rule; it forces per-fixture
+  `!*.xml` un-ignores (for example under `tests/fixtures/bb_export_slice/`).
+
+## Media sandbox verification
+- Import the Canvas gate A probe kit (relative `<img src>` and
+  `$IMS-CC-FILEBASE$` variants) into a Canvas Classic Quizzes sandbox and
+  record results in [docs/MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md).
+- Import the Blackboard Ultra gate D probe kit (a-href and plain `<img>`
+  variants, synthesized `_90000001_1` id) and decide whether Ultra should
+  package images instead of emitting placeholder text.
+- Optional: import the Blackboard Original gate B csfiles probe kit to confirm
+  the write-side image path renders on real import.
 
 ## Extraction checks
 - BBQ reader: validate required field counts per type and include line numbers in errors.
@@ -32,10 +47,16 @@ Backlog items with concrete, actionable next steps. Grouped by topic.
 - Reader validation coverage for each format (BBQ and text2qti).
 
 ## Docs follow-ups
-- Update [docs/CODE_DESIGN.md](CODE_DESIGN.md) with engine registry and CRC semantics.
+- Update [docs/archive/CODE_DESIGN.md](archive/CODE_DESIGN.md) with engine registry and CRC semantics.
 - Document text2qti feedback syntax and planned hint syntax in [docs/FORMATS.md](FORMATS.md).
 - Update [docs/ENGINES.md](ENGINES.md) capability tables for readers/writers.
 - Add a short note on output determinism to [docs/DEVELOPMENT.md](DEVELOPMENT.md).
+
+## Known limitations
+- `blackboard_export_zip` image roundtrip is basename-level (LOM identifier
+  basename recovery), a documented fidelity limit rather than a bug.
+- HOTSPOT images in `blackboard_export_zip` are read-only; there is no HOTSPOT
+  item type to author on write.
 
 ## Won't implement
 - `canvas_qti_v1_2/write_item.py`: `ORDER` (Canvas does not support it).
@@ -55,6 +76,10 @@ Content migrated from a legacy TODO list. Keep for historical context and to avo
 - Track CRC codes for uniqueness.
 
 ## Done
+- Image/media support across all engines: shared `media_assets` API, four-value
+  `media_policy`, map-based ZIP writer, and image packaging for Canvas QTI 1.2,
+  Blackboard QTI 2.1, and Blackboard Original (csfiles). Text and HTML engines
+  inline, copy, or placeholder images per policy.
 - Full write capability for `human_readable`.
 - Full write capability for `bbq_text_upload`.
 - BBQ reader supports ORDER, NUM, FIB, and MULTI_FIB.

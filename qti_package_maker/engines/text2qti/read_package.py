@@ -1,5 +1,6 @@
 
 # Standard Library
+import os
 import re
 
 # Pip3 Library
@@ -14,7 +15,7 @@ def strip_question_number(question_text: str) -> str:
 	return re.sub(r"^\d+\.\s*", "", question_text).strip()
 
 #=====================================================
-def parse_MC_lines(lines, start_index):
+def parse_MC_lines(lines: list, start_index: int) -> tuple:
 	"""Parse multiple-choice options and feedback from text2qti lines."""
 	choices_list = []
 	choice_feedback = {}
@@ -55,7 +56,7 @@ def parse_MC_lines(lines, start_index):
 	return choices_list, answer_text, choice_feedback
 
 #=====================================================
-def read_MC(question_block: str, item_number: int):
+def read_MC(question_block: str, item_number: int) -> item_types.BaseItem:
 	"""Read a text2qti multiple-choice block into an MC item."""
 	lines = [line.rstrip() for line in question_block.strip().split("\n")]
 	question_text_lines = []
@@ -80,7 +81,7 @@ def read_MC(question_block: str, item_number: int):
 
 #=====================================================
 #=====================================================
-def parse_MA_lines(lines, start_index):
+def parse_MA_lines(lines: list, start_index: int) -> tuple:
 	"""Parse multiple-answer options and feedback from text2qti lines."""
 	choices_list = []
 	choice_feedback = {}
@@ -121,7 +122,7 @@ def parse_MA_lines(lines, start_index):
 	return choices_list, answers_list, choice_feedback
 
 #=====================================================
-def read_MA(question_block: str, item_number: int):
+def read_MA(question_block: str, item_number: int) -> item_types.BaseItem:
 	"""Read a text2qti multiple-answer block into an MA item."""
 	lines = [line.rstrip() for line in question_block.strip().split("\n")]
 	question_text_lines = []
@@ -148,7 +149,7 @@ def read_MA(question_block: str, item_number: int):
 
 #=====================================================
 #=====================================================
-def parse_NUM_lines(lines, start_index):
+def parse_NUM_lines(lines: list, start_index: int) -> tuple:
 	"""Parse a numerical answer line and feedback from text2qti lines."""
 	answer_float = None
 	tolerance_float = 0
@@ -182,7 +183,7 @@ def parse_NUM_lines(lines, start_index):
 	return answer_float, tolerance_float, " ".join(answer_feedback).strip()
 
 #=====================================================
-def read_NUM(question_block: str, item_number: int):
+def read_NUM(question_block: str, item_number: int) -> item_types.BaseItem:
 	"""Read a text2qti numeric block into a NUM item."""
 	lines = [line.rstrip() for line in question_block.strip().split("\n")]
 	question_text_lines = []
@@ -207,7 +208,7 @@ def read_NUM(question_block: str, item_number: int):
 
 #=====================================================
 #=====================================================
-def parse_FIB_lines(lines, start_index):
+def parse_FIB_lines(lines: list, start_index: int) -> tuple:
 	"""Parse fill-in-the-blank answers and feedback from text2qti lines."""
 	answers_list = []
 	answer_feedback = []
@@ -223,7 +224,7 @@ def parse_FIB_lines(lines, start_index):
 	return answers_list, " ".join(answer_feedback).strip()
 
 #=====================================================
-def read_FIB(question_block: str, item_number: int):
+def read_FIB(question_block: str, item_number: int) -> item_types.BaseItem:
 	"""Read a text2qti fill-in-the-blank block into a FIB item."""
 	lines = [line.rstrip() for line in question_block.strip().split("\n")]
 	question_text_lines = []
@@ -247,19 +248,19 @@ def read_FIB(question_block: str, item_number: int):
 	return item_cls
 
 #=====================================================
-def read_MATCH(input_data):
+def read_MATCH(input_data: object) -> None:
 	raise NotImplementedError("text2qti does not define MATCH assessment items")
 
 #=====================================================
-def read_MULTI_FIB(input_data):
+def read_MULTI_FIB(input_data: object) -> None:
 	raise NotImplementedError("text2qti does not define MULTI_FIB assessment items")
 
 #=====================================================
-def read_ORDER(input_data):
+def read_ORDER(input_data: object) -> None:
 	raise NotImplementedError("text2qti does not define ORDER assessment items")
 
 #=====================================================
-def make_item_cls_from_block(question_block: str):
+def make_item_cls_from_block(question_block: str) -> item_types.BaseItem | None:
 	"""Infer item type from a text2qti block and parse it."""
 	question_block = question_block.strip()
 
@@ -322,17 +323,49 @@ def split_questions(text: str) -> list[str]:
 	return question_blocks
 
 #=====================================================
+# match text2qti markdown image syntax: ![alt](target)
+_MARKDOWN_IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+
+def restore_img_tags_from_markdown(text: str) -> str:
+	"""
+	Convert text2qti markdown image syntax back into <img> tags.
+
+	write_item.replace_images_with_markdown() emits `![alt](media/name.png)`
+	on write; this is the matching reverse step on read, so a read-write
+	roundtrip keeps item content as a normal <img src> field (no `asset:`
+	scheme is ever stored in item content).
+
+	Args:
+		text: raw text2qti file content, before block splitting.
+
+	Returns:
+		The text with every markdown image replaced by an <img> tag.
+	"""
+	#----------------------------------------------------
+	def _substitute(image_match: re.Match) -> str:
+		alt_text = image_match.group(1)
+		target = image_match.group(2)
+		return f'<img src="{target}" alt="{alt_text}"/>'
+
+	return _MARKDOWN_IMAGE_PATTERN.sub(_substitute, text)
+
 #=====================================================
-def read_items_from_file(input_file: str, allow_mixed: bool=False) -> list:
+#=====================================================
+def read_items_from_file(input_file: str, allow_mixed: bool = False) -> item_bank.ItemBank:
 	"""Read a text2qti file and return an ItemBank."""
 	# Read entire file content as a single string
 	with open(input_file, 'r') as f:
 		text_lines = f.read()
-	return process_text_lines(text_lines, allow_mixed)
+	# restore markdown image syntax into <img> tags before block parsing
+	text_lines = restore_img_tags_from_markdown(text_lines)
+	new_item_bank = process_text_lines(text_lines, allow_mixed)
+	# local images referenced as "media/name.png" resolve against the file's directory
+	new_item_bank.media_base_dir = os.path.dirname(os.path.abspath(input_file))
+	return new_item_bank
 
 #=====================================================
 #=====================================================
-def process_text_lines(text_lines: str, allow_mixed: bool=False) -> list:
+def process_text_lines(text_lines: str, allow_mixed: bool = False) -> item_bank.ItemBank:
 	# Split into question blocks
 	question_blocks = split_questions(text_lines)
 	# Convert each question block into an item_cls and add to the item bank
@@ -350,7 +383,7 @@ def process_text_lines(text_lines: str, allow_mixed: bool=False) -> list:
 	return new_item_bank
 
 #=====================================================
-def main():
+def main() -> None:
 	"""Run local parser sanity checks for text2qti."""
 	print("\n===== Running Unit Tests =====")
 	all_text = []

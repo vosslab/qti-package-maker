@@ -7,22 +7,22 @@ import pytest
 from qti_package_maker.common import qti_manifest
 
 
-def test_manifest_qti12_rejects_multiple_files():
+def test_manifest_qti12_rejects_multiple_files() -> None:
 	with pytest.raises(ValueError):
 		qti_manifest.generate_manifest("dummy", ["a/a.xml", "b/b.xml"], version="1.2")
 
 
-def test_manifest_qti12_rejects_mismatched_dir_and_base():
+def test_manifest_qti12_rejects_mismatched_dir_and_base() -> None:
 	with pytest.raises(ValueError):
 		qti_manifest.generate_manifest("dummy", ["qti12_items/assessment.xml"], version="1.2")
 
 
-def test_manifest_rejects_empty_file_list():
+def test_manifest_rejects_empty_file_list() -> None:
 	with pytest.raises(ValueError):
 		qti_manifest.generate_manifest("dummy", [], version="2.1")
 
 
-def test_manifest_qti12_resources_include_meta():
+def test_manifest_qti12_resources_include_meta() -> None:
 	tree = qti_manifest.generate_manifest("dummy", ["qti12_items/qti12_items.xml"], version="1.2")
 	root = tree.getroot()
 	resources = root.findall(".//resources/resource")
@@ -32,7 +32,7 @@ def test_manifest_qti12_resources_include_meta():
 	assert "assessment_meta" in resource_ids
 
 
-def test_manifest_qti21_dependencies():
+def test_manifest_qti21_dependencies() -> None:
 	files = ["qti21_items/item_00001.xml", "qti21_items/item_00002.xml"]
 	tree = qti_manifest.generate_manifest("dummy", files, version="2.1")
 	root = tree.getroot()

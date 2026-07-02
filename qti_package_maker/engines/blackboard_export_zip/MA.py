@@ -47,7 +47,7 @@ def build_MA(item: item_types.MA) -> lxml.etree.Element:
 	]
 
 	item_el, _outer_flow, response_block = common_xml.build_item_skeleton(
-		"Multiple Answer", 1, item.question_text
+		"Multiple Answer", 1, item.question_text, item.item_crc16
 	)
 	# Multiple cardinality lets the student select more than one choice.
 	response_lid = MC.build_choice_response_lid(

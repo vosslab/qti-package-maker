@@ -8,7 +8,7 @@ import re
 from qti_package_maker.common import string_functions
 
 
-def test_strip_crc_prefix():
+def test_strip_crc_prefix() -> None:
 	assert string_functions.strip_crc_prefix("34. b5b6 banana") == "banana"
 	assert string_functions.strip_crc_prefix("11. <p>b5b6</p> banana") == "banana"
 	assert string_functions.strip_crc_prefix("<p>b5b6</p> banana") == "banana"
@@ -17,7 +17,7 @@ def test_strip_crc_prefix():
 	assert string_functions.strip_crc_prefix("b5b6_6902 banana") == "banana"
 
 
-def test_strip_prefix_from_string():
+def test_strip_prefix_from_string() -> None:
 	assert string_functions.strip_prefix_from_string("A. Glucose") == "Glucose"
 	assert string_functions.strip_prefix_from_string("B. Fructose") == "Fructose"
 	assert string_functions.strip_prefix_from_string("2) Fructose") == "Fructose"
@@ -32,12 +32,12 @@ def test_strip_prefix_from_string():
 	assert string_functions.strip_prefix_from_string("<span>Glucose</span>") == "<span>Glucose</span>"
 
 
-def test_remove_prefix_from_list():
+def test_remove_prefix_from_list() -> None:
 	choices = ["A. One", "B. Two", "C. Three"]
 	assert string_functions.remove_prefix_from_list(choices) == ["One", "Two", "Three"]
 
 
-def test_number_helpers_basic():
+def test_number_helpers_basic() -> None:
 	assert string_functions.number_to_letter(3) == "C"
 	assert string_functions.number_to_lowercase(3) == "c"
 	assert string_functions.number_to_ordinal(3) == "third"
@@ -48,14 +48,14 @@ def test_number_helpers_basic():
 	assert string_functions.number_to_roman(1999) == "MCMXCIX"
 
 
-def test_number_helpers_bounds():
+def test_number_helpers_bounds() -> None:
 	with pytest.raises(ValueError):
 		string_functions.number_to_letter(0)
 	with pytest.raises(ValueError):
 		string_functions.number_to_lowercase(0)
 
 
-def test_generate_gene_letters():
+def test_generate_gene_letters() -> None:
 	assert string_functions.generate_gene_letters(5, 3) == "defgh"
 	assert string_functions.generate_gene_letters(5, 3, clear=True) == "defhj"
 	random_letters = string_functions.generate_gene_letters(5)
@@ -63,32 +63,32 @@ def test_generate_gene_letters():
 	assert len(set(random_letters)) == 5
 
 
-def test_crc16_helpers():
+def test_crc16_helpers() -> None:
 	code = string_functions.get_crc16_from_string("hello")
 	assert re.fullmatch(r"[0-9a-f]{4}", code)
 	rand_code = string_functions.get_random_crc16()
 	assert re.fullmatch(r"[0-9a-f]{4}", rand_code)
 
 
-def test_check_ascii_accepts_ascii():
+def test_check_ascii_accepts_ascii() -> None:
 	assert string_functions.check_ascii("abc 123") is True
 
 
-def test_check_ascii_rejects_unicode():
+def test_check_ascii_rejects_unicode() -> None:
 	with pytest.raises(ValueError):
 		string_functions.check_ascii("caf\u00e9")
 
 
-def test_make_question_pretty_strips_html():
+def test_make_question_pretty_strips_html() -> None:
 	assert string_functions.make_question_pretty("<p>Test</p>") == "Test"
 
 
-def test_html_helpers():
+def test_html_helpers() -> None:
 	assert "monospace" in string_functions.html_monospace("A B", use_nbsp=False)
 	assert "color" in string_functions.html_color_text("Hi", "ff0000")
 
 
-def test_html_table_to_text():
+def test_html_table_to_text() -> None:
 	html = "<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>"
 	table_text = string_functions._html_table_to_text(html)
 	assert "[TABLE]" not in table_text
@@ -98,14 +98,14 @@ def test_html_table_to_text():
 	assert "2" in table_text
 
 
-def test_format_html_lxml_basic():
+def test_format_html_lxml_basic() -> None:
 	raw_html = "<div><p>Text</p><ul><li>A</li><li>B</li></ul></div>"
 	formatted = string_functions.format_html_lxml(raw_html)
 	assert "<div" in formatted
 	assert "<li" in formatted
 
 
-def test_format_html_lxml_skips_script(capsys):
+def test_format_html_lxml_skips_script(capsys: pytest.CaptureFixture) -> None:
 	raw_html = "<script>var x = 1;</script><div>ok</div>"
 	formatted = string_functions.format_html_lxml(raw_html)
 	out = capsys.readouterr().out
@@ -113,7 +113,7 @@ def test_format_html_lxml_skips_script(capsys):
 	assert formatted == raw_html
 
 
-def test_html_table_to_text_cell_borders():
+def test_html_table_to_text_cell_borders() -> None:
 	# Cell-level visible borders should produce fancy_grid (box-drawing grid lines)
 	html = (
 		'<table>'
@@ -130,7 +130,7 @@ def test_html_table_to_text_cell_borders():
 	assert "\u2554" in result or "\u2555" in result or "\u2550" in result
 
 
-def test_html_table_to_text_cell_border_zero():
+def test_html_table_to_text_cell_border_zero() -> None:
 	# Cell-level border: 0 should NOT trigger fancy_grid
 	# This is the metabolic pathway table pattern
 	html = (
@@ -149,7 +149,7 @@ def test_html_table_to_text_cell_border_zero():
 		assert ch not in result
 
 
-def test_html_table_to_text_border_zero():
+def test_html_table_to_text_border_zero() -> None:
 	# border="0" should produce plain format (no box-drawing characters)
 	html = (
 		'<table border="0">'
@@ -166,7 +166,7 @@ def test_html_table_to_text_border_zero():
 		assert ch not in result
 
 
-def test_html_table_to_text_border_collapse():
+def test_html_table_to_text_border_collapse() -> None:
 	# Table-level border + collapse should produce fancy_outline
 	html = (
 		'<table style="border: 1px solid black; border-collapse: collapse;">'

@@ -8,7 +8,7 @@ from qti_package_maker.common import string_functions
 from qti_package_maker.engines.html_selftest import html_functions
 from qti_package_maker.engines.html_selftest import javascript_functions
 #============================================
-def generate_drag_and_drop_js(crc16_text: str):
+def generate_drag_and_drop_js(crc16_text: str) -> str:
 	"""
 	Build drag-and-drop JavaScript for MATCH items.
 	"""
@@ -78,7 +78,7 @@ def generate_drag_and_drop_js(crc16_text: str):
 	js_content += "</script>\n"
 	return js_content
 
-def generate_check_answers_js(crc16_text: str):
+def generate_check_answers_js(crc16_text: str) -> str:
 	"""
 	Build JavaScript that scores matching answers and updates feedback.
 	The function name is suffixed with the item CRC to avoid collisions when multiple
@@ -151,7 +151,7 @@ def generate_check_answers_js(crc16_text: str):
 	return js_content
 
 #============================================
-def generate_prompts_table(crc16_text: str, prompts_list: list):
+def generate_prompts_table(crc16_text: str, prompts_list: list) -> str:
 	"""
 	Build the prompts table for a matching item.
 	"""
@@ -187,7 +187,7 @@ def generate_prompts_table(crc16_text: str, prompts_list: list):
 	return table_content
 
 #============================================
-def generate_choices_list(crc16_text: str, choices_list: list):
+def generate_choices_list(crc16_text: str, choices_list: list) -> str:
 	"""
 	Build the draggable choices list for a matching item.
 	"""
@@ -226,7 +226,7 @@ def generate_choices_list(crc16_text: str, choices_list: list):
 
 #============================================
 # This function generates HTML for a matching question.
-def generate_core_html(crc16_text: str, question_text: str, prompts_list: list, choices_list: list):
+def generate_core_html(crc16_text: str, question_text: str, prompts_list: list, choices_list: list) -> str:
 	"""
 	Build the HTML body for a MATCH item (no script).
 	"""
@@ -245,7 +245,9 @@ def generate_core_html(crc16_text: str, question_text: str, prompts_list: list, 
 	return html_content
 
 #============================================
-def generate_html(item_number: int, crc16_text: str, question_text: str, prompts_list: list, choices_list: list):
+def generate_html(
+		item_number: int, crc16_text: str, question_text: str, prompts_list: list, choices_list: list
+		) -> str:
 	"""
 	Return formatted HTML plus matching scripts.
 	"""

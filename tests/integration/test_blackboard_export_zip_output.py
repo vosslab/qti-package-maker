@@ -14,14 +14,20 @@ These tests write only inside tmp_path and finish well under a second.
 """
 
 # Standard Library
+import os
 import re
+import base64
+import pathlib
 import zipfile
 
 # PIP3 modules
+import pytest
 import lxml.html
 import lxml.etree
 
 # QTI Package Maker
+import file_utils
+from qti_package_maker.common import media_assets
 from qti_package_maker.assessment_items import item_types
 from qti_package_maker.engines.blackboard_export_zip import read_package
 from qti_package_maker.engines.blackboard_export_zip import MC
@@ -29,6 +35,7 @@ from qti_package_maker.engines.blackboard_export_zip import MA
 from qti_package_maker.engines.blackboard_export_zip import FIB
 from qti_package_maker.engines.blackboard_export_zip import MATCH
 from qti_package_maker.engines.blackboard_export_zip import common_xml
+from qti_package_maker.engines.blackboard_export_zip import assessment_meta
 from qti_package_maker.package_interface import QTIPackageInterface
 
 # Matches the engine's 32-char lowercase hex idents (dashless UUID shape).
@@ -155,7 +162,7 @@ _REAL_SHAPE_MA_RESPROCESSING = """\
 
 
 #============================================
-def test_save_package_omits_bb_package_sig(tmp_path):
+def test_save_package_omits_bb_package_sig(tmp_path: pathlib.Path) -> None:
 	"""
 	save_package must NOT include .bb-package-sig (server-computed, omission is correct).
 	"""
@@ -178,7 +185,7 @@ def test_save_package_omits_bb_package_sig(tmp_path):
 
 
 #============================================
-def test_order_item_produces_warning_and_is_absent(tmp_path, capsys):
+def test_order_item_produces_warning_and_is_absent(tmp_path: pathlib.Path, capsys: object) -> None:
 	"""
 	An ORDER item causes a base_engine warning and does not appear in the pool dat.
 	"""
@@ -401,7 +408,7 @@ def test_mc_correct_branch_unchanged_after_ma_split() -> None:
 
 
 #============================================
-def test_ma_in_code_round_trip_recovers_answers(tmp_path) -> None:
+def test_ma_in_code_round_trip_recovers_answers(tmp_path: pathlib.Path) -> None:
 	"""
 	An MA built in code, written, and read back must recover the same answers_list.
 
@@ -538,7 +545,7 @@ def test_fib_writer_emits_per_answer_itemfeedback() -> None:
 
 
 #============================================
-def test_fib_in_code_round_trip_recovers_answers(tmp_path) -> None:
+def test_fib_in_code_round_trip_recovers_answers(tmp_path: pathlib.Path) -> None:
 	"""
 	A FIB built in code, written, and read back must recover the same answers_list.
 
@@ -636,3 +643,192 @@ def test_question_html_passes_non_table_markup_through_unchanged() -> None:
 	markup = "K<sup>+</sup> and Cl<sup>-</sup> with a <b>bold</b> note<br/>line two"
 	mat = common_xml.build_smart_text(markup)
 	assert mat.text == markup
+
+
+#============================================
+# csfiles image-embedding structure
+#============================================
+# Opaque image bytes; the engine copies them verbatim, so content is irrelevant.
+_STEM_PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"stem" + b"\x00" * 8
+
+#============================================
+def _write_single_image_package(tmp_path: pathlib.Path) -> str:
+	"""
+	Write a one-item, one-image package through the engine and return its path.
+
+	Args:
+		tmp_path: The pytest tmp_path base.
+
+	Returns:
+		The path to the written ZIP.
+	"""
+	qti = QTIPackageInterface(package_name="img_struct", verbose=False, allow_mixed=True)
+	qti.add_item("MC", ('Name the part <img src="diagram.png"/>',
+		["alpha", "beta", "gamma"], "alpha"))
+	qti.item_bank.add_image("diagram.png", _STEM_PNG_BYTES)
+	outfile = str(tmp_path / "img_struct.zip")
+	return qti.save_package("blackboard_export_zip", outfile)
+
+#============================================
+def test_csfiles_binary_and_sidecar_written_with_bytes(tmp_path: pathlib.Path) -> None:
+	# The image bytes land under csfiles/home_dir/__xid-<n>_1<ext> (byte-identical)
+	# and a paired LOM sidecar recovers the original filename.
+	result_path = _write_single_image_package(tmp_path)
+	with zipfile.ZipFile(result_path, "r") as z:
+		names = z.namelist()
+		binary_names = [
+			name for name in names
+			if name.startswith("csfiles/home_dir/__xid-")
+			and not name.endswith(".xml")
+		]
+		assert len(binary_names) == 1, f"expected one csfiles binary, got {binary_names}"
+		binary_name = binary_names[0]
+		assert z.read(binary_name) == _STEM_PNG_BYTES
+		sidecar = z.read(binary_name + ".xml").decode("utf-8")
+	# The sidecar identifier recovers the authored basename after the '#'.
+	assert "diagram.png" in sidecar
+	assert assessment_meta.LOM_NAMESPACE in sidecar
+
+#============================================
+def test_pool_body_carries_csfiles_token_and_csresourcelinks_entry(tmp_path: pathlib.Path) -> None:
+	# The item body carries the @X@ bbcswebdav token, and res00005.dat carries a
+	# matching CSResourceLinks resourceId the reader cross-checks against it.
+	result_path = _write_single_image_package(tmp_path)
+	with zipfile.ZipFile(result_path, "r") as z:
+		pool_text = z.read("res00002.dat").decode("utf-8")
+		links_text = z.read(assessment_meta.CSRESOURCELINKS_DAT_FILENAME).decode("utf-8")
+	# The rewritten src token is present in the pool body.
+	assert common_xml.CSFILES_SRC_PREFIX + "xid-1_1" in pool_text
+	# The CSResourceLinks entry's resourceId matches the token's xid.
+	assert "<resourceId>1_1</resourceId>" in links_text
+
+#============================================
+# CSResourceLinks parent resolution (embedded-image import integrity)
+#============================================
+# The committed real-export slice; its res00005.dat parentIds are known to match
+# item bbmd_asi_object_id values in its res00002.dat (documented in
+# tests/fixtures/bb_export_slice_README.md). The generated-output invariant
+# below is derived from that ground truth.
+_SLICE_ZIP = os.path.join(
+	file_utils.get_repo_root(), "tests", "fixtures", "bb_export_slice.zip")
+
+#============================================
+def _item_asi_object_ids(pool_bytes: bytes) -> set[str]:
+	"""
+	Return the set of item-level `bbmd_asi_object_id` values in a pool `.dat`.
+
+	These are the ASI object ids a CSResourceLinks `parentId` must reference for a
+	live Blackboard import to locate an embedded image's owning item.
+
+	Args:
+		pool_bytes: The res00002.dat pool XML bytes.
+
+	Returns:
+		Every `item/itemmetadata/bbmd_asi_object_id` text value.
+	"""
+	pool = lxml.etree.fromstring(pool_bytes)
+	asi_ids = pool.findall(".//item/itemmetadata/bbmd_asi_object_id")
+	return {element.text for element in asi_ids}
+
+#============================================
+def _csresourcelinks_parent_ids(links_bytes: bytes) -> list[str]:
+	"""
+	Return every `<parentId>` value in a res00005.dat CSResourceLinks body.
+
+	Args:
+		links_bytes: The res00005.dat CSResourceLinks XML bytes.
+
+	Returns:
+		The `parentId` text of each `<cms_resource_link>`, in document order.
+	"""
+	links = lxml.etree.fromstring(links_bytes)
+	parents = links.findall(".//cms_resource_link/parentId")
+	return [element.text for element in parents]
+
+#============================================
+def test_csresourcelinks_parent_resolves_to_item_asi_object_id(tmp_path: pathlib.Path) -> None:
+	# Regression guard for the dropped-image bug: a live Blackboard import matches
+	# each CSResourceLinks parentId against an item's bbmd_asi_object_id to locate
+	# the image's owning item. If the pool emits no matching asi_object_id, Learn
+	# logs "the parent ... cannot be located in the package" and drops the image.
+	# Two items each carry a distinct image, so the two parentIds must be distinct
+	# and each must resolve to that item's asi id.
+	qti = QTIPackageInterface(package_name="parent_resolve", verbose=False, allow_mixed=True)
+	qti.add_item("MC", ('Stem one <img src="one.png"/>', ["a", "b", "c"], "a"))
+	qti.add_item("MC", ('Stem two <img src="two.png"/>', ["a", "b", "c"], "b"))
+	qti.item_bank.add_image("one.png", _STEM_PNG_BYTES)
+	qti.item_bank.add_image("two.png", _STEM_PNG_BYTES + b"two")
+	outfile = str(tmp_path / "parent_resolve.zip")
+	result_path = qti.save_package("blackboard_export_zip", outfile)
+	with zipfile.ZipFile(result_path, "r") as z:
+		pool_bytes = z.read("res00002.dat")
+		links_bytes = z.read(assessment_meta.CSRESOURCELINKS_DAT_FILENAME)
+	item_asi_ids = _item_asi_object_ids(pool_bytes)
+	parent_ids = _csresourcelinks_parent_ids(links_bytes)
+	# Every image links to a parent, and every parent resolves inside the pool.
+	assert parent_ids, "expected at least one CSResourceLinks parentId"
+	unresolved = [pid for pid in parent_ids if pid not in item_asi_ids]
+	assert not unresolved, (
+		f"CSResourceLinks parentId(s) {unresolved} not found among pool item "
+		f"bbmd_asi_object_id values {item_asi_ids}"
+	)
+	# Each item owns its own image, so the two parents are distinct.
+	assert len(set(parent_ids)) == 2
+
+#============================================
+def test_fixture_csresourcelinks_parent_matches_pool_item_asi() -> None:
+	# Ground-truth invariant: in the real Blackboard export slice, every
+	# res00005.dat parentId is an item bbmd_asi_object_id in res00002.dat. This
+	# pins the relationship the generated-output test above mirrors, so the fix
+	# stays anchored to real Learn behavior rather than an invented convention.
+	with zipfile.ZipFile(_SLICE_ZIP, "r") as slice_zip:
+		pool_bytes = slice_zip.read("res00002.dat")
+		links_bytes = slice_zip.read("res00005.dat")
+	item_asi_ids = _item_asi_object_ids(pool_bytes)
+	parent_ids = _csresourcelinks_parent_ids(links_bytes)
+	assert parent_ids, "fixture slice should carry CSResourceLinks entries"
+	unresolved = [pid for pid in parent_ids if pid not in item_asi_ids]
+	assert not unresolved, (
+		f"real-export parentId(s) {unresolved} not found among pool item "
+		f"bbmd_asi_object_id values {item_asi_ids}"
+	)
+
+#============================================
+def test_csfiles_images_are_not_declared_in_manifest(tmp_path: pathlib.Path) -> None:
+	# csfiles binaries are implicitly bundled: the imsmanifest.xml must not
+	# reference them (matching the real Blackboard export).
+	result_path = _write_single_image_package(tmp_path)
+	with zipfile.ZipFile(result_path, "r") as z:
+		manifest_text = z.read("imsmanifest.xml").decode("utf-8")
+	assert "csfiles" not in manifest_text
+	assert "__xid-" not in manifest_text
+
+#============================================
+def test_imageless_package_keeps_empty_csresourcelinks_and_csfiles_marker(tmp_path: pathlib.Path) -> None:
+	# A bank with no images must still ship the empty CSResourceLinks list and an
+	# empty csfiles/ directory marker (the historical layout is unchanged).
+	qti = QTIPackageInterface(package_name="no_img", verbose=False, allow_mixed=True)
+	qti.add_item("MC", ("What is 2+2?", ["3", "4", "5"], "4"))
+	outfile = str(tmp_path / "no_img.zip")
+	result_path = qti.save_package("blackboard_export_zip", outfile)
+	with zipfile.ZipFile(result_path, "r") as z:
+		names = z.namelist()
+		links_text = z.read(assessment_meta.CSRESOURCELINKS_DAT_FILENAME).decode("utf-8")
+	assert "<cms_resource_link>" not in links_text
+	assert "csfiles/" in names
+	assert not any(name.startswith("csfiles/home_dir/") for name in names)
+
+#============================================
+def test_data_uri_image_raises_for_packaging_engine(tmp_path: pathlib.Path) -> None:
+	# A data URI carries no file for this file-packaging engine to embed, so
+	# save_package must raise instead of warning and leaving it inline.
+	encoded = base64.b64encode(b"not a real gif").decode("ascii")
+	qti = QTIPackageInterface(package_name="bb_datauri", verbose=False, allow_mixed=True)
+	qti.add_item("MC", (
+		f'What does <img src="data:image/gif;base64,{encoded}" alt="fig"/> show?',
+		["alpha", "beta", "gamma"],
+		"alpha",
+	))
+	outfile = str(tmp_path / "bb_datauri.zip")
+	with pytest.raises(media_assets.MediaPolicyError, match="data URI"):
+		qti.save_package("blackboard_export_zip", outfile)

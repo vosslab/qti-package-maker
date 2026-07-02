@@ -1,4 +1,5 @@
 # Standard Library
+import pathlib
 
 # Pip3 Library
 
@@ -8,7 +9,7 @@ from qti_package_maker.engines.okla_chrst_bqgen import write_item
 from qti_package_maker.engines.okla_chrst_bqgen import read_package
 
 
-def test_okla_roundtrip_supported_types(tmp_path):
+def test_okla_roundtrip_supported_types(tmp_path: pathlib.Path) -> None:
 	items = [
 		item_types.MC("MC question?", ["A", "B", "C"], "B"),
 		item_types.MA("MA question?", ["A", "B", "C"], ["A", "C"]),

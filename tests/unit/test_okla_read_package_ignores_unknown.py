@@ -1,4 +1,5 @@
 # Standard Library
+import pathlib
 
 # Pip3 Library
 
@@ -6,7 +7,7 @@
 from qti_package_maker.engines.okla_chrst_bqgen import read_package
 
 
-def test_okla_ignores_unknown_blocks(tmp_path):
+def test_okla_ignores_unknown_blocks(tmp_path: pathlib.Path) -> None:
 	content = """essay 1. Write about space.
 This is not supported.
 

@@ -1,10 +1,16 @@
 # Standard Library
+import pathlib
+
+# Pip3 Library
+import pytest
 
 # QTI Package Maker
 import qti_package_maker.engines.engine_registration
 
 
-def test_engine_classes_import_and_validate(tmp_path, monkeypatch):
+def test_engine_classes_import_and_validate(
+	tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
 	monkeypatch.chdir(tmp_path)
 	qti_package_maker.engines.engine_registration.register_engines()
 	for engine_info in qti_package_maker.engines.engine_registration.ENGINE_REGISTRY.values():

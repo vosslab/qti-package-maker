@@ -3,7 +3,6 @@
 # Standard Library
 from dataclasses import MISSING, dataclass, fields
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -14,11 +13,11 @@ class WheelSpec:
 	target_j: float
 	m_min: float
 	m_max: float
-	shared_m_quantile: Optional[float]
+	shared_m_quantile: float | None
 	allow_m_variation: float
 	max_m_blend: float = 0.0
-	brightness_q_cap: Optional[float] = None
-	target_ucs_r: Optional[float] = None
+	brightness_q_cap: float | None = None
+	target_ucs_r: float | None = None
 
 
 _DEFAULT_WHEEL_SPECS = {
@@ -46,7 +45,7 @@ _DEFAULT_RED_OFFSETS = {
 }
 
 
-def _build_wheel_spec(values, defaults=None):
+def _build_wheel_spec(values: dict | None, defaults: WheelSpec | None = None) -> WheelSpec:
 	base = defaults.__dict__ if defaults is not None else {}
 	merged = {**base, **(values or {})}
 	kwargs = {}
@@ -62,7 +61,7 @@ def _build_wheel_spec(values, defaults=None):
 	return WheelSpec(**kwargs)
 
 
-def _validate_colorfulness_control(mode, spec):
+def _validate_colorfulness_control(mode: str, spec: WheelSpec) -> None:
 	has_shared = spec.shared_m_quantile is not None
 	has_ucs = spec.target_ucs_r is not None
 	if has_shared == has_ucs:
@@ -84,7 +83,7 @@ def _validate_colorfulness_control(mode, spec):
 			)
 
 
-def _load_wheel_specs_from_yaml():
+def _load_wheel_specs_from_yaml() -> tuple:
 	yaml_path = Path(__file__).with_name("wheel_specs.yaml")
 	if not yaml_path.exists():
 		return _DEFAULT_WHEEL_SPECS, _DEFAULT_VIEWING, _DEFAULT_RED_OFFSETS

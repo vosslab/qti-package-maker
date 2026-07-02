@@ -70,7 +70,7 @@ def validate_html(html_str: str) -> bool:
 	return True
 
 #========================================================
-def validate_string_text(string_text: str, name: str, min_length: int = 3):
+def validate_string_text(string_text: str, name: str, min_length: int = 3) -> bool:
 	"""
 	Validate a string text.
 	"""
@@ -105,7 +105,7 @@ def validate_list_of_strings(list_of_strings: list, name: str, min_length: int =
 	return True
 
 #========================================================
-def validate_MC(question_text: str, choices_list: list, answer_text: str):
+def validate_MC(question_text: str, choices_list: list, answer_text: str) -> bool:
 	"""
 	Validate a Multiple Choice (Single Answer) question.
 
@@ -126,7 +126,7 @@ def validate_MC(question_text: str, choices_list: list, answer_text: str):
 
 #========================================================
 def validate_MA(question_text: str, choices_list: list, answers_list: list,
-		min_answers_required: int = 1, allow_all_correct: bool = True):
+		min_answers_required: int = 1, allow_all_correct: bool = True) -> bool:
 	"""
 	Validate a Multiple Answer question.
 
@@ -149,7 +149,7 @@ def validate_MA(question_text: str, choices_list: list, answers_list: list,
 	return True
 
 #========================================================
-def validate_FIB(question_text: str,  answers_list: list):
+def validate_FIB(question_text: str,  answers_list: list) -> bool:
 	"""
 	Validate a Fill-in-the-Blank question.
 	"""
@@ -180,7 +180,7 @@ def validate_MULTI_FIB(question_text: str, answer_map: dict) -> str:
 test_answer_map = {'colors': ['red', 'blue'], 'cities': ['Chicago', 'New York']}
 
 #========================================================
-def validate_NUM(question_text: str, answer_float: float, tolerance_float: float, tol_message: bool=True):
+def validate_NUM(question_text: str, answer_float: float, tolerance_float: float, tol_message: bool = True) -> bool:
 	"""
 	Validate a Numeric question.
 	"""
@@ -192,7 +192,7 @@ def validate_NUM(question_text: str, answer_float: float, tolerance_float: float
 	return True
 
 #========================================================
-def validate_MATCH(question_text: str, prompts_list: list, choices_list: list):
+def validate_MATCH(question_text: str, prompts_list: list, choices_list: list) -> bool:
 	"""
 	Validate a Matching question.
 	"""
@@ -208,7 +208,7 @@ def validate_MATCH(question_text: str, prompts_list: list, choices_list: list):
 	return True
 
 #========================================================
-def validate_ORDER(question_text: str,  ordered_answers_list: list):
+def validate_ORDER(question_text: str,  ordered_answers_list: list) -> bool:
 	"""
 	Validate an Order question.
 	"""

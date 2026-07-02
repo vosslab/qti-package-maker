@@ -1,4 +1,5 @@
 # Standard Library
+import pathlib
 
 # Pip3 Library
 
@@ -6,7 +7,7 @@
 from qti_package_maker.engines.okla_chrst_bqgen import read_package
 
 
-def test_okla_read_items_from_file(tmp_path):
+def test_okla_read_items_from_file(tmp_path: pathlib.Path) -> None:
 	content = """1. What is 2+2?
 *a) 4
 b) 3

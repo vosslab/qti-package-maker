@@ -43,7 +43,7 @@ def build_MATCH(item: item_types.MATCH) -> lxml.etree.Element:
 	choices = item.choices_list
 
 	item_el, outer_flow, response_block = common_xml.build_item_skeleton(
-		"Matching", 1, item.question_text
+		"Matching", 1, item.question_text, item.item_crc16
 	)
 
 	# Track each prompt's correct-label ident for the resprocessing branches.

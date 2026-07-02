@@ -1,7 +1,7 @@
 
 
 #==============
-def add_mathml_javascript():
+def add_mathml_javascript() -> str:
 	javascript_text = ""
 	javascript_text += "<script type='text/javascript' async "
 	javascript_text += "  src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'>"
@@ -9,7 +9,7 @@ def add_mathml_javascript():
 	return javascript_text
 
 #==============
-def add_clear_selection_javascript(crc16_text: str):
+def add_clear_selection_javascript(crc16_text: str) -> str:
 	"""
 	Build JavaScript that clears MA selections and resets the result display.
 	The function name is suffixed with the item CRC to avoid collisions when multiple
@@ -39,7 +39,7 @@ def add_clear_selection_javascript(crc16_text: str):
 	return javascript_text
 
 #==============
-def add_reset_game_javascript(crc16_text: str):
+def add_reset_game_javascript(crc16_text: str) -> str:
 	"""
 	Build JavaScript that resets matching dropzones and feedback.
 	The function name is suffixed with the item CRC to avoid collisions when multiple

@@ -7,13 +7,13 @@ import importlib
 from qti_package_maker.common.tabulate_compat import tabulate
 
 # Dictionary to store engine information dynamically
-ENGINE_REGISTRY = {}
+ENGINE_REGISTRY: dict = {}
 
 # Get the directory where this script is located
 ENGINES_DIR = pathlib.Path(__file__).parent
 
 #============================================
-def is_method_implemented(engine_class, method_name: str) -> bool:
+def is_method_implemented(engine_class: type, method_name: str) -> bool:
 	"""
 	Checks if the given method exists and is actually implemented in the engine.
 	"""
@@ -30,7 +30,7 @@ def is_method_implemented(engine_class, method_name: str) -> bool:
 	return True
 
 #============================================
-def process_engine(module_name, ispkg):
+def process_engine(module_name: str, ispkg: bool) -> dict | None:
 	# Import the engine_class module dynamically
 	module_path = f"qti_package_maker.engines.{module_name}.engine_class"
 
@@ -54,15 +54,18 @@ def process_engine(module_name, ispkg):
 	can_write = is_method_implemented(engine_class, "save_package")
 
 	# Register engine using folder name as engine_name
-	ENGINE_REGISTRY[module_name] = {
+	engine_dict = {
 		"engine_name": module_name,
 		"can_read": can_read,
 		"can_write": can_write,
+		# every EngineClass declares media_policy (BaseEngine sets the default)
+		"media_policy": engine_class.media_policy,
 		"engine_class": engine_class
 	}
+	return engine_dict
 
 #============================================
-def register_engines():
+def register_engines() -> None:
 	"""
 	Dynamically scans the 'engines' directory for engine_class.py files
 	and registers available engines by importing their classes.
@@ -79,19 +82,19 @@ def register_engines():
 			ENGINE_REGISTRY[module_name] = engine_dict
 
 #============================================
-def print_engine_table(tablefmt: str="fancy_outline"):
+def print_engine_table(tablefmt: str = "fancy_outline") -> None:
 	if ENGINE_REGISTRY:
 		engine_data = []
 		for info in ENGINE_REGISTRY.values():
 			# Convert True/False to colored + or X
 			can_read = PLUS if info["can_read"] else CROSS
 			can_write = PLUS if info["can_write"] else CROSS
-			engine_data.append([info["engine_name"], can_read, can_write])
-			print("\nRegistered Engines:")
-			headers = ["Engine Name", "Can Read", "Can Write"]
-			print(tabulate(engine_data, headers, tablefmt=tablefmt))
-		else:
-			print("No engines found.")
+			engine_data.append([info["engine_name"], can_read, can_write, info["media_policy"]])
+		print("\nRegistered Engines:")
+		headers = ["Engine Name", "Can Read", "Can Write", "Media Policy"]
+		print(tabulate(engine_data, headers, tablefmt=tablefmt))
+	else:
+		print("No engines found.")
 
 #============================================
 # Run the registration when imported
@@ -110,7 +113,7 @@ CROSS = f"{RED}X{RESET}" # Red X
 #============================================
 # If this script is run directly, print the available engines
 #============================================
-def main():
+def main() -> None:
 	register_engines()
 	print_engine_table()
 

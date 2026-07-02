@@ -16,7 +16,9 @@ An ORDER item is included to confirm the engine drops unsupported types.
 """
 
 # Standard Library
+import os
 import math
+import pathlib
 import zipfile
 
 # QTI Package Maker
@@ -64,7 +66,7 @@ def _index_by_question(items: list) -> dict:
 	return {item.question_text: item for item in items}
 
 #============================================
-def _compare_item(item_a, item_b) -> list[str]:
+def _compare_item(item_a: object, item_b: object) -> list[str]:
 	"""
 	Compare a built item to its round-tripped counterpart at the behavior level.
 
@@ -115,7 +117,7 @@ def _compare_item(item_a, item_b) -> list[str]:
 	return failures
 
 #============================================
-def test_round_trip_all_types(tmp_path) -> None:
+def test_round_trip_all_types(tmp_path: pathlib.Path) -> None:
 	# Write every first-class type through the engine, read it back, and assert
 	# behavior-level equality. ORDER is dropped by the engine and must be absent.
 	qti = _build_round_trip_bank()
@@ -141,3 +143,60 @@ def test_round_trip_all_types(tmp_path) -> None:
 		all_failures.extend(_compare_item(item_a, item_b))
 
 	assert not all_failures, "Round-trip behavior failures:\n" + "\n".join(all_failures)
+
+
+#============================================
+# Image embedding round-trip
+#============================================
+# A minimal but valid PNG header plus filler; content is opaque to the engine,
+# which copies the bytes verbatim, so the exact pixels do not matter.
+_PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"stem-image-bytes" + b"\x00" * 8
+# A minimal JPEG (SOI ... EOI) with opaque filler bytes.
+_JPG_BYTES = b"\xff\xd8\xff\xe0" + b"choice-image-bytes" + b"\xff\xd9"
+
+#============================================
+def test_round_trip_preserves_image_bytes_and_refs(tmp_path: pathlib.Path) -> None:
+	# Acceptance: an item whose stem carries one image and an item whose
+	# choice carries another are written through the csfiles mechanism, read
+	# back, and must preserve both the <img src> references (basename-level, as
+	# the reader rewrites to the recovered filename) and the exact image bytes.
+	qti = package_interface.QTIPackageInterface(
+		package_name="image_roundtrip",
+		verbose=False,
+		allow_mixed=True,
+	)
+	# The srcs are plain basenames so the reader's recovered filename equals the
+	# authored src, keeping the reference identical across the round-trip.
+	qti.add_item("MC", ('Identify the organelle <img src="stem.png"/>',
+		["Nucleus", "Golgi", "Ribosome"], "Nucleus"))
+	qti.add_item("MA", ("Which of these are metals?",
+		['Iron <img src="metal.jpg"/>', "Oxygen", "Gold"],
+		['Iron <img src="metal.jpg"/>', "Gold"]))
+	qti.item_bank.add_image("stem.png", _PNG_BYTES)
+	qti.item_bank.add_image("metal.jpg", _JPG_BYTES)
+
+	outfile = str(tmp_path / "image_roundtrip.zip")
+	result_path = qti.save_package("blackboard_export_zip", outfile)
+
+	bank_b = read_package.read_items_from_file(result_path, allow_mixed=True)
+	items_b = _index_by_question(list(bank_b))
+
+	# The MC stem reference survives and the @X@ token is gone after read.
+	mc_item = items_b["Identify the organelle <img src=\"stem.png\"/>"]
+	assert '<img src="stem.png"' in mc_item.question_text
+	assert "@X@EmbeddedFile.requestUrlStub" not in mc_item.question_text
+
+	# The MA choice reference survives on the choice HTML.
+	ma_item = items_b["Which of these are metals?"]
+	assert any('<img src="metal.jpg"' in choice for choice in ma_item.choices_list)
+	for choice in ma_item.choices_list:
+		assert "@X@EmbeddedFile.requestUrlStub" not in choice
+
+	# The extracted image bytes are byte-identical to what was embedded.
+	assert bank_b.media_base_dir is not None
+	stem_path = os.path.join(bank_b.media_base_dir, "stem.png")
+	with open(stem_path, "rb") as stem_file:
+		assert stem_file.read() == _PNG_BYTES
+	metal_path = os.path.join(bank_b.media_base_dir, "metal.jpg")
+	with open(metal_path, "rb") as metal_file:
+		assert metal_file.read() == _JPG_BYTES

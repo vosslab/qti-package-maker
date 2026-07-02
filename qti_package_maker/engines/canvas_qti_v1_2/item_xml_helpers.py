@@ -27,7 +27,7 @@ def create_assessment_items_file_xml_header() -> lxml.etree.Element:
 	return assessment_items_file_xml_root
 
 #==============================================================
-def create_itemmetadata(choice_ids_list: list, question_type: str):
+def create_itemmetadata(choice_ids_list: list, question_type: str) -> lxml.etree.Element:
 	"""Create the <itemmetadata> section with QTI metadata fields."""
 	itemmetadata = lxml.etree.Element("itemmetadata")
 	qtimetadata = lxml.etree.SubElement(itemmetadata, "qtimetadata")
@@ -47,7 +47,7 @@ def create_itemmetadata(choice_ids_list: list, question_type: str):
 	return itemmetadata
 
 #==============================================================
-def create_material_mattext(question_text: str):
+def create_material_mattext(question_text: str) -> lxml.etree.Element:
 	"""Create the <material> section inside <presentation>."""
 	material = lxml.etree.Element("material")
 	mattext = lxml.etree.SubElement(material, "mattext", texttype="text/html")
@@ -56,7 +56,7 @@ def create_material_mattext(question_text: str):
 	return material
 
 #==============================================================
-def create_choice_response_lid(choices_list: list, cardinality: str="Single"):
+def create_choice_response_lid(choices_list: list, cardinality: str="Single") -> lxml.etree.Element:
 	"""Create the <response_lid> section with <render_choice> and answer options."""
 	response_lid = lxml.etree.Element("response_lid", ident="response1", rcardinality=cardinality)
 	render_choice = lxml.etree.SubElement(response_lid, "render_choice")
@@ -71,7 +71,7 @@ def create_choice_response_lid(choices_list: list, cardinality: str="Single"):
 	return response_lid
 
 #==============================================================
-def create_matching_response_lid(prompts_list: list, choices_list: list):
+def create_matching_response_lid(prompts_list: list, choices_list: list) -> list[lxml.etree.Element]:
 	"""Create the <response_lid> sections for matching questions."""
 	response_lids = []
 	# Iterate through answers and create a <response_lid> for each one
@@ -99,7 +99,7 @@ def create_matching_response_lid(prompts_list: list, choices_list: list):
 	return response_lids
 
 #==============================================================
-def _create_base_outcomes():
+def _create_base_outcomes() -> lxml.etree.Element:
 	"""
 	Create the base <resprocessing> structure with <outcomes> and <decvar>.
 
@@ -115,7 +115,7 @@ def _create_base_outcomes():
 	return resprocessing
 
 #==============================================================
-def create_MC_resprocessing(choices_list, answer_text):
+def create_MC_resprocessing(choices_list: list, answer_text: str) -> lxml.etree.Element:
 	"""
 	Create the <resprocessing> section for Multiple Choice (Single Answer) questions.
 	"""
@@ -136,7 +136,7 @@ def create_MC_resprocessing(choices_list, answer_text):
 	return resprocessing
 
 #==============================================================
-def create_MA_resprocessing(choices_list, answers_list):
+def create_MA_resprocessing(choices_list: list, answers_list: list) -> lxml.etree.Element:
 	"""
 	Create the <resprocessing> section, automatically sorting correct and incorrect answers.
 	"""
@@ -163,7 +163,7 @@ def create_MA_resprocessing(choices_list, answers_list):
 	return resprocessing
 
 #==============================================================
-def create_MATCH_resprocessing(prompts_list: list):
+def create_MATCH_resprocessing(prompts_list: list) -> lxml.etree.Element:
 	"""
 	Create the <resprocessing> section for matching questions, assigning scores for each match.
 	"""
@@ -188,7 +188,7 @@ def create_MATCH_resprocessing(prompts_list: list):
 	return resprocessing
 
 #==============================================================
-def create_numeric_presentation(question_text: str):
+def create_numeric_presentation(question_text: str) -> lxml.etree.Element:
 	"""
 	Create <presentation> for a numeric response (fill-in) using response_str.
 	"""
@@ -202,7 +202,7 @@ def create_numeric_presentation(question_text: str):
 	return presentation
 
 #==============================================================
-def create_NUM_resprocessing(answer_float: float, tolerance_float: float):
+def create_NUM_resprocessing(answer_float: float, tolerance_float: float | None) -> lxml.etree.Element:
 	"""
 	Create <resprocessing> for numeric questions with optional tolerance.
 	"""
@@ -227,7 +227,7 @@ def create_NUM_resprocessing(answer_float: float, tolerance_float: float):
 	return resprocessing
 
 #==============================================================
-def create_fib_presentation(question_text: str):
+def create_fib_presentation(question_text: str) -> lxml.etree.Element:
 	"""
 	Create <presentation> for a single fill-in-the-blank string response.
 	"""
@@ -241,7 +241,7 @@ def create_fib_presentation(question_text: str):
 	return presentation
 
 #==============================================================
-def create_FIB_resprocessing(answers_list: list):
+def create_FIB_resprocessing(answers_list: list) -> lxml.etree.Element:
 	"""
 	Create <resprocessing> for fill-in-the-blank with optional multiple acceptable answers.
 	"""
@@ -257,7 +257,7 @@ def create_FIB_resprocessing(answers_list: list):
 	return resprocessing
 
 #==============================================================
-def create_multi_fib_presentation(question_text: str, answer_map: dict):
+def create_multi_fib_presentation(question_text: str, answer_map: dict) -> lxml.etree.Element:
 	"""
 	Create <presentation> for multiple fill-in-the-blank responses using response_lid.
 	"""
@@ -271,7 +271,7 @@ def create_multi_fib_presentation(question_text: str, answer_map: dict):
 	return presentation
 
 #==============================================================
-def create_multi_fib_response_lids(answer_map: dict):
+def create_multi_fib_response_lids(answer_map: dict) -> tuple[list[lxml.etree.Element], list[str]]:
 	"""
 	Create response_lid blocks for each blank with choices for acceptable answers.
 	Returns (response_lids, label_ids_list).
@@ -297,7 +297,7 @@ def create_multi_fib_response_lids(answer_map: dict):
 	return response_lids, label_ids
 
 #==============================================================
-def create_MULTI_FIB_resprocessing(answer_map: dict):
+def create_MULTI_FIB_resprocessing(answer_map: dict) -> lxml.etree.Element:
 	"""
 	Create <resprocessing> for multi-blank FIB with all blanks required.
 	"""
@@ -323,7 +323,7 @@ def create_MULTI_FIB_resprocessing(answer_map: dict):
 
 #==============================================================
 #==============================================================
-def dummy_test_run():
+def dummy_test_run() -> None:
 	"""
 	Run a test generation of assessment XML.
 	"""

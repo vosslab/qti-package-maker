@@ -7,21 +7,21 @@ import pytest
 from qti_package_maker.assessment_items.item_bank import ItemBank
 
 
-def test_item_bank_rejects_mixed_types_by_default():
+def test_item_bank_rejects_mixed_types_by_default() -> None:
 	bank = ItemBank()
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	with pytest.raises(ValueError):
 		bank.add_item("MA", ("Q2?", ["A", "B", "C"], ["A", "B"]))
 
 
-def test_item_bank_allows_mixed_types():
+def test_item_bank_allows_mixed_types() -> None:
 	bank = ItemBank(allow_mixed=True)
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank.add_item("MA", ("Q2?", ["A", "B", "C"], ["A", "B"]))
 	assert len(bank) == 2
 
 
-def test_item_bank_skips_duplicate_crc(capsys):
+def test_item_bank_skips_duplicate_crc(capsys: pytest.CaptureFixture) -> None:
 	bank = ItemBank()
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
@@ -30,7 +30,7 @@ def test_item_bank_skips_duplicate_crc(capsys):
 	assert len(bank) == 1
 
 
-def test_item_bank_merge_and_operators():
+def test_item_bank_merge_and_operators() -> None:
 	bank1 = ItemBank()
 	bank1.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank2 = ItemBank()
@@ -43,7 +43,7 @@ def test_item_bank_merge_and_operators():
 	assert bank2.merge(bank1) == merged
 
 
-def test_item_bank_merge_preserves_first_item_type():
+def test_item_bank_merge_preserves_first_item_type() -> None:
 	bank1 = ItemBank()
 	bank1.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	empty = ItemBank()
@@ -53,7 +53,7 @@ def test_item_bank_merge_preserves_first_item_type():
 		merged.add_item("MA", ("Q2?", ["A", "B", "C"], ["A"]))
 
 
-def test_item_bank_merge_same_type_sets_first_item_type():
+def test_item_bank_merge_same_type_sets_first_item_type() -> None:
 	bank1 = ItemBank()
 	bank1.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank2 = ItemBank()
@@ -62,7 +62,7 @@ def test_item_bank_merge_same_type_sets_first_item_type():
 	assert merged.first_item_type == "MC"
 
 
-def test_item_bank_getitem_slice_and_index():
+def test_item_bank_getitem_slice_and_index() -> None:
 	bank = ItemBank()
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank.add_item("MC", ("Q2?", ["A", "B"], "B"))
@@ -74,7 +74,7 @@ def test_item_bank_getitem_slice_and_index():
 	assert bank[0].question_text == "Q1?"
 
 
-def test_item_bank_setitem_reorders():
+def test_item_bank_setitem_reorders() -> None:
 	bank = ItemBank()
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank.add_item("MC", ("Q2?", ["A", "B"], "B"))
@@ -87,14 +87,14 @@ def test_item_bank_setitem_reorders():
 	assert bank[0] == last_item
 
 
-def test_item_bank_histogram_empty(capsys):
+def test_item_bank_histogram_empty(capsys: pytest.CaptureFixture) -> None:
 	bank = ItemBank()
 	bank.print_histogram()
 	out = capsys.readouterr().out
 	assert out == ""
 
 
-def test_item_bank_histogram_mc_output(capsys):
+def test_item_bank_histogram_mc_output(capsys: pytest.CaptureFixture) -> None:
 	bank = ItemBank()
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank.add_item("MC", ("Q2?", ["A", "B"], "B"))
@@ -103,7 +103,7 @@ def test_item_bank_histogram_mc_output(capsys):
 	assert "Histogram" in out
 
 
-def test_item_bank_renumber_items():
+def test_item_bank_renumber_items() -> None:
 	bank = ItemBank()
 	bank.add_item("MC", ("Q1?", ["A", "B"], "A"))
 	bank.add_item("MC", ("Q2?", ["A", "B"], "B"))

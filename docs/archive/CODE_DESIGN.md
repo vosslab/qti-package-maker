@@ -172,6 +172,6 @@ Once tested, submit a PR on GitHub!
 ---
 
 ## **License**
-This project is licensed under the **GPL v3 License**.
+This project is licensed under the **LGPL v3 License**.
 
 ---

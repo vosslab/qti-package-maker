@@ -662,7 +662,7 @@ def _write_ma_pool_package(tmp_path: pathlib.Path, item_xml_str: str) -> pathlib
 # Tests
 #============================================
 #============================================
-def test_unknown_question_type_is_skipped_with_warning(tmp_path: pathlib.Path, capsys) -> None:
+def test_unknown_question_type_is_skipped_with_warning(tmp_path: pathlib.Path, capsys: object) -> None:
 	# An unknown bbmd_questiontype must be skipped with a warning naming the type
 	# and source item, leaving the rest of the pool parseable.
 	pool_dir = tmp_path / "pool"

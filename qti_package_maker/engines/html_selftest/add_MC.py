@@ -8,7 +8,7 @@ from qti_package_maker.engines.html_selftest import html_functions
 
 #==============
 # This function generates HTML for a multiple-choice question.
-def generate_core_html(crc16_text: str, question_text: str, choices_list: list, answer_text: str):
+def generate_core_html(crc16_text: str, question_text: str, choices_list: list, answer_text: str) -> str:
 	"""
 	Build the HTML body for an MC item (no script).
 	"""
@@ -57,7 +57,7 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 #==============
 
 # This function generates JavaScript to check the answer for a multiple-choice question.
-def generate_javascript(crc16_text) -> str:
+def generate_javascript(crc16_text: str) -> str:
 	"""
 	Build JavaScript that checks a selected MC answer.
 	The function name is suffixed with the item CRC to avoid collisions when multiple
@@ -108,7 +108,9 @@ def generate_javascript(crc16_text) -> str:
 
 #==============
 
-def generate_html(item_number: int, crc16_text: str, question_text: str, choices_list: list, answer_text: str):
+def generate_html(
+		item_number: int, crc16_text: str, question_text: str, choices_list: list, answer_text: str
+		) -> str:
 	"""
 	Return formatted HTML plus the MC answer-check script.
 	"""

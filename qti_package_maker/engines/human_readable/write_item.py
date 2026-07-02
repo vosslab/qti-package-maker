@@ -1,9 +1,15 @@
 ENGINE_NAME = "human_readable"
 
+# Standard Library
+import re
+
+# QTI Package Maker
 from qti_package_maker.common import string_functions
+from qti_package_maker.common import media_assets
+from qti_package_maker.assessment_items import item_types
 
 #==============================================================
-def is_valid_content(content_text):
+def is_valid_content(content_text: str) -> bool:
 	if '<mathml' in content_text.lower():
 		#print("problem contains mathml")
 		return False
@@ -13,14 +19,14 @@ def is_valid_content(content_text):
 	return True
 
 #====================
-def is_valid_list(list_of_strings):
+def is_valid_list(list_of_strings: list) -> bool:
 	for content_text in list_of_strings:
 		if not is_valid_content(content_text):
 			return False
 	return True
 
 #==============================================================
-def MC(item_cls):
+def MC(item_cls: item_types.BaseItem) -> str | None:
 	#item_number: int, crc16_text: str, question_text: str, choices_list: list, answer_text: str):
 	"""Render an MC item in the human-readable format."""
 	local_question_text = string_functions.make_question_pretty(item_cls.question_text)
@@ -47,7 +53,7 @@ def MC(item_cls):
 	return assessment_text
 
 #==============================================================
-def MA(item_cls):
+def MA(item_cls: item_types.BaseItem) -> str | None:
 	#item_number: int, crc16_text: str, question_text: str, choices_list: list, answers_list: list):
 	"""Render an MA item in the human-readable format."""
 	local_question_text = string_functions.make_question_pretty(item_cls.question_text)
@@ -74,7 +80,7 @@ def MA(item_cls):
 	return assessment_text
 
 #==============================================================
-def MATCH(item_cls):
+def MATCH(item_cls: item_types.BaseItem) -> str | None:
 	#item_number: int, crc16_text: str, question_text: str, prompts_list: list, choices_list: list):
 	"""Render a MATCH item in the human-readable format."""
 	#MAT TAB question text TAB answer text TAB matching text TAB answer two text TAB matching two text
@@ -105,7 +111,7 @@ def MATCH(item_cls):
 	return assessment_text
 
 #==============================================================
-def NUM(item_cls):
+def NUM(item_cls: item_types.BaseItem) -> str | None:
 	#item_number: int, crc16_text: str,
 	#question_text: str, answer_float: float, tolerance_float: float, tolerance_message=True):
 	"""Render a NUM item in the human-readable format."""
@@ -122,7 +128,7 @@ def NUM(item_cls):
 	return assessment_text
 
 #==============================================================
-def FIB(item_cls):
+def FIB(item_cls: item_types.BaseItem) -> str | None:
 	#item_number: int, crc16_text: str, question_text: str, answers_list: list):
 	"""Render a FIB item in the human-readable format."""
 	local_question_text = string_functions.make_question_pretty(item_cls.question_text)
@@ -143,7 +149,7 @@ def FIB(item_cls):
 
 #==============================================================
 # Create a Fill-in-the-Blank (Multiple Blanks) question using answer mapping.
-def MULTI_FIB(item_cls):
+def MULTI_FIB(item_cls: item_types.BaseItem) -> str | None:
 	#item_number: int, crc16_text: str, question_text: str, answer_map: dict) -> str:
 	"""Render a MULTI_FIB item in the human-readable format."""
 	local_question_text = string_functions.make_question_pretty(item_cls.question_text)
@@ -165,7 +171,7 @@ def MULTI_FIB(item_cls):
 	return assessment_text
 
 #==============================================================
-def ORDER(item_cls):
+def ORDER(item_cls: item_types.BaseItem) -> str | None:
 	#item_number: int, crc16_text: str, question_text: str, ordered_answers_list: list):
 	"""Render an ORDER item in the human-readable format."""
 	local_question_text = string_functions.make_question_pretty(item_cls.question_text)
@@ -181,3 +187,67 @@ def ORDER(item_cls):
 		assessment_text += f"- [{i+1}] [____] (Correct: {answer_text})\n"
 	assessment_text += '\n\n'
 	return assessment_text
+
+#==============================================================
+# whole <img ...> tag / src="..." patterns come from media_assets (single owner);
+# only the alt attribute pattern is local to this engine
+_ALT_ATTR_PATTERN = re.compile(r"""\balt\s*=\s*(["'])(.*?)\1""", re.IGNORECASE | re.DOTALL)
+
+def _describe_image(asset: media_assets.MediaAsset, alt_text: str) -> str:
+	"""
+	Build a readable inline description of an image reference: name, alt
+	text, and source path. human_readable never copies or embeds files.
+	"""
+	description = media_assets.placeholder_text(asset)
+	if alt_text:
+		description += f" (alt: {alt_text})"
+	description += f" (source: {asset.src})"
+	return description
+
+#==============================================================
+def _replace_img_tags_in_text(text: str, asset_by_src: dict) -> str:
+	"""Replace every <img src=...> tag in one string field with its description."""
+	#----------------------------------------------------
+	def _substitute(tag_match: re.Match) -> str:
+		tag = tag_match.group(0)
+		src_match = media_assets.SRC_ATTR_PATTERN.search(tag)
+		if src_match is None:
+			return tag
+		src = src_match.group(3)
+		asset = asset_by_src.get(src)
+		if asset is None:
+			return tag
+		alt_match = _ALT_ATTR_PATTERN.search(tag)
+		alt_text = alt_match.group(2) if alt_match else ""
+		return _describe_image(asset, alt_text)
+
+	return media_assets.IMG_TAG_PATTERN.sub(_substitute, text)
+
+#==============================================================
+def _replace_img_tags_in_value(value: object, asset_by_src: dict) -> object:
+	"""Recurse into a supporting-field value (str, list, or dict) and replace <img> tags."""
+	if isinstance(value, str):
+		return _replace_img_tags_in_text(value, asset_by_src)
+	if isinstance(value, list):
+		return [_replace_img_tags_in_value(element, asset_by_src) for element in value]
+	if isinstance(value, dict):
+		return {key: _replace_img_tags_in_value(element, asset_by_src) for key, element in value.items()}
+	return value
+
+#==============================================================
+def clone_item_with_image_descriptions(
+			item_cls: item_types.BaseItem, asset_by_src: dict) -> item_types.BaseItem:
+	"""
+	Return a deep copy of item_cls with every <img> tag in its HTML-bearing
+	fields replaced by a readable name + alt + source-path description.
+
+	This must run BEFORE rendering (not on the rendered text afterward)
+	because make_question_pretty strips every HTML tag it does not
+	specifically recognize, including <img>, from the final output.
+	"""
+	cloned_item = item_cls.copy()
+	cloned_item.question_text = _replace_img_tags_in_text(item_cls.question_text, asset_by_src)
+	for field_name in item_cls.get_supporting_field_names():
+		field_value = getattr(item_cls, field_name)
+		setattr(cloned_item, field_name, _replace_img_tags_in_value(field_value, asset_by_src))
+	return cloned_item

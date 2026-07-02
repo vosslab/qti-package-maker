@@ -33,7 +33,7 @@ class BaseItem:
 	Base class for all assessment items.
 	Handles validation, CRC calculations, and common properties.
 	"""
-	def __init__(self, question_text: str):
+	def __init__(self, question_text: str) -> None:
 		"""
 		Initializes a base assessment item.
 		Ensures necessary properties are set and validates the item.
@@ -142,7 +142,7 @@ class BaseItem:
 #============================================
 #============================================
 class MC(BaseItem):
-	def __init__(self, question_text: str, choices_list: list, answer_text: str):
+	def __init__(self, question_text: str, choices_list: list, answer_text: str) -> None:
 		self.choices_list = string_functions.remove_prefix_from_list(choices_list)
 		self.answer_text = string_functions.strip_prefix_from_string(answer_text)
 		secondary_string = "|".join(choices_list)
@@ -162,7 +162,7 @@ class MA(BaseItem):
 		answers_list: list,
 		min_answers_required: int = 1,
 		allow_all_correct: bool = True,
-	):
+	) -> None:
 		self.choices_list = string_functions.remove_prefix_from_list(choices_list)
 		self.answers_list = string_functions.remove_prefix_from_list(answers_list)
 		self.min_answers_required = min_answers_required
@@ -177,7 +177,7 @@ class MA(BaseItem):
 
 #============================================
 class MATCH(BaseItem):
-	def __init__(self, question_text: str, prompts_list: list, choices_list: list):
+	def __init__(self, question_text: str, prompts_list: list, choices_list: list) -> None:
 		self.prompts_list = string_functions.remove_prefix_from_list(prompts_list)
 		self.choices_list = string_functions.remove_prefix_from_list(choices_list)
 		secondary_string = "|".join(prompts_list+choices_list)
@@ -189,7 +189,7 @@ class MATCH(BaseItem):
 
 #============================================
 class NUM(BaseItem):
-	def __init__(self, question_text: str, answer_float: float, tolerance_float: float, tolerance_message=True):
+	def __init__(self, question_text: str, answer_float: float, tolerance_float: float, tolerance_message: bool = True) -> None:
 		self.answer_float = answer_float
 		self.tolerance_float = tolerance_float
 		self.tolerance_message = tolerance_message
@@ -202,7 +202,7 @@ class NUM(BaseItem):
 
 #============================================
 class FIB(BaseItem):
-	def __init__(self, question_text: str, answers_list: list):
+	def __init__(self, question_text: str, answers_list: list) -> None:
 		self.answers_list = string_functions.remove_prefix_from_list(answers_list)
 		secondary_string = "|".join(answers_list)
 		self.secondary_crc16 = string_functions.get_crc16_from_string(secondary_string)
@@ -213,7 +213,7 @@ class FIB(BaseItem):
 
 #============================================
 class MULTI_FIB(BaseItem):
-	def __init__(self, question_text: str, answer_map: dict):
+	def __init__(self, question_text: str, answer_map: dict) -> None:
 		self.answer_map = answer_map
 		secondary_string = '|'.join(f"{k}:{v}" for k, v in sorted(answer_map.items()))
 		self.secondary_crc16 = string_functions.get_crc16_from_string(secondary_string)
@@ -224,7 +224,7 @@ class MULTI_FIB(BaseItem):
 
 #============================================
 class ORDER(BaseItem):
-	def __init__(self, question_text: str, ordered_answers_list: list):
+	def __init__(self, question_text: str, ordered_answers_list: list) -> None:
 		self.ordered_answers_list = string_functions.remove_prefix_from_list(ordered_answers_list)
 		secondary_string = "|".join(ordered_answers_list)
 		self.secondary_crc16 = string_functions.get_crc16_from_string(secondary_string)

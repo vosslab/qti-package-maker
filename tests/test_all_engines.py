@@ -1,5 +1,6 @@
 # Standard Library
 import os
+import pathlib
 
 # Pip3 Library
 import pytest
@@ -9,7 +10,7 @@ from qti_package_maker import package_interface
 
 
 @pytest.mark.smoke
-def test_all_engines_write(tmp_cwd, sample_items):
+def test_all_engines_write(tmp_cwd: pathlib.Path, sample_items: dict) -> None:
 	qti_packer = package_interface.QTIPackageInterface("dummy", verbose=False)
 	engine_name_list = qti_packer.get_available_engines()
 	available_item_types = qti_packer.get_available_item_types()

@@ -3,6 +3,14 @@
 Priorities organized by time horizon. Dates are directional, not commitments.
 
 ## Near term (0-3 months)
+- Image/media support has landed across every engine (shared `media_assets`
+  API, four-value `media_policy`, image packaging for Canvas, Blackboard QTI
+  2.1, and Blackboard Original). The only open work is human sandbox
+  verification: import the Canvas gate A and Blackboard Ultra gate D probe
+  kits and record results in [docs/MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md).
+- Decide the Blackboard Ultra packaged-image upgrade after gate D: Ultra
+  currently ships `[image: name.ext]` placeholder text, and the real-package
+  render verdict waits on the sandbox import.
 - Engine selection fix: exact match, unique prefix, else error listing candidates.
 - Auto-detect reader selection in QTIPackageInterface (zip/xml/txt heuristics).
 - Quiet mode that suppresses warnings and progress output.
@@ -20,7 +28,6 @@ Priorities organized by time horizon. Dates are directional, not commitments.
 - Text format syntax for hints/feedback (BBQ and text2qti) plus round-trip tests.
 - QTI 1.2 and 2.1 feedback mapping with predictable fallbacks.
 - HTML selftest hint toggle and feedback blocks in UI.
-- Documentation refresh of formats and engine capability tables.
 - Stable choice identifiers for per-choice feedback across formats.
 - Optional item metadata (points, tags, learning objectives, difficulty).
 - Reader support for QTI 1.2 and 2.1 packages where feasible.
@@ -37,6 +44,10 @@ Priorities organized by time horizon. Dates are directional, not commitments.
 
 ## Out of scope
 - Canvas QTI 1.2 ORDER items (Canvas does not support them).
+- HOTSPOT image items on write: no HOTSPOT item type exists in the item model,
+  so `blackboard_export_zip` reads hotspot images but does not author them.
+- Rasterization preprocessing (HTML tables or JS figures to PNG): deferred to a
+  future standalone tool rather than folded into this package.
 - LMS-specific UI features beyond standard QTI outputs.
 - Online validation services or network-dependent conversions.
 - Native LMS API integrations (gradebook sync, user provisioning).

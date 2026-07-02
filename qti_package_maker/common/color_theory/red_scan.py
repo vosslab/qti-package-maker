@@ -10,14 +10,14 @@ for mode, value in (DEFAULT_RED_OFFSETS or {}).items():
 	_BEST_RED_OFFSETS[(mode, None, "ff0000")] = value
 
 
-def _render_red_scan_tables(num_colors=16, mode=None):
+def _render_red_scan_tables(num_colors: int = 16, mode: str | None = None) -> str:
 	if mode is None:
 		mode = list(DEFAULT_WHEEL_MODE_ORDER)[0]
 	spec = DEFAULT_WHEEL_SPECS.get(mode)
 	if spec is None:
 		raise ValueError(f"Unknown mode: {mode}")
 
-	def rows_for_offsets(offsets):
+	def rows_for_offsets(offsets: list) -> list:
 		rows = []
 		for offset in offsets:
 			hues = _generate_hues_equal(num_colors, offset=offset)
@@ -98,7 +98,7 @@ def _render_red_scan_tables(num_colors=16, mode=None):
 	return "".join(parts)
 
 
-def _write_red_scan_html(filename, num_colors=16, mode=None):
+def _write_red_scan_html(filename: str, num_colors: int = 16, mode: str | None = None) -> None:
 	if mode is None:
 		mode = list(DEFAULT_WHEEL_MODE_ORDER)[0]
 	with open(filename, "w") as f:
@@ -113,7 +113,7 @@ def _write_red_scan_html(filename, num_colors=16, mode=None):
 	print(f"Red scan table saved as {filename}")
 
 
-def _write_red_scan_bundle_html(filename, num_colors=16, modes=None):
+def _write_red_scan_bundle_html(filename: str, num_colors: int = 16, modes: list | None = None) -> None:
 	if modes is None:
 		modes = list(DEFAULT_WHEEL_MODE_ORDER)
 
@@ -132,21 +132,21 @@ def _write_red_scan_bundle_html(filename, num_colors=16, modes=None):
 
 
 def _best_red_offset(
-	num_colors,
-	mode,
-	anchor_hex,
-	wheel_specs=None,
-	coarse_step=5.0,
-	fine_step=1.0,
-	micro_step=0.2,
-	top_k=3,
-):
+	num_colors: int,
+	mode: str,
+	anchor_hex: str,
+	wheel_specs: dict | None = None,
+	coarse_step: float = 5.0,
+	fine_step: float = 1.0,
+	micro_step: float = 0.2,
+	top_k: int = 3,
+) -> float:
 	specs = wheel_specs or DEFAULT_WHEEL_SPECS
 	spec = specs.get(mode)
 	if spec is None:
 		raise ValueError(f"Unknown mode: {mode}")
 
-	def score_offset(offset):
+	def score_offset(offset: float) -> tuple:
 		hues = _generate_hues_equal(num_colors, offset=offset)
 		color_hex = _color_for_hue(hues[0], spec, mode, m_override=spec.m_max)
 		return _redness_score(color_hex)
@@ -169,7 +169,7 @@ def _best_red_offset(
 	return micro_ranked[0][1]
 
 
-def _select_hues_for_anchor(num_colors, mode, anchor_hex, samples=48, wheel_specs=None):
+def _select_hues_for_anchor(num_colors: int, mode: str, anchor_hex: str, samples: int = 48, wheel_specs: dict | None = None) -> list:
 	specs = wheel_specs or DEFAULT_WHEEL_SPECS
 	spec = specs.get(mode)
 	if spec is None:
@@ -188,7 +188,7 @@ def _select_hues_for_anchor(num_colors, mode, anchor_hex, samples=48, wheel_spec
 	return _generate_hues_equal(num_colors, offset=best_offset)
 
 
-def _generate_table_td(bg_hex_color, text_hex_color, text="this is a test"):
+def _generate_table_td(bg_hex_color: str, text_hex_color: str, text: str = "this is a test") -> str:
 	td_cell = ''
 	td_cell += f"<td style='background-color:#{bg_hex_color};'>"
 	td_cell += f"<span style='color:#{text_hex_color};'>{text}</span></td>\n"

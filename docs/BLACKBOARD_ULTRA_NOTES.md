@@ -1,13 +1,27 @@
 # Blackboard Ultra QTI 2.1 empirical contract
 
 Empirical contract for what Blackboard Ultra accepts, rewrites, or destroys
-on QTI 2.1 import/export. This document is the single source of truth for
-the `bb_ultra_qti_v2_1` engine. Findings are derived from manual round
-trips through an Ultra sandbox, not from Anthology's documentation, because
+on QTI 2.1 import/export. Findings are derived from manual round trips
+through an Ultra sandbox, not from Anthology's documentation, because
 Anthology's docs are silent on almost every question that matters to a
 third-party QTI producer.
 
-Last updated: 2026-04-14.
+**Status (2026-07-02): the dedicated `bb_ultra_qti_v2_1` engine described
+throughout this document was removed as redundant.** Field evidence showed
+every `blackboard_qti_v2_1` export already imports cleanly into Ultra with
+only per-feature degradation (matching skipped, table widths/color/most
+inline CSS stripped), and the gate D visible-figure probe round confirmed
+images render in Ultra from `blackboard_qti_v2_1`-shaped QTI 2.1 and from
+`blackboard_export_zip` via "Import from file" (which also carries
+matching questions Ultra's QTI 2.1 importer skips). See
+[docs/ENGINES.md](ENGINES.md) for the current supported Ultra paths and
+`docs/CHANGELOG.md`'s 2026-07-02 entry for the removal rationale. This
+document is retained in full as the empirical record of Ultra's HTML,
+table, and identifier behavior discovered while that engine was built;
+links to the removed engine's source files below are dead and kept as
+historical citations only.
+
+Last updated: 2026-04-14 (development history); removal noted 2026-07-02.
 
 ## Executive summary (for non-technical readers)
 
@@ -67,6 +81,32 @@ choice, multiple answer, fill-in-the-blank, and multi-blank fill-in all
 port cleanly. Diagram-heavy questions (carbohydrate chemistry, protein
 structures, anything drawn in HTML rather than rendered to an image) do
 not port until the image follow-up project lands.
+
+## Field evidence: blackboard_qti_v2_1 exports import into Ultra (2026-07-02)
+
+User-verified field report, 2026-07-02, on real-world `blackboard_qti_v2_1`
+exports imported into Ultra (paraphrased closely): every `blackboard_qti_v2_1`
+export tried with Ultra works, except for known issues - matching questions
+are skipped, table widths are removed, color is removed, and most inline
+CSS is removed.
+
+Implications for the engine split:
+
+- The lightweight `blackboard_qti_v2_1` exporter (deliberately minimal,
+  required fields only) serves BOTH Learn Classic and Ultra. The format is
+  shared; there is no separate Ultra-only wire format for these exports.
+- Ultra-side degradations reported here are per-feature and graceful, not
+  package rejections. Matching questions are skipped on import; table
+  widths, colors, and most inline CSS are stripped. This matches the
+  attribute-stripping and tag-survival findings documented below, and
+  confirms none of it blocks the rest of the package from importing.
+- Matching questions reach Ultra via the `blackboard_export_zip` path
+  ("Import from file") instead of `blackboard_qti_v2_1` ("Import from QTI
+  2.1 package"), since Ultra's QTI 2.1 importer skips them.
+- `bb_ultra_qti_v2_1`'s remaining role is enforcing and normalizing around
+  these Ultra limits (sanitizing HTML to the tag/attribute allowlist below,
+  refusing unsupported question types with a warning), not producing a
+  materially different wire format from `blackboard_qti_v2_1`.
 
 ## Source of findings
 
@@ -362,8 +402,108 @@ it has no unambiguous literal representation.
 
 ## Images
 
-Three separate image test results, none of which produce a working v1
-image path.
+Three separate image test results; the final gate D re-test below now
+produces a working image path.
+
+### Gate D PASS (2026-07-02): Ultra imports and renders images on both paths
+
+Gate D's final verdict is **PASS**. Blackboard Ultra imports and renders
+embedded images through both of its import systems: "Import from QTI 2.1
+package" (both the `<a href>` and plain `<img>` reference patterns) and
+"Import from file" (the `bb_export` conversion path). The earlier
+"media-not-imported" reading recorded below was a false negative traced to
+the probe image itself, not to Ultra's importers; see "Final status" below
+for the full account. `placeholder_warn` was no longer the ceiling for
+`bb_ultra_qti_v2_1` once this was confirmed, but rather than upgrade the
+dedicated Ultra engine to a `package` media policy, the engine itself was
+removed on 2026-07-02: `blackboard_qti_v2_1` and `blackboard_export_zip`
+already package and render images in Ultra, making a separate Ultra writer
+redundant (see [docs/ENGINES.md](ENGINES.md) for the current supported
+Ultra paths and [docs/MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md) gate D for
+the verified probe results).
+
+### Final status: `placeholder_warn` is the shipped default (retraction, 2026-07-02)
+
+The engine ships with the `placeholder_warn` media policy: every `<img>` is
+replaced with a readable `[image: name.ext]` placeholder text (with an
+itemized warning) on a cloned item before sanitization, so authors see a
+description of the missing image rather than silence. `placeholder_warn`
+was the shipped default through the false-negative gate D round; the
+gate D PASS re-test above lifted this limitation, and the dedicated
+Ultra engine was subsequently removed rather than upgraded (2026-07-02;
+see "Status" note at the top of this document).
+
+Gate D ran on 2026-07-02 against the user's real Blackboard Ultra SaaS
+sandbox ("Ultra Sandbox - NVoss"), probing all three of Ultra's available
+import paths for the `READ_ONLY/embedded/` pattern documented below (see
+[docs/MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md) for the probe kit, import
+steps, and results table):
+
+- `ultra_probe_ahref-qti21.zip` ("Import from QTI 2.1 package", `<a href>`
+  variant reproducing Ultra's own export pattern): question imported
+  successfully, but neither the image nor the anchor text appeared after
+  import.
+- `ultra_probe_img-qti21.zip` ("Import from QTI 2.1 package", plain `<img>`
+  variant): question imported successfully, image did not appear after
+  import.
+- `ultra_probe_img-bbexport.zip` ("Import from file", `bb_export` conversion
+  path): question imported successfully, image did not appear after the
+  conversion import.
+
+All three of our own generated packages imported successfully as question
+banks with the question text, choices, correct answer, and points intact --
+the image did not appear after import on any available path. Whether the
+binary was never loaded into the content store or was loaded but not linked
+from the question HTML was not determined at the time. At the time, this
+was read as proof that Ultra's importers discard embedded media regardless
+of route, and `placeholder_warn` was declared final and permanent for
+`bb_ultra_qti_v2_1`.
+
+**That conclusion is retracted.** On 2026-07-02, the user imported
+`control_ultra-qti21.zip` -- a faithful re-zip of Blackboard's own real
+Ultra export (`SAMPLES/blackboard_ultra-qti21_export/`, built by
+`devel/build_sample_control_zips.py`, no writer code of ours involved) --
+into the same Ultra sandbox, and the embedded image rendered inline (pool
+"a blank pool", the MC question's image visible in place). The two
+`B-control` Learn imports (see [docs/MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md))
+render the same way. All three control packages Blackboard's own exporter
+produced render their images on import, so there is no LMS-side ceiling on
+media anywhere in this probe matrix: Ultra's (and Learn's) importers handle
+embedded media correctly when the package matches Blackboard's own export
+shape. The image not appearing after import on every one of our synthesized
+packages is therefore a package-shape defect in our own writers, not a
+platform limitation.
+`placeholder_warn` stayed the shipped default while a root-cause
+investigation was open (see
+`docs/active_plans/audits/media_import_delta_report.md`); that
+investigation concluded in the Gate D PASS finding below, and the
+resolution was to remove the dedicated Ultra engine rather than upgrade
+it, since the two remaining engines already package and render images in
+Ultra.
+
+**Gate D PASS (visible-figure round, 2026-07-02).** The root-cause
+investigation found the media-not-imported result was itself a false
+negative: the probe figure was a 1x1-pixel test image, real and correctly
+imported and linked by Blackboard but too small to see on the page. Two
+real writer bugs found during the investigation were also fixed (a QTI 2.1
+`correctResponse` `answer_002` vs `answer_2` padding mismatch, and the
+`blackboard_export_zip` engine's missing `bbmd_asi_object_id` for
+`CSResourceLinks` `parentId`; see `docs/CHANGELOG.md`'s 2026-07-02 "Fixes
+and Maintenance"). After rebuilding the probe kits with a visible
+240x120 red figure, the user re-imported all three Ultra variants and
+every one rendered the image inline: `ultra_probe_ahref-qti21.zip`
+(`<a href>` pattern), `ultra_probe_img-qti21.zip` (plain `<img>` pattern),
+and `ultra_probe_img-bbexport.zip` ("Import from file" `bb_export`
+conversion path). Both the `<a href>` and plain `<img>` QTI 2.1 patterns
+render, and Ultra accepts a synthesized `_<digits>_1` id cleanly on every
+path. The placeholder-only limitation described throughout this document
+is lifted; instead of upgrading the dedicated Ultra engine to a `package`
+media policy, the engine was removed (2026-07-02) because
+`blackboard_qti_v2_1` and `blackboard_export_zip` already package and
+render images in Ultra, making a separate writer redundant. See
+[docs/ENGINES.md](ENGINES.md) for current Ultra guidance and
+[docs/MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md) gate D for the full
+results table and evidence.
 
 ### `<img src="csfiles/home_dir/...">` path (tried first)
 
@@ -381,7 +521,20 @@ The user confirmed empirically that SVG content does not render in
 Ultra, regardless of how it is embedded. SVG is not a usable format.
 Only raster PNG is viable.
 
-### Ultra-native image embedding (discovered, deferred to v2)
+### Ultra-native image embedding (pattern confirmed by gate D PASS)
+
+**Note:** the gate-D probe (see "Gate D PASS" above) tested this exact
+pattern with a synthesized id. The initial round found the image did not
+appear after import, but that was a false negative caused by an invisible
+1x1-pixel probe figure, not a defect in the pattern. The visible-figure
+retest confirmed the pattern renders correctly on import through both QTI
+2.1 import paths and the `bb_export` conversion path. The "deferred to v2"
+implementation plan described below never shipped as a dedicated Ultra
+engine feature: the engine was removed (2026-07-02) once field evidence
+showed `blackboard_qti_v2_1` and `blackboard_export_zip` already package
+and render images in Ultra without any Ultra-specific asset-bundling code.
+This section remains the reference for the pattern Ultra's own exporter
+uses.
 
 The image test at
 `ULTRA/image_test/` shows Ultra's canonical
@@ -433,8 +586,12 @@ resource entries and dependency tracking; (d) item writer integration
 that detects drawing-canvas HTML and replaces it with a pre-rendered
 image reference; (e) compat gate extensions.
 
-For v1, the new engine strips `<img>` unconditionally during
-sanitization and emits nothing rather than a broken reference.
+For v1, the engine substitutes a readable `[image: name.ext]` placeholder
+into a cloned item before sanitization (with an itemized warning), so the
+author sees text describing the missing image rather than nothing. The
+sanitizer's unconditional `<img>` drop (below) remains as the backstop for
+any `<img>` tag that reaches it, which does not normally happen because the
+placeholder substitution runs first.
 
 ## QTI shell structural facts
 
@@ -473,9 +630,9 @@ probe ZIP. They are the shape the new engine emits.
 
 ## Engine sanitizer rules (locked)
 
-The `bb_ultra_qti_v2_1` engine's HTML sanitizer implements these rules
-(see
-[qti_package_maker/engines/bb_ultra_qti_v2_1/html_sanitize.py](../qti_package_maker/engines/bb_ultra_qti_v2_1/html_sanitize.py)).
+The removed `bb_ultra_qti_v2_1` engine's HTML sanitizer implemented these
+rules (see `qti_package_maker/engines/bb_ultra_qti_v2_1/html_sanitize.py`
+in the pre-removal git history, deleted 2026-07-02).
 
 **Core operation.** Every input HTML fragment is re-serialized through
 `lxml.html.fromstring` + `lxml.html.tostring`. This single operation
@@ -497,7 +654,9 @@ the sanitizer matters without this pass.
 drop list.
 
 **Tag drops (tag and content removed):**
-`<style>`, `<script>`, `<img>`.
+`<style>`, `<script>`, `<img>`. A placeholder-text substitution runs upstream
+of the sanitizer (see the Images section above), so a live `<img>` tag
+normally never reaches this drop rule.
 
 **Attribute strips (removed unconditionally from every element):**
 `style`, `class`, `id`, `cellpadding`, `cellspacing`, `bgcolor`,
@@ -513,8 +672,8 @@ exception is `href` on `<a>` elements.
 - Does not normalize table structure.
 
 **Idempotence:** `sanitize(sanitize(x)) == sanitize(x)` for every
-fixture. Unit-tested in
-[tests/test_ultra_html_sanitize.py](../tests/test_ultra_html_sanitize.py).
+fixture. Was unit-tested in `tests/test_ultra_html_sanitize.py` (deleted
+2026-07-02 with the engine; see pre-removal git history).
 
 ## Render correctness vs round-trip stability
 
@@ -542,7 +701,7 @@ emitted subset is the contract.
 | CSS (inline, style tag, class) | NO, all stripped | NO | Unportable |
 | `<img src="csfiles/...">` | Structurally broken | NO | Strip unconditionally |
 | SVG | - | NO | Not supported in Ultra |
-| `<img>` via `READ_ONLY/embedded/` path | YES (confirmed) | YES (confirmed) | Deferred to image follow-up project |
+| `<img>` via `READ_ONLY/embedded/` path | YES (confirmed) | YES -- renders on import of a synthesized id, both QTI 2.1 patterns and the `bb_export` conversion path (gate D PASS, visible-figure round, 2026-07-02) | Served today by `blackboard_qti_v2_1` and `blackboard_export_zip` (dedicated Ultra engine removed 2026-07-02); see "Gate D PASS" above |
 
 ## What this means for old Learn content
 
@@ -557,21 +716,32 @@ A rough porting forecast based on the above:
 | Chemistry diagrams drawn with HTML tables (sugarlib class) | Does not work in v1; deferred to image project |
 | Ordering / drag-to-order questions | Not supported by Ultra; engine refuses to emit |
 | Hot Spot questions | Authorable in Ultra but cannot round-trip |
-| Questions with inline `<img>` images | Does not work via current `<img src>` path; deferred to image project |
+| Questions with inline `<img>` images | Clean port -- gate D PASS (visible-figure round, 2026-07-02) confirmed the image renders on import through both QTI 2.1 patterns and the `bb_export` conversion path; served today by `blackboard_qti_v2_1` and `blackboard_export_zip` |
 | Questions using `<u>` for underline | Underline lost on import |
 | Questions using `<pre>` for monospace layout | Whitespace destroyed; rewrite to `<p>` |
 | Multi-heading questions | Headings downshift by one level (h3 -> h4, h4 -> h5) |
 
 ## Deferred: image follow-up project
 
+**Note:** gate D PASS (visible-figure round, 2026-07-02, see "Gate D PASS"
+above) confirmed the `READ_ONLY/embedded/` asset-bundling pattern below
+renders correctly on import with a synthesized id, on every one of our own
+generated packages, through both QTI 2.1 import paths and the `bb_export`
+conversion path. Plain `<img>` embedding into Ultra is a solved problem via
+`blackboard_qti_v2_1` and `blackboard_export_zip` (no dedicated Ultra
+asset-bundling code was ever needed); the dedicated Ultra engine that would
+have implemented this pattern was removed 2026-07-02 as redundant. This
+section remains the reference for the asset-bundling shape Ultra's own
+exporter uses, for anyone who later needs it.
+
 Content that depends on pre-rendered or embedded images - specifically
 the biochem drawing-canvas question generators in the
-biology-problems repo - requires a follow-up project that is strictly
-out of scope for v1 of the Ultra engine. The charter for that project
-is in the plan at
+biology-problems repo - still requires a follow-up project that remains
+out of scope for this repo. The charter for that project is in the plan at
 `/Users/vosslab/.claude/plans/dreamy-dancing-sparrow.md` under
-"Follow-up project: Ultra image asset support". Summary of what it
-needs to build:
+"Follow-up project: Ultra image asset support" (a historical reference;
+that plan predates the engine removal). Summary of what it would need to
+build, if picked up by whichever engine(s) end up carrying it:
 
 1. A local HTML-to-PNG renderer (headless browser or weasyprint).
 2. Asset bundling in the engine: files written to

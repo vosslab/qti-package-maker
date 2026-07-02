@@ -50,7 +50,7 @@ def parse_args() -> argparse.Namespace:
 
 #==============
 
-def main():
+def main() -> None:
 	"""
 	Main function to handle the script execution logic.
 	"""

@@ -10,6 +10,7 @@ from qti_package_maker.common.color_theory.wheel_specs import DEFAULT_VIEWING
 
 # Third Party
 import six
+import numpy
 
 if "six.moves" not in sys.modules:
 	sys.modules["six.moves"] = six.moves
@@ -23,7 +24,7 @@ import colour
 _VIEWING_CACHE = None
 
 
-def _get_viewing_conditions():
+def _get_viewing_conditions() -> tuple:
 	global _VIEWING_CACHE
 	if _VIEWING_CACHE is not None:
 		return _VIEWING_CACHE
@@ -35,7 +36,9 @@ def _get_viewing_conditions():
 	return _VIEWING_CACHE
 
 
-def cam16_jmh_to_xyz(j, m, h, viewing_conditions=None):
+def cam16_jmh_to_xyz(
+	j: float, m: float, h: float, viewing_conditions: dict | None = None
+) -> numpy.ndarray:
 	XYZ_w, L_A, Y_b, surround, _xy_w = _get_viewing_conditions()
 	if viewing_conditions:
 		XYZ_w = viewing_conditions.get("XYZ_w", XYZ_w)
@@ -47,7 +50,7 @@ def cam16_jmh_to_xyz(j, m, h, viewing_conditions=None):
 	return colour.CAM16_to_XYZ(spec, XYZ_w, L_A, Y_b, surround)
 
 
-def _xyz_to_srgb(XYZ, apply_encoding=True):
+def _xyz_to_srgb(XYZ: numpy.ndarray, apply_encoding: bool = True) -> numpy.ndarray:
 	_xyz = [value / 100.0 for value in XYZ]
 	_xyz_w, _L_A, _Y_b, _surround, xy_w = _get_viewing_conditions()
 	try:
@@ -66,11 +69,11 @@ def _xyz_to_srgb(XYZ, apply_encoding=True):
 		)
 
 
-def _linear_rgb_in_gamut(rgb, epsilon=1e-7):
+def _linear_rgb_in_gamut(rgb: numpy.ndarray, epsilon: float = 1e-7) -> bool:
 	return all(-epsilon <= channel <= 1.0 + epsilon for channel in rgb)
 
 
-def _srgb_hex_to_cam16_spec(hex_value):
+def _srgb_hex_to_cam16_spec(hex_value: str) -> colour.CAM_Specification_CAM16:
 	r = int(hex_value[0:2], 16)
 	g = int(hex_value[2:4], 16)
 	b = int(hex_value[4:6], 16)
@@ -81,18 +84,18 @@ def _srgb_hex_to_cam16_spec(hex_value):
 	return colour.XYZ_to_CAM16(XYZ, XYZ_w, L_A, Y_b, surround)
 
 
-def _cam16_ucs_radius(cam):
+def _cam16_ucs_radius(cam: colour.CAM_Specification_CAM16) -> float:
 	jab = colour.JMh_CAM16_to_CAM16UCS((cam.J, cam.M, cam.h))
 	_jp, ap, bp = jab
 	return float(math.hypot(ap, bp))
 
 
-def cam16_ucs_radius_from_jmh(j, m, h):
+def cam16_ucs_radius_from_jmh(j: float, m: float, h: float) -> float:
 	jab = colour.JMh_CAM16_to_CAM16UCS((j, m, h))
 	_jp, ap, bp = jab
 	return float(math.hypot(ap, bp))
 
 
-def _gamut_margin(rgb_linear):
+def _gamut_margin(rgb_linear: numpy.ndarray) -> float:
 	r, g, b = rgb_linear
 	return min(r, g, b, 1.0 - r, 1.0 - g, 1.0 - b)

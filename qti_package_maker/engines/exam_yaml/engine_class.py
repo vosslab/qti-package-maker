@@ -6,8 +6,10 @@ import datetime
 import yaml
 
 # QTI Package Maker
+from qti_package_maker.common import media_assets
 from qti_package_maker.engines import base_engine
 from qti_package_maker.engines.exam_yaml import write_item
+from qti_package_maker.assessment_items.item_bank import ItemBank
 
 class EngineClass(base_engine.BaseEngine):
 	"""
@@ -16,9 +18,15 @@ class EngineClass(base_engine.BaseEngine):
 	Exam YAML is a print-oriented format for generating ODT exams.
 	It is intentionally lossy: answer keys, scoring metadata, and
 	section structure are not preserved.
+
+	Media policy: reference_warn. `write_item.py` writes `question_text`
+	verbatim into the YAML `statement` field, so any `<img>` tag is kept
+	unchanged; each referenced image gets one itemized warning.
 	"""
+	media_policy = media_assets.POLICY_REFERENCE_WARN
+
 	#==============
-	def __init__(self, package_name: str, verbose: bool = False):
+	def __init__(self, package_name: str, verbose: bool = False) -> None:
 		# Call the base engine constructor
 		super().__init__(package_name, verbose)
 		# Set the write_item module (required)
@@ -27,12 +35,30 @@ class EngineClass(base_engine.BaseEngine):
 		self.validate_write_item_module()
 
 	#==============
-	def read_package(self, infile: str):
+	def read_package(self, infile: str) -> None:
 		"""Read is not supported for this engine."""
 		raise NotImplementedError
 
 	#==============
-	def save_package(self, item_bank, outfile: str = None) -> str:
+	def _warn_about_item_media(self, item_bank: ItemBank) -> None:
+		"""
+		Print one itemized warning per image referenced by the item bank.
+
+		Exam YAML carries images through verbatim inside the "statement"
+		string but has no channel to transport image files, so every
+		engine-referenced image routes through the declared media_policy
+		(reference_warn) and surfaces via the single
+		media_assets.apply_media_policy warning channel.
+		"""
+		collected_assets = item_bank.collect_assets()
+		for item_crc16, item_assets in collected_assets.item_dependencies.items():
+			decision = media_assets.apply_media_policy(
+				self.media_policy, item_assets, self.name, item_crc16)
+			for warning in decision.warnings:
+				print(warning)
+
+	#==============
+	def save_package(self, item_bank: ItemBank, outfile: str = None) -> str | None:
 		"""
 		Write the item bank to an exam YAML file.
 
@@ -40,6 +66,8 @@ class EngineClass(base_engine.BaseEngine):
 			str: Path to the written file, or None if no items.
 		"""
 		outfile = self.get_outfile_name('exam', 'yaml', outfile)
+		# emit the itemized image warnings before rendering item text
+		self._warn_about_item_media(item_bank)
 		# Render each item as a question dict
 		assessment_items_tree = self.process_item_bank(item_bank)
 		if len(assessment_items_tree) == 0:

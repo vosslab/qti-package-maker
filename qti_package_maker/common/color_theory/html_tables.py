@@ -8,14 +8,14 @@ from qti_package_maker.common.color_theory.red_scan import _select_hues_for_anch
 from qti_package_maker.common.color_theory.wheel_specs import DEFAULT_WHEEL_MODE_ORDER, DEFAULT_WHEEL_SPECS
 
 
-def _generate_table_td(bg_hex_color, text_hex_color, text="this is a test"):
+def _generate_table_td(bg_hex_color: str, text_hex_color: str, text: str = "this is a test") -> str:
 	td_cell = ''
 	td_cell += f"<td style='background-color:#{bg_hex_color};'>"
 	td_cell += f"<span style='color:#{text_hex_color};'>{text}</span></td>\n"
 	return td_cell
 
 
-def write_html_color_table(filename, num_colors=16, modes=None):
+def write_html_color_table(filename: str, num_colors: int = 16, modes: list | None = None) -> None:
 	if modes is None:
 		modes = list(DEFAULT_WHEEL_MODE_ORDER)
 
@@ -92,7 +92,7 @@ def write_html_color_table(filename, num_colors=16, modes=None):
 	)
 
 
-def write_html_color_table_cam16_debug(filename, num_colors=16, modes=None, repeats=1):
+def write_html_color_table_cam16_debug(filename: str, num_colors: int = 16, modes: list | None = None, repeats: int = 1) -> None:
 	if modes is None:
 		modes = list(DEFAULT_WHEEL_MODE_ORDER)
 
