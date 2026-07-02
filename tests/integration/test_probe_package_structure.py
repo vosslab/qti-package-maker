@@ -3,9 +3,10 @@ Automated structure checks for the LMS probe kits.
 
 Unzips each buildable probe package (devel/build_canvas_media_probe.py,
 devel/build_ultra_media_probe.py, devel/build_bb_original_probe.py) and
-asserts its layout/manifest matches the corresponding SAMPLES/ reference
-shape BEFORE any human sandbox import, so package correctness is proven by
-fixtures and only real-LMS rendering waits on a human. The gate B (BB Learn
+asserts its layout/manifest matches the QTI-spec-derived, engine-produced
+reference shape BEFORE any human sandbox import, so package correctness is
+proven by self-contained fixtures and only real-LMS rendering waits on a
+human. The gate B (BB Learn
 CLASSIC) kit's bbexport variant csfiles image-embedding shape is checked
 against tests/fixtures/bb_export_slice.zip, the trimmed real-export reference
 (the write path that variant exercises); its qti21 variant is checked
@@ -14,7 +15,6 @@ since both are driven by the real blackboard_qti_v2_1 engine.
 """
 
 # Standard Library
-import re
 import pathlib
 import zipfile
 
@@ -124,67 +124,6 @@ def test_ultra_qti21_probe_kit_matches_expected_layout(tmp_path: pathlib.Path) -
 
 		item_text = zip_file.read("qti21_items/item_00001.xml").decode("utf-8")
 		assert f'<img src="../{ultra_probe.PROBE_IMAGE_FILENAME}"' in item_text
-
-
-#============================================
-def test_ultra_probe_shape_matches_real_samples_export() -> None:
-	"""
-	Document the real Ultra export image-embedding contract, read directly
-	from SAMPLES/blackboard_ultra-qti21_export: every embedded-image
-	webcontent resource's href sits under
-	READ_ONLY/question/_<digits>_1/embedded/, and every item resource
-	declares at least one <dependency> pointing at one of those image
-	resources. This is independent of the probe kit above (which now
-	targets the same webcontent/dependency shape blackboard_qti_v2_1
-	already produces, staged at the package root, since gate D confirmed a
-	synthesized-id `<img>` pool imports and renders); it stays useful
-	reference for any future engine work reading this SAMPLES export
-	directly. (The sample also carries one non-image webcontent resource, a
-	qti21/web_content00001.log manifest artifact, excluded here since it is
-	not an embedded-image reference.)
-	"""
-	repo_root = pathlib.Path(__file__).resolve().parents[2]
-	sample_manifest_path = repo_root / "SAMPLES" / "blackboard_ultra-qti21_export" / "imsmanifest.xml"
-	manifest_root = lxml.etree.fromstring(sample_manifest_path.read_bytes())
-
-	embedded_folder_pattern = re.compile(r"^READ_ONLY/question/(_\d+_1)/embedded/[^/]+$")
-	webcontent_resources = _find_by_local_name(manifest_root, "resource", {"type": "webcontent"})
-	assert webcontent_resources
-	image_webcontent_resources = [
-		resource for resource in webcontent_resources
-		if embedded_folder_pattern.match(resource.get("href"))
-	]
-	assert image_webcontent_resources
-	webcontent_identifiers = {resource.get("identifier") for resource in image_webcontent_resources}
-	# map each image webcontent identifier to its embedded folder id, so an
-	# item's <dependency> can be resolved back to the folder id it points at.
-	folder_id_by_webcontent_identifier = {
-		resource.get("identifier"): embedded_folder_pattern.match(resource.get("href")).group(1)
-		for resource in image_webcontent_resources
-	}
-
-	item_resources = _find_by_local_name(manifest_root, "resource", {"type": "imsqti_item_xmlv2p1"})
-	assert item_resources
-	for item_resource in item_resources:
-		dependency_refs = {
-			dep.get("identifierref") for dep in _find_by_local_name(item_resource, "dependency")
-		}
-		image_deps = dependency_refs & webcontent_identifiers
-		assert image_deps
-
-		# Every real Ultra item's own @identifier is "QUE_" + the embedded
-		# folder id verbatim (the folder id already starts with "_", so this
-		# yields a double underscore, e.g. "QUE__23221289_1" for folder
-		# "_23221289_1"). Confirm that contract holds for the item XML file
-		# this manifest resource points at.
-		item_file_path = repo_root / "SAMPLES" / "blackboard_ultra-qti21_export" / item_resource.get("href")
-		item_root = lxml.etree.fromstring(item_file_path.read_bytes())
-		item_identifier = item_root.get("identifier")
-		expected_identifiers = {
-			f"QUE_{folder_id_by_webcontent_identifier[webcontent_identifier]}"
-			for webcontent_identifier in image_deps
-		}
-		assert item_identifier in expected_identifiers
 
 
 #============================================

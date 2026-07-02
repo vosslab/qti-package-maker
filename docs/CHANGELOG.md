@@ -411,6 +411,20 @@ passed.
 
 ### Removals and Deprecations
 
+- Removed `test_ultra_probe_shape_matches_real_samples_export` from
+  `tests/integration/test_probe_package_structure.py`: it read
+  `SAMPLES/blackboard_ultra-qti21_export/imsmanifest.xml` (and the item XML
+  it references) at runtime, but `SAMPLES/` is a gitignored temp directory
+  (`.gitignore:31`) that no longer exists, so the test could not run. This
+  was a `PYTEST_STYLE.md` "Inline inputs, not external data files"
+  violation; per the same doc, deleted rather than rewritten. Dropped the
+  now-unused `import re`. Reworded the module docstring: the five remaining
+  probe tests assert the QTI-spec-derived, engine-produced shape into
+  `tmp_path` (and the tracked `tests/fixtures/bb_export_slice.zip`), none
+  read `SAMPLES/`. Swept the rest of `tests/` for the same failure mode --
+  no other test reads a gitignored/untracked path; remaining external reads
+  target `tmp_path` outputs, tracked fixtures, or tracked repo source. File
+  still passes (5 tests, ~0.1s), pyflakes clean.
 - Removed `docs/COMMUNITY.md` after merging its links into `README.md`
   (`REPO_STYLE.md` lists it under docs not to use).
 - Archived completed planning docs via `git mv`:
