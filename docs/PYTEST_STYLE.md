@@ -33,12 +33,12 @@ See [Good tests](#good-tests) for examples of stable assertion shapes and [Britt
 * `tests/` (including `tests/playwright/` and `tests/e2e/`) is the only place `assert` statements should appear in this repo. Plain scripts and library modules must not contain `assert`. See [PYTHON_STYLE.md](PYTHON_STYLE.md#assert) for the rationale (module-level asserts slow script startup).
 * Pytest is the fast lane: keep tests deterministic and quick. Slow end-to-end tests live in `tests/playwright/` (browser-driven) and `tests/e2e/` (shell/Python) and run outside pytest (excluded via `collect_ignore = ["e2e", "playwright"]` in `tests/conftest.py`); see [E2E_TESTS.md](E2E_TESTS.md).
 * Store tests in `tests/` with files named `test_*.py`.
-* Use `tests/conftest.py` for pytest configuration, fixtures, collection hooks, and shared pytest setup.
+* Use `tests/conftest.py` for pytest configuration, collection hooks, and shared pytest setup.
 * Test functions should be named `test_*` and should use plain `assert`.
 * Keep tests small and deterministic.
 * Avoid network calls, random behavior, and time based logic unless mocked.
-* Prefer fixtures for setup and shared resources.
-* Use built in fixtures like `tmp_path` instead of custom temp directories.
+* Keep setup inline and close to the test.
+* Use `tmp_path` for temp files.
 * Avoid complex logic inside tests.
 * If test logic needs comments, move the logic into helper functions and test those helpers.
 * Before writing any test, ask: "will this test still pass next week without code changes?"
@@ -49,6 +49,33 @@ See [Good tests](#good-tests) for examples of stable assertion shapes and [Britt
 * Do not create permanent pytest files for temporary or scratch code.
 * Do not write tests for `_temp.*` files, ad-hoc debugging scripts, or any code intended to be deleted shortly after use.
 * Tests in `tests/` are reserved for code that will remain in the repo.
+
+## Fixture policy
+
+Long-term tests keep setup inline and close to the test so behavior is easy to read and
+maintain. Use repo files directly when the real file is the point. Keep separate test data or
+shared setup only when file shape, loader behavior, or shared test infrastructure is the
+behavior under test.
+
+This policy applies to both on-disk fixture files (`tests/fixtures/`) and custom
+`@pytest.fixture` functions.
+
+During early implementation, separate setup can help pin behavior quickly. Once behavior is
+pinned, migrate setup inline so the test stays small and self-contained.
+
+* **Repo drift**: fixture directories accumulate because they were useful during initial testing;
+  they pile up and serve little use after their initial creation.
+* **Redundancy**: actual data or code files already in the repo often make fixtures redundant --
+  test against the real file when the real file is the point.
+* **Durable convention**: keep a fixture long-term only when file shape, loader behavior,
+  or shared test infrastructure is the behavior under test.
+* **Why**: durable tests are usually smaller, inline, and easier to maintain.
+
+Two concrete durable uses cover most of this repo:
+
+* Builtin fixtures such as `tmp_path` for temp-file setup.
+* The vendored hygiene `collect_report` autouse harness (see
+  [Hygiene report files](#hygiene-report-files)) -- shared infrastructure under vendored control.
 
 ## Three-tier test layout
 
@@ -111,11 +138,9 @@ at module import time, the failure takes the whole test module down with it, not
 Embed small real inputs directly in the test (a literal string, a short list, a few-line sample) so
 the case cannot drift out of existence.
 
-This is about external **data files**, not pytest fixtures. A `@pytest.fixture` that builds an
-object in memory, or `tmp_path` files the test writes itself during the run, are fine and preferred
-for setup. The hazard is a checked-in sample file the test reads at runtime: inline the content
-instead, or if the data is genuinely large, treat the round trip as an end-to-end check under
-`tests/e2e/` per [E2E_TESTS.md](E2E_TESTS.md).
+The hazard is a checked-in sample file the test reads at runtime: inline the content instead, or
+if the data is genuinely large, treat the round trip as an end-to-end check under `tests/e2e/` per
+[E2E_TESTS.md](E2E_TESTS.md).
 
 ## Basic commands
 
@@ -286,6 +311,10 @@ def test_topic(rel: str) -> None:
 	msg = file_utils.format_violation_assert_message(rel, VIOLATIONS_BY_FILE.get(rel, []), REPORT_NAME)
 	assert rel not in VIOLATIONS_BY_FILE, msg
 ```
+
+The `collect_report` autouse fixture above is the named shared-infrastructure exception under
+[Fixture policy](#fixture-policy): it stays a fixture because the harness itself, not
+test-specific data, is what needs to run once per module.
 
 Notes on the shape:
 

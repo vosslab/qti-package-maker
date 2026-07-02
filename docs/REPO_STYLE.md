@@ -206,7 +206,7 @@ Preferred structure:
 - `docs/AUTHORS.md`: primary maintainers and notable contributors
 - `docs/CLAUDE_HOOK_USAGE_GUIDE.md`: generated hook behavior reference, not a repo style source of truth. If repo style differs from hook examples, update repo style docs and recommend a hook rule update upstream.
 - `docs/MARKDOWN_STYLE.md`: Markdown writing rules and formatting conventions for this repo.
-- `docs/PYTEST_STYLE.md`: pytest test-writing rules, commands, fixtures, and failure triage.
+- `docs/PYTEST_STYLE.md`: pytest test-writing rules, commands, fixture policy, and failure triage.
 - `docs/PYTHON_STYLE.md`: Python formatting, linting, and project-specific conventions.
 - `docs/REPO_STYLE.md`: repo-level organization, conventions, and file placement rules.
 
