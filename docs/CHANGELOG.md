@@ -37,6 +37,12 @@ passed.
 - Created `docs/NEWS.md` and `docs/RELEASE_HISTORY.md` (news-release-docs
   skill), each a single `v26.06 - 2026-07-02` block; `NEWS.md` leads with the
   per-engine image support highlight.
+- Prepended `v26.07 - 2026-07-02` blocks to `docs/NEWS.md` and
+  `docs/RELEASE_HISTORY.md` (news-release-docs skill) for the GitHub 26.7
+  release: package integrity checker, field-verified Blackboard image
+  imports (gates D and B PASS), the two live Blackboard import bug fixes,
+  and the `bb_ultra_qti_v2_1` engine removal. `NEWS.md` carries the
+  `-u`/`--ultra` removal as an upgrade note.
 - Added `devel/check_package_integrity.py`, an ad-hoc CLI wrapper around
   `package_integrity.check_package()` for checking any package ZIP or
   extracted directory (real LMS exports, probe kits, suspect ZIPs) outside
