@@ -4,6 +4,9 @@
 
 ### Behavior or Interface Changes
 
+- Added `--verbose` to `devel/submit_to_pypi.py`; it passes Twine's detailed upload diagnostics
+  through only when requested, while normal successful uploads stay concise. A failed non-verbose
+  upload now tells the user to rerun the script with `--verbose`.
 - Refreshed `README.md` as a newcomer-focused landing page: added a compact destination and image
   compatibility chart, moved the existing self-test screenshots into a named proof section, added a
   reproducible input-to-three-outputs quick start and Python API example, surfaced Canvas live-import

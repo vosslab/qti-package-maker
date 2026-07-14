@@ -197,6 +197,12 @@ def parse_args() -> argparse.Namespace:
 		help="Run all build steps but skip upload and test install.",
 		action="store_true",
 	)
+	behavior_group.add_argument(
+		"--verbose",
+		dest="verbose_upload",
+		help="Show verbose Twine output during upload.",
+		action="store_true",
+	)
 
 	behavior_group.add_argument(
 		"--set-version",
@@ -1054,6 +1060,7 @@ def upload_package(
 	upload_url: str,
 	username: str,
 	password: str,
+	verbose: bool,
 ) -> None:
 	"""Upload the package with twine, injecting credentials via environment.
 
@@ -1063,11 +1070,15 @@ def upload_package(
 		upload_url: The upload endpoint URL.
 		username: PyPI username (usually '__token__').
 		password: PyPI API token.
+		verbose: True to pass verbose output through from Twine.
 	"""
 	print_step("Uploading the package...")
 	dist_dir = os.path.join(project_dir, "dist")
 	dist_args = get_dist_args(dist_dir)
-	cmd = [python_exe, "-m", "twine", "upload", "--repository-url", upload_url]
+	cmd = [python_exe, "-m", "twine", "upload"]
+	if verbose:
+		cmd.append("--verbose")
+	cmd.extend(["--repository-url", upload_url])
 	cmd.extend(dist_args)
 	# Inject credentials via environment so twine does not need [distutils]
 	env = os.environ.copy()
@@ -1076,7 +1087,9 @@ def upload_package(
 	result = subprocess.run(cmd, cwd=project_dir, text=True, env=env)
 	if result.returncode != 0:
 		command_text = " ".join(cmd)
-		fail(f"Command failed: {command_text}")
+		if verbose:
+			fail(f"Command failed: {command_text}")
+		fail(f"Command failed: {command_text}\nRerun this script with --verbose for Twine diagnostics.")
 
 #============================================
 
@@ -1309,7 +1322,14 @@ def main() -> None:
 		if answer.lower() != "yes":
 			fail("Aborted. Did not confirm production upload.")
 
-	upload_package(sys.executable, project_dir, upload_url, twine_username, twine_password)
+	upload_package(
+		sys.executable,
+		project_dir,
+		upload_url,
+		twine_username,
+		twine_password,
+		args.verbose_upload,
+	)
 
 	test_install(sys.executable, project_dir, package_name, import_name, index_url, version)
 
