@@ -44,17 +44,12 @@ no server, account, or external image folder required.
 
 ## Quick start
 
-Requires Python 3.10 or newer; tested with Python 3.12. From a fresh checkout:
+Requires Python 3.10 or newer; tested with Python 3.12.
 
 ```sh
-git clone https://github.com/vosslab/qti_package_maker.git
-cd qti_package_maker
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r pip_requirements.txt
-source source_me.sh
+python3 -m pip install qti-package-maker
 printf 'MC\tWhat color is a clear sky?\tblue\tcorrect\tgreen\tincorrect\n' > bbq-demo-questions.txt
-python tools/bbq_converter.py -i bbq-demo-questions.txt -1 -r -s
+bbq_converter.py -i bbq-demo-questions.txt -1 -r -s
 ```
 
 This converts one Blackboard question-upload row into three useful artifacts:
@@ -72,13 +67,13 @@ installation paths, including virtual environments and PyPI, are in
 Select one or more outputs in the same conversion:
 
 ```sh
-python tools/bbq_converter.py -i bbq-demo-questions.txt \
+bbq_converter.py -i bbq-demo-questions.txt \
 	-f canvas_qti_v1_2 -f blackboard_qti_v2_1 -f html_selftest
 ```
 
-Use `-a` to select every CLI output or `python tools/bbq_converter.py -h` to see the available
-shortcuts. Some specialized engines are API-only; [docs/USAGE.md](docs/USAGE.md) covers the full CLI
-and Python API, while [docs/FORMATS.md](docs/FORMATS.md) defines inputs and outputs.
+Use `-a` to select every CLI output or `bbq_converter.py -h` to see the available shortcuts. Some
+specialized engines are API-only; [docs/USAGE.md](docs/USAGE.md) covers the full CLI and Python API,
+while [docs/FORMATS.md](docs/FORMATS.md) defines inputs and outputs.
 
 ## Use it from Python
 

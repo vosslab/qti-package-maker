@@ -40,21 +40,27 @@ pip install -e .
 ## Install from PyPI
 
 ```sh
-pip install qti-package-maker
+python3 -m pip install qti-package-maker
+bbq_converter.py -h
+```
+
+The PyPI package installs the educator-facing converter command:
+
+```text
+bbq_converter.py
 ```
 
 ## Verify install
 
 ```sh
-python3 -m qti_package_maker.engines.engine_registration
+bbq_converter.py -h
 ```
 
-This prints the registered engine table (read/write and media-policy columns),
-confirming the package imports and its engines load. An import-only check also
-works:
+This prints the converter help, confirming that the package and its educator-facing
+command are installed. The engine table provides a deeper verification:
 
 ```sh
-python3 -c "import qti_package_maker; print(qti_package_maker.__name__)"
+python3 -m qti_package_maker.engines.engine_registration
 ```
 
 ## Troubleshooting

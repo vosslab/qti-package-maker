@@ -12,6 +12,10 @@
   managed self-test screenshots to exact 16:10 frames with accessible before-and-after prose, and
   curated the documentation and support routes. Moved the 2026-07-02 and 2026-07-01 lead summaries
   into their `Developer Tests and Notes` subsections so every day-block entry is categorized.
+- Exposed the existing `tools/bbq_converter.py` as a setuptools `script-file`, so PyPI installs the
+  educator-facing `bbq_converter.py` command without moving or duplicating its implementation. Kept
+  the destructive XML formatter and repository shell helper development-only, and rewrote the
+  primary README and usage quick starts around the `pip install` workflow.
 
 ## 2026-07-02
 

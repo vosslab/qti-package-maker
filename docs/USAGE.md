@@ -1,21 +1,21 @@
 # Usage
 
 qti_package_maker converts Blackboard Question Upload (BBQ) text files into QTI
-packages and other exports. Use it two ways: the
-[tools/bbq_converter.py](../tools/bbq_converter.py) command line, or the
-`package_interface.QTIPackageInterface` library API. Both drive the same engines,
-so any format in [docs/ENGINES.md](ENGINES.md) is reachable from either path.
+packages and other exports. Use it two ways: the installed `bbq_converter.py`
+command (the source checkout is [tools/bbq_converter.py](../tools/bbq_converter.py)),
+or the `package_interface.QTIPackageInterface` library API. Both drive the same
+engines, so any format in [docs/ENGINES.md](ENGINES.md) is reachable from either path.
 
 ## Quick start (command line)
 
-Set `PYTHONPATH` once per shell, create a small BBQ input file, then convert it.
-Input files must match the `bbq-<name>-questions.txt` naming pattern; `<name>`
-becomes the content name used in the output filenames.
+Install the package, create a small BBQ input file, then convert it. Input files
+must match the `bbq-<name>-questions.txt` naming pattern; `<name>` becomes the
+content name used in the output filenames.
 
 ```sh
-source source_me.sh
+python3 -m pip install qti-package-maker
 printf 'MC\tWhat color is a clear sky?\tblue\tcorrect\tgreen\tincorrect\n' > bbq-demo-questions.txt
-python3 tools/bbq_converter.py -i bbq-demo-questions.txt -1 -r -s
+bbq_converter.py -i bbq-demo-questions.txt -1 -r -s
 ```
 
 That writes three files into the current directory: `qti12-demo.zip` (Canvas QTI
@@ -41,7 +41,7 @@ hand, call `qti_packer.read_package("bbq-demo-questions.txt", "bbq_text")` befor
 ## CLI
 
 ```sh
-python3 tools/bbq_converter.py -h
+bbq_converter.py -h
 ```
 
 - `-i`, `--input`: path to the BBQ text file (required).
@@ -77,11 +77,11 @@ See the per-engine media table in [docs/ENGINES.md](ENGINES.md) for exact behavi
 ## Examples
 
 ```sh
-python3 tools/bbq_converter.py -i bbq-demo-questions.txt -f canvas_qti_v1_2 -f human_readable
+bbq_converter.py -i bbq-demo-questions.txt -f canvas_qti_v1_2 -f human_readable
 ```
 
 ```sh
-python3 tools/bbq_converter.py -i bbq-demo-questions.txt -o my_quiz.zip -1
+bbq_converter.py -i bbq-demo-questions.txt -o my_quiz.zip -1
 ```
 
 ```sh

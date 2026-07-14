@@ -38,6 +38,9 @@ dependencies = [
 
 [tool.setuptools]
 license-files = ["LICENSE.LGPL_v3"]
+script-files = [
+    "tools/bbq_converter.py",
+]
 
 # This will include all sub-packages
 [tool.setuptools.packages.find]
