@@ -1,11 +1,19 @@
 # Changelog
 
-## 2026-07-02
+## 2026-07-14
 
-Audit follow-up on the 2026-07-01 image-support close-out (mechanical
-comment/docstring cleanup and three doc corrections) plus a full doc-set
-refresh for new visitors. No production code change; full suite still 2799
-passed.
+### Behavior or Interface Changes
+
+- Refreshed `README.md` as a newcomer-focused landing page: added a compact destination and image
+  compatibility chart, moved the existing self-test screenshots into a named proof section, added a
+  reproducible input-to-three-outputs quick start and Python API example, surfaced Canvas live-import
+  limitations before onboarding, aligned package metadata and docs on Python 3.10+ runtime syntax,
+  Python 3.11+ `tomllib` development tooling, and the tested Python 3.12 environment, cropped both
+  managed self-test screenshots to exact 16:10 frames with accessible before-and-after prose, and
+  curated the documentation and support routes. Moved the 2026-07-02 and 2026-07-01 lead summaries
+  into their `Developer Tests and Notes` subsections so every day-block entry is categorized.
+
+## 2026-07-02
 
 ### Additions and New Features
 
@@ -546,6 +554,9 @@ passed.
 
 ### Developer Tests and Notes
 
+- Completed an audit follow-up on the 2026-07-01 image-support close-out: mechanical
+  comment/docstring cleanup, three doc corrections, and a full doc-set refresh for new visitors.
+  No production code changed; the full suite still passed 2799 tests.
 - Recorded user-verified field evidence in `docs/BLACKBOARD_ULTRA_NOTES.md`:
   every `blackboard_qti_v2_1` export the user has tried imports successfully
   into Ultra, with per-feature degradation (matching questions skipped, table
@@ -553,11 +564,6 @@ passed.
   rejection. No code change.
 
 ## 2026-07-01
-
-Image-support plan close-out. Every engineering work package (WP-C1 through
-WP-P1) is complete, spec and quality reviewed, remediated, and verified; full
-suite 2799 passed. The plan stays in `docs/active_plans/active/` because WP-U1
-(Ultra decision) waits on the human gate-D sandbox import.
 
 ### Additions and New Features
 
@@ -670,6 +676,10 @@ suite 2799 passed. The plan stays in `docs/active_plans/active/` because WP-U1
 
 ### Developer Tests and Notes
 
+- Closed out the image-support plan through WP-P1: every engineering work package was complete,
+  specification and quality reviewed, remediated, and verified; the full suite passed 2799 tests.
+  The plan remained in `docs/active_plans/active/` because WP-U1 still awaited the human gate-D
+  sandbox import.
 - Patch 3 (WP-T1): add `tests/unit/test_media_assets.py`, the frozen-API unit
   matrix with inline base64 image constants (a JPEG constant and a
   first-class-raster test were added at spec review).

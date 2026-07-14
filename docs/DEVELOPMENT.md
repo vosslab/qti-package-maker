@@ -28,8 +28,9 @@ pip install -e .
 
 Runtime dependencies live in `pip_requirements.txt`; developer-only tools (for
 example `pytest`) live in `pip_requirements-dev.txt`. The package targets
-Python 3.9+ at runtime (`requires-python` in `pyproject.toml`); day-to-day
-development uses Python 3.12.
+Python 3.10+ at runtime (`requires-python` in `pyproject.toml`); day-to-day
+development uses Python 3.12. Development scripts that import the standard-library
+`tomllib` module require Python 3.11+.
 
 ## Running the tool
 

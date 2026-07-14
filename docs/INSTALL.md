@@ -7,7 +7,8 @@ into your environment.
 
 ## Requirements
 
-- Python 3.9+ (project metadata); local tooling targets Python 3.12.
+- Python 3.10+ for the package; development and tests target Python 3.12.
+- Python 3.11+ for development scripts that use the standard-library `tomllib` module.
 - pip, and Git for source installs.
 - Runtime dependencies: `crcmod`, `lxml`, `num2words`, `pyyaml`, `tabulate`
   (installed automatically by the pip steps below).
