@@ -23,6 +23,11 @@
 
 ### Fixes and Maintenance
 
+- Archived the superseded Pillow rasterization plan
+  (`docs/archive/floating-wiggling-castle.md`). Documented `--html-to-image`
+  in [docs/COOKBOOK.md](COOKBOOK.md), [docs/NEWS.md](NEWS.md), and
+  [docs/RELEASE_HISTORY.md](RELEASE_HISTORY.md). Pointed `MANIFEST.in` at
+  `LICENSE.LGPL-3.0` and `pip_requirements.txt`.
 - Removed the unused npm Playwright/TypeScript toolchain
   (`package.json`, `package-lock.json`, `devel/setup_playwright.sh`,
   `devel/setup_typescript.sh`). Table screenshots use pip `playwright`
@@ -40,6 +45,7 @@
   and the probe builders in tests via `importlib` instead of importing
   `tools` or `devel` as packages. Recorded `tools/bbq_converter.py` as the
   one support-dir exclusion: it is the setuptools-installed educator CLI.
+- Synchronized shared style guides, tests, and repository support files from the starter template.
 - Synchronized shared style guides, tests, and repository support files from the starter template.
 
 ### Developer Tests and Notes

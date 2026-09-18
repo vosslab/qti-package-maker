@@ -1,5 +1,27 @@
 # News
 
+## v26.09 - 2026-09-18
+
+### Highlights
+
+- Blackboard Ultra no longer has to lose table-cell drawings. Opt-in
+  `--html-to-image` screenshots gels, restriction maps, and agglutination
+  wells to packaged PNGs on `-2` (QTI 2.1) and `-B` (pool export).
+- Live Ultra import of a 99-item paternity-gel pool confirmed the figures
+  render after upload.
+- RDKit JavaScript canvases can be redrawn the same way; that path is
+  available but is not required for the DNA-profiling and restriction-map
+  generators.
+
+### Upgrade notes
+
+- New runtime dependencies: pip `playwright` and `rdkit`. For drawing
+  conversion, also run `playwright install chromium`.
+- `--html-to-image` is off by default and applies only to the two Blackboard
+  packaging engines. Mixed CLI runs leave other formats unchanged.
+- The npm Playwright/TypeScript toolchain is not used; Chromium comes from
+  the pip Playwright package.
+
 ## v26.07 - 2026-07-02
 
 ### Highlights
@@ -21,7 +43,7 @@
 ### Upgrade notes
 
 - The `bb_ultra_qti_v2_1` engine and its `-u`/`--ultra` CLI flag are removed.
-  For Blackboard Ultra, use `-q` (`blackboard_qti_v2_1`) or `-B`
+  For Blackboard Ultra, use `-2` (`blackboard_qti_v2_1`) or `-B`
   (`blackboard_export_zip`); both are field-verified to import into Ultra.
 
 ## v26.06 - 2026-07-02

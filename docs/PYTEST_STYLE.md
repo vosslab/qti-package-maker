@@ -77,6 +77,45 @@ Pytest excludes only `tests/e2e/` and `tests/playwright/` through `tests/conftes
 `tests/test_checkout_disk_budget.py` is the documented exception to the no-subprocess fast-lane
 default. Its local `du` call measures the checkout that the gate protects.
 
+## FIXTURE POLICY
+
+Treat fixtures as liabilities. Most fixtures add indirection, hidden coupling, and maintenance cost,
+so avoid them unless an actual product need depends on the shared setup, file shape, or loader
+behavior. Test-author convenience alone does not justify a fixture.
+
+Write test inputs directly in the test by default. Put the setup near the assertion so the test is
+easy to read, move, and maintain.
+
+Inline means the test input is written directly in the test file, close to the assertion. Use a
+literal string, literal object, short list, or a short helper function used only by tests in that
+same file.
+
+This policy covers both test data files under `tests/fixtures/` and custom `@pytest.fixture`
+functions.
+
+Use fixtures for these durable cases:
+
+1. Use the built-in `tmp_path` fixture when a test needs a temporary file or directory.
+2. Use the vendored `collect_report` autouse harness for hygiene report checks. See
+   [PYTEST_AUTHORING_GUIDE.md](PYTEST_AUTHORING_GUIDE.md#use-the-hygiene-harness).
+3. Use an existing repository file directly when that real file's required shape or loader
+   behavior is what the test checks: a shipped config, a template, or committed production data
+   that already exists for a non-test reason.
+
+For all other tests, write the input directly in the test.
+
+Use `tmp_path` for file-shaped test input, such as a CSV, YAML, JSON, or image, that exists only for
+the test. Write the inline data into a `tmp_path` file at runtime so the data lives in the test and
+the file exists only during the run. Add a permanent committed file only when that file already has
+a non-test purpose in the repository, or when a human explicitly approves it as durable shared test
+infrastructure.
+
+During early implementation, keep scratch setup in the test. Once the behavior is pinned, keep that
+setup in the test instead of moving it into a shared fixture.
+
+Treat a committed `tests/fixtures/` directory as shared test infrastructure. Get explicit human
+sign-off before adding one. These directories often accumulate stale files after their first use.
+
 ## Assertion shapes
 
 Prefer assertions that survive refactoring:

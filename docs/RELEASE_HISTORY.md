@@ -1,5 +1,19 @@
 # Release history
 
+## v26.09 - 2026-09-18
+
+### Highlights
+
+- New `qti_package_maker/html_to_image` package converts Ultra-stripped
+  table-cell drawings (Playwright screenshot) and RDKit canvases (RDKit
+  Python API) into packaged PNGs. `blackboard_qti_v2_1` and
+  `blackboard_export_zip` accept `html_to_image=True` (default off).
+  `QTIPackageInterface.save_package` forwards `engine_options`; the CLI flag
+  is `--html-to-image` and is scoped to those two engines.
+- Required runtime deps now include `playwright` and `rdkit`. Chromium is
+  installed with `playwright install chromium` for the drawing path only.
+- npm Playwright/`package.json` is not part of this release.
+
 ## v26.07 - 2026-07-02
 
 ### Highlights

@@ -61,19 +61,3 @@ class TableRenderer:
 		png_bytes = locator.screenshot(type="png")
 		page.close()
 		return png_bytes
-
-
-#============================================
-def render_table_png(table_html: str) -> bytes:
-	"""
-	Screenshot one table fragment with a short-lived browser.
-
-	Args:
-		table_html: The selected table's HTML.
-
-	Returns:
-		PNG bytes of the table element.
-	"""
-	with TableRenderer() as renderer:
-		png_bytes = renderer.render_table_png(table_html)
-	return png_bytes

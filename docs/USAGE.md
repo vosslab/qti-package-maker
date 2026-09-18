@@ -36,7 +36,9 @@ qti_packer.save_package("canvas_qti_v1_2", "bio101.zip")
 `add_item` takes an item type and a tuple; mixing item types in one bank needs
 `allow_mixed=True`. To convert an existing BBQ file instead of building items by
 hand, call `qti_packer.read_package("bbq-demo-questions.txt", "bbq_text")` before
-`save_package`.
+`save_package`. For Blackboard table-cell drawings, pass
+`engine_options={"html_to_image": True}` to `save_package` on
+`blackboard_qti_v2_1` or `blackboard_export_zip`.
 
 ## CLI
 

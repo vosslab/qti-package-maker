@@ -255,12 +255,12 @@ def _convert_value(
 
 
 #============================================
-def _resolve_render_pairs(renderers: list | None) -> list:
+def _resolve_render_pairs(renderers: list | None) -> list | None:
 	"""
 	Normalize caller renderers into (finder, renderer, family) triples.
 
 	Args:
-		renderers: None, or a list of pairs/triples.
+		renderers: None, or a list of (finder, renderer, family) triples.
 
 	Returns:
 		Triples ready for convert. None means the caller should use defaults.
@@ -269,12 +269,11 @@ def _resolve_render_pairs(renderers: list | None) -> list:
 		return None
 	pairs = []
 	for entry in renderers:
-		if len(entry) == 3:
-			pairs.append(entry)
-			continue
-		finder, renderer = entry
-		family = "canvas" if finder is selectors.find_canvas_fragments else "table"
-		pairs.append((finder, renderer, family))
+		if len(entry) != 3:
+			raise ValueError(
+				"renderers must be (finder, renderer, family) triples"
+			)
+		pairs.append(entry)
 	return pairs
 
 
