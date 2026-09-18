@@ -23,5 +23,4 @@ ULTRA/
 *.xml
 # real committed fixture, not generated output
 !tests/fixtures/bb_export_slice.zip
-
-report_*.txt
+/SAMPLES/
