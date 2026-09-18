@@ -1,3 +1,5 @@
+# This file is vendored. Local changes can and will be overwritten by propagation.
+
 """Repo-wide whitespace hygiene: BOM, CRLF, trailing whitespace, missing final newline."""
 
 # Standard Library

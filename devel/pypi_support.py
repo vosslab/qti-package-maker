@@ -1,3 +1,5 @@
+# This file is vendored. Local changes can and will be overwritten by propagation.
+
 """Console and subprocess helpers for the PyPI publishing command."""
 
 # Standard Library

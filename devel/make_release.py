@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+# This file is vendored. Local changes can and will be overwritten by propagation.
+
 """Prepare a manual GitHub source release from a stable HEAD snapshot.
 
 Releases are manual human decisions. This script never creates tags, never
 runs git mutations, and never calls the gh CLI. It validates the working
 state, builds reproducible source archives from committed HEAD, verifies the
-bundled LICENSE byte-for-byte, and PRINTS the exact commands a human runs to
+bundled license files byte-for-byte, and PRINTS the exact commands a human runs to
 cut the release.
 
 Dry-run is the default: it reports the planned commands and leaves files as
@@ -32,8 +34,18 @@ import version_lib
 
 # Directory (relative to repo root) that receives built release archives.
 OUTPUT_DIR_NAME = "output_release"
-# Committed pathspec the release LICENSE check and snapshot guarantee.
-LICENSE_PATHSPEC = "LICENSE"
+# This propagated script cannot import the template-only reset catalog. A meta
+# test keeps this release allow-list synchronized with the canonical choices.
+SUPPORTED_LICENSE_FILENAMES = frozenset({
+	"LICENSE.AGPL-3.0",
+	"LICENSE.Apache-2.0",
+	"LICENSE.CC-BY-4.0",
+	"LICENSE.CC-BY-SA-4.0",
+	"LICENSE.GPL-3.0",
+	"LICENSE.LGPL-3.0",
+	"LICENSE.MIT",
+	"LICENSE.MPL-2.0",
+})
 
 #============================================
 
@@ -118,21 +130,56 @@ def ensure_tag_free(version: str) -> None:
 
 #============================================
 
-def ensure_committed_license() -> None:
-	"""Confirm a LICENSE blob exists at committed HEAD.
+def committed_license_paths() -> list[str]:
+	"""Return policy-named regular license files committed at HEAD.
 
-	The snapshot is built from HEAD, so the LICENSE must be committed (not
+	The snapshot is built from HEAD, so each license must be committed (not
 	merely present in the working tree) to ship inside the archives.
+	Filename and object-mode checks also keep unsupported names, rendering
+	extensions, executable files, and symlinks out of the release contract.
+
+	Returns:
+		Sorted root-relative license paths.
 
 	Raises:
-		RuntimeError: When HEAD has no committed LICENSE.
+		RuntimeError: When a license-like file violates the filename or file-mode
+			contract, or HEAD has no committed policy-named license.
 	"""
-	result = changelog_lib.run_git(["cat-file", "-e", f"HEAD:{LICENSE_PATHSPEC}"])
+	result = changelog_lib.run_git(["ls-tree", "HEAD"])
 	if result.returncode != 0:
+		message = result.stderr.strip() or "git ls-tree HEAD failed."
+		raise RuntimeError(message)
+	license_paths: list[str] = []
+	for line in result.stdout.splitlines():
+		metadata, separator, path = line.partition("\t")
+		if separator == "" or not (path == "LICENSE" or path.startswith("LICENSE.")):
+			continue
+		# Only catalog-owned names may become Git blob and archive member paths.
+		if path not in SUPPORTED_LICENSE_FILENAMES:
+			raise RuntimeError(
+				f"Unsupported root license filename {path!r}. Use a LICENSE.<SPDX> "
+				"name offered by reset_repo.py, with no rendering extension."
+			)
+		mode, object_type, _object_id = metadata.split(" ", maxsplit=2)
+		if mode != "100644" or object_type != "blob":
+			raise RuntimeError(
+				f"Committed license {path!r} must be a regular, non-executable file; "
+				"symlinks are not releasable licenses."
+			)
+		license_paths.append(path)
+	if not license_paths:
 		raise RuntimeError(
-			"No committed LICENSE at HEAD. Commit a LICENSE file at the "
-			"repo root before releasing so it ships inside the archives."
+			"No committed LICENSE.<SPDX> file at HEAD. Commit each real license "
+			"file at the repo root before releasing so it ships in the archives."
 		)
+	return sorted(license_paths)
+
+
+#============================================
+
+def ensure_committed_license() -> list[str]:
+	"""Confirm policy-named licenses exist at HEAD and return their paths."""
+	return committed_license_paths()
 
 #============================================
 
@@ -156,25 +203,25 @@ def warn_uncommitted_changes() -> None:
 
 #============================================
 
-def read_head_license_bytes() -> bytes:
-	"""Read the raw bytes of the LICENSE blob at HEAD.
+def read_head_license_bytes(license_path: str) -> bytes:
+	"""Read the raw bytes of one committed license blob at HEAD.
 
 	Reads in binary mode (not changelog_lib.run_git, which is text mode) so
 	the bytes compare exactly against the blob git archive stores.
 
 	Returns:
-		The raw LICENSE bytes from HEAD.
+		The raw license bytes from HEAD.
 
 	Raises:
-		RuntimeError: When the LICENSE blob cannot be read.
+		RuntimeError: When the license blob cannot be read.
 	"""
 	result = subprocess.run(
-		["git", "show", f"HEAD:{LICENSE_PATHSPEC}"],
+		["git", "show", f"HEAD:{license_path}"],
 		stdout=subprocess.PIPE,
 		stderr=subprocess.PIPE,
 	)
 	if result.returncode != 0:
-		raise RuntimeError("Unable to read HEAD LICENSE bytes.")
+		raise RuntimeError(f"Unable to read HEAD {license_path} bytes.")
 	license_bytes = result.stdout
 	return license_bytes
 
@@ -303,17 +350,17 @@ def run_git_archive(archive_args: list[str]) -> None:
 
 def verify_archive_license(archive_path: str, member_name: str,
 		expected_bytes: bytes) -> None:
-	"""Verify an archive carries a LICENSE byte-equal to HEAD.
+	"""Verify an archive carries one license file byte-equal to HEAD.
 
 	Args:
 		archive_path: Path to the built zip or tgz archive.
-		member_name: Archive member path for the LICENSE entry.
-		expected_bytes: The expected LICENSE bytes from HEAD.
+		member_name: Archive member path for the license entry.
+		expected_bytes: The expected license bytes from HEAD.
 
 	Raises:
-		RuntimeError: When the archived LICENSE differs from HEAD.
+		RuntimeError: When the archived license differs from HEAD.
 	"""
-	# Read the LICENSE member back out of whichever archive format this is.
+	# Read the license member back out of whichever archive format this is.
 	if archive_path.endswith(".zip"):
 		with zipfile.ZipFile(archive_path) as zip_file:
 			archived_bytes = zip_file.read(member_name)
@@ -322,11 +369,13 @@ def verify_archive_license(archive_path: str, member_name: str,
 			member = tar_file.extractfile(member_name)
 			# extractfile returns None for non-regular members (dirs, links).
 			if member is None:
-				raise RuntimeError(f"No regular LICENSE member {member_name} in {archive_path}.")
+				raise RuntimeError(
+					f"No regular license member {member_name} in {archive_path}."
+				)
 			archived_bytes = member.read()
 	if archived_bytes != expected_bytes:
 		raise RuntimeError(
-			f"LICENSE in {archive_path} does not match HEAD LICENSE."
+			f"{member_name} in {archive_path} does not match committed HEAD."
 		)
 
 #============================================
@@ -515,7 +564,7 @@ def main() -> None:
 
 	# Validate all release preconditions up front, before writing any files.
 	ensure_tag_free(version)
-	ensure_committed_license()
+	license_paths = ensure_committed_license()
 	warn_uncommitted_changes()
 
 	# Resolve snapshot output paths and the in-archive prefix.
@@ -524,7 +573,6 @@ def main() -> None:
 	zip_path = os.path.join(output_dir, f"{repo_name}-v{version}.zip")
 	tgz_path = os.path.join(output_dir, f"{repo_name}-v{version}.tgz")
 	arg_lists = build_archive_arg_lists(prefix, zip_path, tgz_path)
-	license_member = f"{prefix}{LICENSE_PATHSPEC}"
 
 	if args.dry_run:
 		# Dry-run: report the planned build commands, build nothing.
@@ -541,13 +589,15 @@ def main() -> None:
 		# Precheck duplicate release headings up front, before building anything,
 		# so a re-run at an already-released version leaves no archives or doc edits.
 		ensure_release_docs_unreleased(repo_root, version)
-		# Write: build the archives, then verify each bundled LICENSE.
+		# Write: build the archives, then verify every bundled license.
 		os.makedirs(output_dir, exist_ok=True)
 		run_git_archive(arg_lists["zip"])
 		run_git_archive(arg_lists["tgz"])
-		expected_license = read_head_license_bytes()
-		verify_archive_license(zip_path, license_member, expected_license)
-		verify_archive_license(tgz_path, license_member, expected_license)
+		for license_path in license_paths:
+			expected_license = read_head_license_bytes(license_path)
+			license_member = f"{prefix}{license_path}"
+			verify_archive_license(zip_path, license_member, expected_license)
+			verify_archive_license(tgz_path, license_member, expected_license)
 		print(f"Built and verified: {zip_path}")
 		print(f"Built and verified: {tgz_path}")
 		# Write the release-doc entries under --write.

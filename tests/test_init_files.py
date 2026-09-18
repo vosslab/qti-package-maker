@@ -1,3 +1,5 @@
+# This file is vendored. Local changes can and will be overwritten by propagation.
+
 """Enforce minimal __init__.py files: no imports, defs, globals, or logic."""
 
 # Standard Library

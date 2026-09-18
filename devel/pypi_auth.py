@@ -1,3 +1,5 @@
+# This file is vendored. Local changes can and will be overwritten by propagation.
+
 """Resolve PyPI repository endpoints and token configuration."""
 
 # Standard Library

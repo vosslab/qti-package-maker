@@ -1,5 +1,22 @@
-# Byte-compiled / optimized / DLL files
+# === UNIVERSAL === [PROPAGATED - LOCAL EDITS OVERWRITTEN]
 .DS_Store
+/node_modules/
+/.env
+/report_*.txt
+/output*/
+/generated/
+/graphify-out/
+_temp*.?*
+/temp/
+/tests/_temp/
+/OTHER_REPOS/
+/LOCAL_ONLY/
+
+# -------------------- LOCAL REPOSITORY RULES --------------------
+# ADD YOUR CUSTOM IGNORES BELOW
+# Propagation preserves this section.
+# ------------------ END LOCAL REPOSITORY RULES ------------------
+# Byte-compiled / optimized / DLL files
 ULTRA/
 *.html
 *.zip
@@ -8,31 +25,3 @@ ULTRA/
 !tests/fixtures/bb_export_slice.zip
 
 report_*.txt
-
-# === UNIVERSAL ===
-output*/
-_temp*.?*
-/OTHER_REPOS/
-/LOCAL_ONLY/
-
-# === PYTHON ===
-build/
-dist/
-sdist/
-*.egg
-*.egg-info/
-site/
-
-# === NODE / PLAYWRIGHT ===
-node_modules/
-npm-debug.log*
-test-results/
-playwright-report/
-.playwright/
-# === LOCAL DATA ===
-# local-only evidence and sample trees, not tracked
-SAMPLES/
-
-
-
-

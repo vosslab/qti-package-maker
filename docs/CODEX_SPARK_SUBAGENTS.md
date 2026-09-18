@@ -1,5 +1,7 @@
 # Spark Subagents
 
+> This file is vendored. Local changes can and will be overwritten by propagation.
+
 Use `gpt-5.3-codex-spark` subagents for bounded tasks that can run independently. Spark agents are fast and
 well suited for focused implementation, code review, investigation, testing, and other clearly scoped work.
 
