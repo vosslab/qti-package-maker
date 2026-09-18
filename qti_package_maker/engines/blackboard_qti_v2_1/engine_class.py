@@ -18,6 +18,7 @@ from qti_package_maker.assessment_items.item_bank import ItemBank
 from qti_package_maker.assessment_items.item_bank import CollectedAssets
 from qti_package_maker.engines.blackboard_qti_v2_1 import write_item
 from qti_package_maker.engines.blackboard_qti_v2_1 import assessment_meta
+from qti_package_maker.html_to_image import transform
 #from qti_package_maker.engines.blackboard_qti_v2_1 import item_xml_helpers
 
 #==============
@@ -41,13 +42,22 @@ class EngineClass(base_engine.BaseEngine):
 	# Images are copied into the ZIP and their <img src> rewritten.
 	media_policy = media_assets.POLICY_PACKAGE
 
-	def __init__(self, package_name: str, verbose: bool=False) -> None:
+	def __init__(
+				self,
+				package_name: str,
+				verbose: bool=False,
+				html_to_image: bool = False,
+				html_to_image_renderers: list | None = None) -> None:
 		# Call the base engine constructor
 		super().__init__(package_name, verbose)
 		# set the write_item module (required)
 		self.write_item = write_item
 		# Verify that the correct write_item module is imported
 		self.validate_write_item_module()
+		# Opt-in Ultra drawing conversion; html_to_image_renderers is the
+		# test-stub seam (None uses Playwright tables and RDKit canvases).
+		self.html_to_image = html_to_image
+		self.html_to_image_renderers = html_to_image_renderers
 		# Setup Directories
 		self._setup_directories()
 
@@ -240,6 +250,10 @@ class EngineClass(base_engine.BaseEngine):
 		# staging directories are created, so a rejected bank never leaks an
 		# empty timestamped output dir into the current working directory.
 		self.raise_on_unpackagable_media(item_bank)
+		converted_bank = None
+		if self.html_to_image:
+			item_bank = transform.convert_bank(item_bank, self.html_to_image_renderers)
+			converted_bank = item_bank
 		# Create necessary directories
 		os.makedirs(self.output_dir, exist_ok=True)
 		os.makedirs(self.assessment_dir, exist_ok=True)
@@ -254,6 +268,9 @@ class EngineClass(base_engine.BaseEngine):
 		archive_map = zip_writer.collect_directory(self.output_dir)
 		zip_writer.build_zip(outfile, archive_map)
 		self.clean_temp_files()
+		# Drop the derived PNG temp dir after the ZIP is written.
+		if converted_bank is not None:
+			converted_bank.cleanup()
 		if self.verbose is True:
 			print(f"Saved {self.save_count} assessment items to {outfile}")
 		return outfile

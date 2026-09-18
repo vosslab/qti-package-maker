@@ -734,26 +734,14 @@ have implemented this pattern was removed 2026-07-02 as redundant. This
 section remains the reference for the asset-bundling shape Ultra's own
 exporter uses, for anyone who later needs it.
 
-Content that depends on pre-rendered or embedded images - specifically
-the biochem drawing-canvas question generators in the
-biology-problems repo - still requires a follow-up project that remains
-out of scope for this repo. The charter for that project is in the plan at
-`/Users/vosslab/.claude/plans/dreamy-dancing-sparrow.md` under
-"Follow-up project: Ultra image asset support" (a historical reference;
-that plan predates the engine removal). Summary of what it would need to
-build, if picked up by whichever engine(s) end up carrying it:
-
-1. A local HTML-to-PNG renderer (headless browser or weasyprint).
-2. Asset bundling in the engine: files written to
-   `READ_ONLY/question/<id>/embedded/<filename>`, declared as
-   `webcontent` resources in the manifest, linked to items via
-   `<dependency>`.
-3. Writer integration that detects drawing-canvas HTML (heuristic:
-   `colspan` or `rowspan` combined with `style="padding:0"` or per-edge
-   borders) and replaces the table with an `<img>` reference and a
-   bundled asset.
-4. Compat gate extensions that hard-fail on any image reference
-   without a matching bundled asset and dependency.
+Table-cell drawings and RDKit canvases convert on request through the
+`html_to_image` keyword on `blackboard_qti_v2_1` and
+`blackboard_export_zip` (CLI: `tools/bbq_converter.py --html-to-image`).
+The four critical DNA-profiling and restriction-map generators are
+table-cell drawings; RDKit canvas redraw remains available but is not
+required to ship those items. PNG packaging uses the existing media layer;
+Ultra's own `READ_ONLY/question/<id>/embedded/` exporter layout is historical
+reference only.
 
 PNG only. SVG is not a viable format in Ultra. Revisit SVG only if a
 future Ultra release adds support.

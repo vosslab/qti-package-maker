@@ -36,7 +36,10 @@ class QTIPackageInterface:
 			}
 
 	#=====================================================================
-	def init_engine(self, input_engine_name: str) -> base_engine.BaseEngine:
+	def init_engine(
+				self,
+				input_engine_name: str,
+				engine_options: dict | None = None) -> base_engine.BaseEngine:
 		"""Retrieve the engine class based on the given engine name."""
 		input_engine_name_low = re.sub(r"[^a-z0-9]", "", input_engine_name.lower())
 		if not input_engine_name_low:
@@ -63,7 +66,11 @@ class QTIPackageInterface:
 		else:
 			self.show_available_engines()
 			raise ValueError(f"Unknown engine: {input_engine_name}")
-		engine_cls = engine_info["class"](self.package_name, self.verbose)
+		if engine_options is None:
+			engine_cls = engine_info["class"](self.package_name, self.verbose)
+		else:
+			engine_cls = engine_info["class"](
+				self.package_name, self.verbose, **engine_options)
 		if self.verbose:
 			print(f"Initialized Engine: {engine_cls.name} ({engine_info['name']})")
 		return engine_cls
@@ -163,7 +170,11 @@ class QTIPackageInterface:
 			)
 
 	#=====================================================================
-	def save_package(self, engine_name: str, outfile: str = None) -> str | None:
+	def save_package(
+				self,
+				engine_name: str,
+				outfile: str = None,
+				engine_options: dict | None = None) -> str | None:
 		"""
 		Saves the current item bank using the specified engine.
 		"""
@@ -172,7 +183,7 @@ class QTIPackageInterface:
 			return
 		self.item_bank.renumber_items()
 
-		engine_cls = self.init_engine(engine_name)  # Initialize the engine
+		engine_cls = self.init_engine(engine_name, engine_options=engine_options)
 		if not hasattr(engine_cls, "save_package"):
 			raise NotImplementedError(f"Engine {engine_cls.name} does not support writing.")
 

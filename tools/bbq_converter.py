@@ -55,6 +55,10 @@ def parse_args(format_shortcuts: dict) -> argparse.Namespace:
 	parser.add_argument("--allow-mixed", dest="allow_mixed", help="Allow mixed question types",
 			action="store_true", default=False)
 
+	parser.add_argument("--html-to-image", dest="html_to_image",
+			action="store_true", default=False,
+			help="Convert table-cell drawings and RDKit canvases to PNGs")
+
 	#============== Output Formats ==============
 
 	# Generate the list of all formats from format_shortcuts
@@ -149,16 +153,29 @@ def main() -> None:
 	# Step 2: Apply question limit if specified
 	qti_packer.trim_item_bank(args.question_limit)
 
+	html_to_image_engines = ("blackboard_qti_v2_1", "blackboard_export_zip")
+
 	count = 0
 	if args.output_file:
-		qti_packer.save_package(args.output_format[0], args.output_file)
+		engine_options = None
+		if args.html_to_image:
+			if args.output_format[0] not in html_to_image_engines:
+				print(
+					"ERROR: --html-to-image applies only to "
+					"blackboard_qti_v2_1 and blackboard_export_zip"
+				)
+				raise SystemExit(2)
+			engine_options = {"html_to_image": True}
+		qti_packer.save_package(
+			args.output_format[0], args.output_file, engine_options=engine_options)
 		count += 1
 	else:
 		for engine_name in args.output_format:
-			#format_data = format_shortcuts[engine_name]
-			#short_name = format_data[1]
+			engine_options = None
+			if args.html_to_image and engine_name in html_to_image_engines:
+				engine_options = {"html_to_image": True}
 			try:
-				qti_packer.save_package(engine_name)
+				qti_packer.save_package(engine_name, engine_options=engine_options)
 				count += 1
 			except NotImplementedError:
 				pass

@@ -21,6 +21,10 @@ and image references pass automated checks, but live Canvas image rendering rema
 the public Free for Teacher sandbox was discontinued. See
 [docs/ENGINES.md](docs/ENGINES.md) for the complete compatibility matrix and exact limitations.
 
+Blackboard Ultra strips table-cell drawing styles (gels, restriction maps, agglutination wells) and
+does not run item JavaScript. Pass `--html-to-image` on a Blackboard QTI 2.1 or pool-export run to
+replace those fragments with packaged PNGs. The flag is off by default.
+
 ## See the bank teach itself
 
 <!-- screenshots:begin (managed by screenshot-docs) -->
@@ -37,10 +41,10 @@ no server, account, or external image folder required.
 
 - Move questions among Blackboard, Canvas, Moodle, and LibreTexts ADAPT workflows.
 - Preserve embedded PNG, JPEG, and GIF figures in packaged LMS exports.
+- Convert table-cell drawings to PNGs so they survive Blackboard Ultra import.
 - Cover seven assessment types, from multiple choice to matching and ordered lists.
 - Review content as readable text before importing it into a course.
 - Publish a self-contained HTML practice quiz with instant grading.
-- Use the command line for conversions or the Python API for generated question banks.
 
 ## Quick start
 
@@ -58,9 +62,10 @@ This converts one Blackboard question-upload row into three useful artifacts:
 - `human-demo.html`: a readable review copy.
 - `selftest-demo.html`: a self-contained, self-grading quiz.
 
-Input rows are tab-delimited, and input filenames follow `bbq-<name>-questions.txt`. The complete
-installation paths, including virtual environments and PyPI, are in
-[docs/INSTALL.md](docs/INSTALL.md).
+Input rows are tab-delimited, and input filenames follow `bbq-<name>-questions.txt`. From a source
+checkout, `source source_me.sh` then `python3 tools/bbq_converter.py` is the no-install path.
+Complete installation choices, including virtual environments, PyPI, and Playwright Chromium for
+`--html-to-image`, are in [docs/INSTALL.md](docs/INSTALL.md).
 
 ## Choose an output
 
@@ -69,6 +74,12 @@ Select one or more outputs in the same conversion:
 ```sh
 bbq_converter.py -i bbq-demo-questions.txt \
 	-f canvas_qti_v1_2 -f blackboard_qti_v2_1 -f html_selftest
+```
+
+For a Blackboard pool ZIP whose table drawings should remain visible in Ultra:
+
+```sh
+bbq_converter.py -i bbq-demo-questions.txt -B --html-to-image
 ```
 
 Use `-a` to select every CLI output or `bbq_converter.py -h` to see the available shortcuts. Some
@@ -89,12 +100,14 @@ bank.save_package("canvas_qti_v1_2", "bio101.zip")
 ```
 
 The result is a Canvas-ready QTI ZIP built through the same engine used by the command-line workflow.
+Pass `engine_options={"html_to_image": True}` to `save_package` for the two Blackboard packaging
+engines when table drawings must become PNGs.
 
 ## Documentation
 
 Start here:
 
-- [docs/INSTALL.md](docs/INSTALL.md): Setup, dependencies, and installation choices.
+- [docs/INSTALL.md](docs/INSTALL.md): Setup, dependencies, Chromium, and installation choices.
 - [docs/USAGE.md](docs/USAGE.md): CLI commands, Python API, images, and worked examples.
 - [docs/ENGINES.md](docs/ENGINES.md): Complete engine, question-type, and media compatibility tables.
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): Symptoms, error messages, and fixes.
@@ -111,12 +124,13 @@ Go deeper:
 The project is beta software. Runtime modules require Python 3.10 or newer, while the development
 and test environment targets Python 3.12. Blackboard Learn and Ultra image paths have live-import
 evidence; Canvas image packaging follows the QTI structure and passes local integrity tests, but
-still needs verification in an institutional Canvas sandbox.
+still needs verification in an institutional Canvas sandbox. `--html-to-image` needs Playwright
+Chromium (`playwright install chromium`) in addition to the Python package.
 
 ## License
 
 Code is licensed under the GNU Lesser General Public License v3. See
-[LICENSE.LGPL_v3](LICENSE.LGPL_v3).
+[LICENSE.LGPL-3.0](LICENSE.LGPL-3.0).
 
 ## Author and support
 

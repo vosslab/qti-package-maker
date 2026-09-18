@@ -15,18 +15,34 @@ since both are driven by the real blackboard_qti_v2_1 engine.
 """
 
 # Standard Library
+import os
+import types
 import pathlib
 import zipfile
+import importlib.util
 
 # Pip3 Library
 import lxml.etree
 import pytest
 
-# QTI Package Maker
-import devel.build_canvas_media_probe as canvas_probe
-import devel.build_ultra_media_probe as ultra_probe
-import devel.build_bb_original_probe as bb_learn_probe
+# local repo modules
+import file_utils
 from qti_package_maker.engines.blackboard_export_zip import assessment_meta as bb_assessment_meta
+
+
+#============================================
+def _load_devel_script(filename: str) -> types.ModuleType:
+	path = os.path.join(file_utils.get_repo_root(), "devel", filename)
+	module_name = "devel_script_" + filename.removesuffix(".py")
+	spec = importlib.util.spec_from_file_location(module_name, path)
+	module = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	return module
+
+
+canvas_probe = _load_devel_script("build_canvas_media_probe.py")
+ultra_probe = _load_devel_script("build_ultra_media_probe.py")
+bb_learn_probe = _load_devel_script("build_bb_original_probe.py")
 
 
 #============================================

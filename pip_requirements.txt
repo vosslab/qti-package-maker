@@ -2,7 +2,9 @@ colour-science
 crcmod
 lxml
 num2words
+playwright
 pyyaml
+rdkit
 seaborn
 six
 tabulate

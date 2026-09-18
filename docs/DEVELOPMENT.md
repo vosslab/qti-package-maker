@@ -54,10 +54,11 @@ for style and [E2E_TESTS.md](E2E_TESTS.md) for the slow tiers.
   `pytest tests/`. This is the fast lane and should finish in seconds.
 - `tests/integration/` and `tests/unit/` deeper pytest checks collected by the
   same `pytest tests/` run.
-- `tests/playwright/` browser-driven tests, run outside pytest. See
-  [PLAYWRIGHT_USAGE.md](PLAYWRIGHT_USAGE.md).
-- `tests/e2e/` non-browser whole-system runners (convention slot; run
-  directly, not via pytest).
+- `tests/playwright/` is a starter-template slot; this repo has no npm
+  Playwright tests. HTML-to-image uses pip Playwright (see
+  [INSTALL.md](INSTALL.md)).
+- `tests/e2e/` whole-system runners, run directly, not via pytest. The
+  html-to-image CLI check is `tests/e2e/e2e_html_to_image.py`.
 
 `tests/conftest.py` sets `collect_ignore = ["e2e", "playwright"]`, so the slow
 tiers never enter the fast lane even if their filenames look like pytest tests.

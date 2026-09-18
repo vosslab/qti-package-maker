@@ -10,8 +10,15 @@ into your environment.
 - Python 3.10+ for the package; development and tests target Python 3.12.
 - Python 3.11+ for development scripts that use the standard-library `tomllib` module.
 - pip, and Git for source installs.
-- Runtime dependencies: `crcmod`, `lxml`, `num2words`, `pyyaml`, `tabulate`
-  (installed automatically by the pip steps below).
+- Runtime dependencies: `crcmod`, `lxml`, `num2words`, `playwright`, `pyyaml`,
+  `rdkit`, `tabulate` (installed automatically by the pip steps below).
+- `--html-to-image` also needs Playwright Chromium after pip install:
+
+```sh
+playwright install chromium
+```
+
+Skip that browser step unless you convert table-cell drawings or RDKit canvases.
 
 ## Quick start (no install)
 

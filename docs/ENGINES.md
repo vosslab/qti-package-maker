@@ -162,8 +162,8 @@ surfaces them identically. The three file-packaging engines
 | Engine name | Media policy | Behavior |
 | --- | --- | --- |
 | `canvas_qti_v1_2` | **package** | Images packaged under `media/`; item `<img src>` uses a selectable token (relative default, or `$IMS-CC-FILEBASE$` for gate A). |
-| `blackboard_qti_v2_1` | **package** | Images packaged at the QTI 2.1 root; `<img src>` uses the `../` form matching the Blackboard sample export. |
-| `blackboard_export_zip` | **package** | Images embedded via the Blackboard csfiles mechanism (binary + LOM sidecar, `res00005.dat` CSResourceLinks, `@X@` body token); write to read roundtrip preserves bytes and references. |
+| `blackboard_qti_v2_1` | **package** | Images packaged at the QTI 2.1 root; `<img src>` uses the `../` form matching the Blackboard sample export. Optional `html_to_image` constructor kwarg (default off) converts table-cell drawings and RDKit canvases to PNGs before collect_assets. |
+| `blackboard_export_zip` | **package** | Images embedded via the Blackboard csfiles mechanism (binary + LOM sidecar, `res00005.dat` CSResourceLinks, `@X@` body token); write to read roundtrip preserves bytes and references. Optional `html_to_image` constructor kwarg (default off) converts table-cell drawings and RDKit canvases to PNGs before collect_assets. |
 | `html_selftest` | **package** | Images inlined as base64 `data:` URIs, so the single HTML file has zero external references (mkdocs-material fragment safe at any nav depth). |
 | `text2qti` | **reference_warn** | Local images copied into a `media/` folder beside the output and `<img>` rewritten to markdown `![alt](media/name.png)`; external and data-uri references kept verbatim with a warning. |
 | `bbq_text_upload` | **reference_warn** | `<img>` kept verbatim in the upload text; one itemized warning per image reminds the user to upload the file manually. |

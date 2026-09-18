@@ -43,6 +43,11 @@ qti_package_maker/
 |  +- blackboard_export_zip/
 |  +- template_class/       copy-me starter (skipped by registration)
 |  `- ...                   more engines; see docs/ENGINES.md
++- html_to_image/           opt-in table screenshot and RDKit canvas to PNG
+|  +- selectors.py          which fragments convert
+|  +- render_table.py       Playwright table screenshots
+|  +- render_canvas.py      RDKit Python canvas PNGs
+|  `- transform.py          ItemBank -> ItemBank rewrite
 +- common/                  shared layers used by both readers and writers
 |  +- media_assets.py       image scan / classify / name / rewrite / policy
 |  +- zip_writer.py         deterministic ZIP builder for packaging engines

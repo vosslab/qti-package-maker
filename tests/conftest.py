@@ -79,14 +79,15 @@ def tmp_cwd(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> pathlib.
 #   - Recursive directory exclusions need an explicit /** because fnmatch's *
 #     does not cross "/". Use "temp_scripts/**" to exclude a whole subtree.
 #
-# This template has no repo-specific exclusions, so the registry is empty.
-# Example entries (commented out; this repo needs none):
-#   REPO_HYGIENE_FILTERS = {
-#       "all": ["temp_scripts/**", "TEMPLATE.py"],
-#       "ascii_compliance": ["human_readable-*.html"],
-#       "pyflakes_code_lint": ["devel/scratch_*.py"],
-#   }
-REPO_HYGIENE_FILTERS = {}
+# tools/bbq_converter.py is the setuptools-installed educator CLI
+# (pyproject script-files). It imports qti_package_maker by design.
+# The vendored support-dir gate treats that as R2; this repo keeps the
+# CLI path and excludes that one file from the gate.
+REPO_HYGIENE_FILTERS = {
+	"support_dirs_not_imported": [
+		"tools/bbq_converter.py",
+	],
+}
 
 # === OPTIONAL_HELPERS_MENU ===
 # See meta/docs/PROPAGATION_RULES.md for the managed-block propagation contract.

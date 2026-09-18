@@ -1,11 +1,25 @@
 # Standard Library
+import os
+import types
 import pathlib
+import importlib.util
 
 # Pip3 Library
 import pytest
 
-# QTI Package Maker
-from tools import bbq_converter
+# local repo modules
+import file_utils
+
+
+def _load_bbq_converter() -> types.ModuleType:
+	path = os.path.join(file_utils.get_repo_root(), "tools", "bbq_converter.py")
+	spec = importlib.util.spec_from_file_location("bbq_converter_script", path)
+	module = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	return module
+
+
+bbq_converter = _load_bbq_converter()
 
 
 def test_extract_core_name_success(tmp_path: pathlib.Path) -> None:

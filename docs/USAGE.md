@@ -50,14 +50,17 @@ bbq_converter.py -h
 - `-f`, `--format`: pick one or more output engines (repeatable).
 - `-a`, `--all`: enable all CLI output formats.
 - `--allow-mixed`: allow mixed question types in one run.
+- `--html-to-image`: convert table-cell drawings and RDKit canvases to PNGs
+  before packaging (off by default; `blackboard_qti_v2_1` and
+  `blackboard_export_zip` only).
 - `-q`, `--quiet` / `-v`, `--verbose`: control logging (verbose by default).
 
-Format shortcuts: `-1` Canvas QTI v1.2, `-2` Blackboard QTI v2.1, `-u` Blackboard
-Ultra, `-r` human-readable, `-b` BBQ text upload, `-s` HTML self-test, `-A` Moodle
-Aiken, `-B` Blackboard pool export ZIP. The `exam_yaml`, `okla_chrst_bqgen`, and
-`text2qti` engines are reachable only through the library API and
-`save_package(engine_name)`.
-
+Format shortcuts: `-1` Canvas QTI v1.2, `-2` Blackboard QTI 2.1, `-r`
+human-readable, `-b` BBQ text upload, `-s` HTML self-test, `-A` Moodle Aiken,
+`-B` Blackboard pool export ZIP. `--html-to-image` is applied only to `-2` and
+`-B`; other selected formats in the same run are written without conversion.
+The `exam_yaml`, `okla_chrst_bqgen`, and `text2qti` engines are reachable only
+through the library API and `save_package(engine_name)`.
 ## Images
 
 BBQ questions may embed a relative image reference such as
@@ -73,6 +76,13 @@ depends on its media policy:
   `[image: name.ext]` text.
 
 See the per-engine media table in [docs/ENGINES.md](ENGINES.md) for exact behavior.
+
+Table-cell drawings and RDKit JavaScript canvases lose their meaning in
+Blackboard Ultra, which strips presentational attributes and does not run
+item JavaScript. Pass `--html-to-image` (or `html_to_image=True` on
+`blackboard_qti_v2_1` / `blackboard_export_zip`) to replace those fragments
+with packaged PNGs. The flag is off by default; without it, packaged item HTML
+is the input HTML.
 
 ## Examples
 

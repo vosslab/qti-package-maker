@@ -8,9 +8,10 @@ Priorities organized by time horizon. Dates are directional, not commitments.
   2.1, and Blackboard Original). The only open work is human sandbox
   verification: import the Canvas gate A and Blackboard Ultra gate D probe
   kits and record results in [docs/MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md).
-- Decide the Blackboard Ultra packaged-image upgrade after gate D: Ultra
-  currently ships `[image: name.ext]` placeholder text, and the real-package
-  render verdict waits on the sandbox import.
+- Canvas live-import of packaged images still waits on an institutional
+  sandbox (gate A). Ultra packaged images already pass gate D via
+  `blackboard_qti_v2_1` and `blackboard_export_zip`; table-cell drawings use
+  opt-in `--html-to-image`.
 - Engine selection fix: exact match, unique prefix, else error listing candidates.
 - Auto-detect reader selection in QTIPackageInterface (zip/xml/txt heuristics).
 - Quiet mode that suppresses warnings and progress output.
@@ -46,8 +47,9 @@ Priorities organized by time horizon. Dates are directional, not commitments.
 - Canvas QTI 1.2 ORDER items (Canvas does not support them).
 - HOTSPOT image items on write: no HOTSPOT item type exists in the item model,
   so `blackboard_export_zip` reads hotspot images but does not author them.
-- Rasterization preprocessing (HTML tables or JS figures to PNG): deferred to a
-  future standalone tool rather than folded into this package.
+- Rasterization of a third HTML fragment family beyond table-cell drawings and
+  RDKit canvases. Those two families convert on request via `html_to_image`
+  on `blackboard_qti_v2_1` and `blackboard_export_zip`.
 - LMS-specific UI features beyond standard QTI outputs.
 - Online validation services or network-dependent conversions.
 - Native LMS API integrations (gradebook sync, user provisioning).

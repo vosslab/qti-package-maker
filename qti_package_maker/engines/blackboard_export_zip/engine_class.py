@@ -18,6 +18,7 @@ from qti_package_maker.engines.blackboard_export_zip import read_package
 from qti_package_maker.engines.blackboard_export_zip import assessment_meta
 from qti_package_maker.assessment_items.item_bank import ItemBank
 from qti_package_maker.assessment_items.item_bank import CollectedAssets
+from qti_package_maker.html_to_image import transform
 
 
 #============================================
@@ -90,13 +91,22 @@ class EngineClass(base_engine.BaseEngine):
 	# package a data URI).
 	media_policy = media_assets.POLICY_PACKAGE
 
-	def __init__(self, package_name: str, verbose: bool = False) -> None:
+	def __init__(
+				self,
+				package_name: str,
+				verbose: bool = False,
+				html_to_image: bool = False,
+				html_to_image_renderers: list | None = None) -> None:
 		# Call the base engine constructor
 		super().__init__(package_name, verbose)
 		# Wire in the write_item dispatch module for this engine
 		self.write_item = write_item
 		# Confirm the module is the correct one for this engine folder
 		self.validate_write_item_module()
+		# Opt-in Ultra drawing conversion; html_to_image_renderers is the
+		# test-stub seam (None uses Playwright tables and RDKit canvases).
+		self.html_to_image = html_to_image
+		self.html_to_image_renderers = html_to_image_renderers
 
 	#============================================
 	def read_items_from_file(self, infile: str, allow_mixed: bool = False) -> ItemBank:
@@ -111,7 +121,8 @@ class EngineClass(base_engine.BaseEngine):
 		Build the Blackboard pool ZIP from the item bank.
 
 		Steps:
-		  0. Plan csfiles image embedding (mint xids, build the src rewrite map,
+		  0. Optionally convert table-cell drawings to PNGs (html_to_image).
+		  1. Plan csfiles image embedding (mint xids, build the src rewrite map,
 		     LOM sidecars, and CSResourceLinks entries).
 		  1. Render each item, rewriting <img src> to its csfiles token -> list of
 		     <item> Elements.
@@ -122,8 +133,8 @@ class EngineClass(base_engine.BaseEngine):
 		  5. Write .bb-package-info and .bb-log-info plain-text sidecars.
 		  6. Write embedded image binaries + LOM sidecars under csfiles/home_dir/;
 		     res00001/ (and csfiles/ when imageless) ship as empty-dir markers.
-		  7. Zip the entire temp dir tree.
-		  8. Clean the temp dir.
+		  8. Zip the entire temp dir tree.
+		  9. Clean the staging dir, then the converted bank's owned media dir.
 
 		Args:
 			item_bank: Iterable of assessment items.
@@ -134,6 +145,13 @@ class EngineClass(base_engine.BaseEngine):
 		"""
 		# Derive a human-readable title for the pool header and manifest
 		pool_title = assessment_meta.humanize_package_name(self.package_name)
+
+		# Validate the authored bank before conversion or staging.
+		self.raise_on_unpackagable_media(item_bank)
+		converted_bank = None
+		if self.html_to_image:
+			item_bank = transform.convert_bank(item_bank, self.html_to_image_renderers)
+			converted_bank = item_bank
 
 		# Step 0: plan csfiles image embedding (empty plan when no local images).
 		# This validates media policy and RAISES on data-URI images, so it runs
@@ -221,6 +239,10 @@ class EngineClass(base_engine.BaseEngine):
 		# Step 8: clean up temp files
 		if os.path.exists(temp_dir):
 			shutil.rmtree(temp_dir)
+		# converted_bank.cleanup() removes the derived PNG temp dir, not the ZIP
+		# staging dir (already removed above).
+		if converted_bank is not None:
+			converted_bank.cleanup()
 
 		if self.verbose:
 			print(f"Saved {len(item_elements)} items to {outfile}")

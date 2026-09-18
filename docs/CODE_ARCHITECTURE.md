@@ -65,6 +65,11 @@ Upload) is the plain-text question format this tool grew up reading.
   [ENGINES.md](ENGINES.md) and [ENGINE_AUTHORING.md](ENGINE_AUTHORING.md).
 
 ### Shared layers (used by readers and writers alike)
+- [html_to_image/transform.py](../qti_package_maker/html_to_image/transform.py) converts table-cell
+  drawings and RDKit canvases into PNG `<img>` tags on request. Engines
+  `blackboard_qti_v2_1` and `blackboard_export_zip` apply it when
+  `html_to_image=True`, before `collect_assets()`. Playwright never runs
+  inside pytest; tests inject stub renderers.
 - [common/media_assets.py](../qti_package_maker/common/media_assets.py) is the single
   image layer. It is file-reference-first: question content keeps the author's plain
   `<img src="images/foo.jpg">`, with no special scheme. This module scans HTML for
@@ -141,9 +146,9 @@ A typical read-then-write run moves through the hub once:
 - Add new command-line tools under [tools](../tools).
 
 ## Known gaps
-- Confirm the final Blackboard Ultra media behavior; the Ultra image path is gated on a
-  human decision (see [ROADMAP.md](ROADMAP.md) and
-  [docs/active_plans/active/image_support_plan.md](active_plans/active/image_support_plan.md)).
+- Canvas live-import of packaged images still waits on an institutional sandbox.
+  Ultra packaged images use `blackboard_qti_v2_1` and `blackboard_export_zip`;
+  table-cell drawings convert with opt-in `html_to_image`.
 - The empirical results of the LMS image-import probe kits
   ([devel/build_canvas_media_probe.py](../devel/build_canvas_media_probe.py) and
   siblings) are tracked in [MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md); confirm which

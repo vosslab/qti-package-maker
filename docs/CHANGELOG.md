@@ -2,9 +2,56 @@
 
 ## 2026-09-18
 
+### Additions and New Features
+
+- Added opt-in `html_to_image` conversion for Blackboard Ultra-stripped
+  table-cell drawings (Playwright screenshot) and RDKit JavaScript canvases
+  (RDKit Python API). `blackboard_export_zip` and `blackboard_qti_v2_1` accept
+  the keyword (default off). `QTIPackageInterface.save_package()` passes
+  `engine_options`, and `tools/bbq_converter.py --html-to-image` forwards it.
+  Fixture provenance: DNA gels (`who_father_html.py`, `who_killer_html.py` /
+  `gellib.py`), agglutination (`blood_type_agglutination_test.py`), restriction
+  maps (`linear_digest.py`), Fischer `padding: 0` cells (`sugarlib.py`), and
+  two `moleculelib.py` canvases (legend on/off). Negatives: a plain data table
+  and `metaboliclib.py` `padding: 0 2px` labels.
+
+### Behavior or Interface Changes
+
+- Packaged item HTML is unchanged unless `html_to_image` is on. Version is
+  26.09. `playwright` and `rdkit` are required runtime dependencies;
+  [docs/INSTALL.md](INSTALL.md) documents `playwright install chromium`.
+
 ### Fixes and Maintenance
 
+- Removed the unused npm Playwright/TypeScript toolchain
+  (`package.json`, `package-lock.json`, `devel/setup_playwright.sh`,
+  `devel/setup_typescript.sh`). Table screenshots use pip `playwright`
+  and `playwright install chromium`.
+- Scoped `--html-to-image` to the two Blackboard packaging engines so mixed
+  CLI runs no longer TypeError on Canvas or text writers. Dropped the removed
+  `-u` Ultra shortcut from [docs/USAGE.md](USAGE.md), pointed troubleshooting
+  at Chromium install, and trimmed Ultra notes that still described the
+  converter as unbuilt.
+- Refreshed [README.md](../README.md) for the current landing-page contract:
+  Ultra table-drawing conversion, the `--html-to-image` Blackboard path, and
+  the canonical [LICENSE.LGPL-3.0](../LICENSE.LGPL-3.0) name.
+- Pointed [README.md](../README.md) and `pyproject.toml` at the real
+  [LICENSE.LGPL-3.0](../LICENSE.LGPL-3.0) file. Loaded `tools/bbq_converter.py`
+  and the probe builders in tests via `importlib` instead of importing
+  `tools` or `devel` as packages. Recorded `tools/bbq_converter.py` as the
+  one support-dir exclusion: it is the setuptools-installed educator CLI.
 - Synchronized shared style guides, tests, and repository support files from the starter template.
+
+### Developer Tests and Notes
+
+- Permanent html-to-image tests cover the product contracts only: which
+  fragments convert, SMILES-to-PNG, derived-bank replacement without mutating
+  the source, MC answer identity after conversion, no media dir on render
+  error, and switch-on/switch-off packaging for both engines. The CLI path is
+  `tests/e2e/e2e_html_to_image.py`. Fixture-inventory parametrization, a 100px
+  screenshot oracle, and optional sibling-repo BBQ scans were removed.
+- The four critical generators are table-cell drawings; RDKit canvas conversion
+  is implemented but is not required to ship those items.
 
 ## 2026-08-25
 

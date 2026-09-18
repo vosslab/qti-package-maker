@@ -21,9 +21,18 @@ errors come from the shared media layer in
 - Try a small sample file and increase `--limit` to isolate a bad row.
 
 ## HTML tables in question text
-- Tables are converted to plain text when possible.
-- If you see `[TABLE]`, the HTML may be malformed; verify `<table>` tags are
-  well-formed.
+- Readable data tables stay HTML in packaged Blackboard output.
+- Table-cell drawings (gels, restriction maps, agglutination wells) collapse
+  in Blackboard Ultra unless you pass `--html-to-image` with `-2` or `-B`.
+- If a text engine shows `[TABLE]`, the HTML may be malformed; verify `<table>`
+  tags are well-formed.
+
+## `--html-to-image` cannot find Chromium
+- Symptom: Playwright reports that the Chromium executable does not exist and
+  names `playwright install`.
+- Cause: pip `playwright` is installed, but the browser binary was not.
+- Fix: `playwright install chromium` (the pip package, not `npx`). The flag
+  stays off by default; this step is only needed when converting drawings.
 
 ## HTML self-test styling
 - The HTML self-test output uses inline styles and helper functions in
@@ -84,13 +93,12 @@ errors come from the shared media layer in
 - Fix: no action needed to produce output. To silence the warnings, convert SVG
   to a raster format and download external images to local files.
 
-## Blackboard Ultra shows `[image: name.ext]`
-- Symptom: exported Ultra items contain `[image: name.ext]` text instead of the
-  image.
-- Cause: this is expected, not a bug. The Ultra engine uses the placeholder
-  policy and drops `<img>` tags; packaged images await the Ultra media probe.
-- Fix: none needed. Use Canvas QTI or Blackboard export zip when you need the
-  image bundled into the package.
+## Blackboard Ultra missing a figure
+- Symptom: a packaged image does not appear after Ultra import.
+- Cause: Ultra has no dedicated writer; images reach Ultra through
+  `blackboard_qti_v2_1` (`-2`) or `blackboard_export_zip` (`-B`). Gate D
+  confirmed those paths for ordinary `<img>` files.
+- Fix: export with `-2` or `-B`. For table-cell drawings, add `--html-to-image`.
 
 ## Cleaning up reader extraction directories
 - Readers that unzip a package (for example Blackboard export zip) extract into
