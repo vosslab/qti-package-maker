@@ -56,7 +56,7 @@ def main() -> None:
 	env["PYTHONPATH"] = pythonpath
 	argv = [
 		sys.executable, CONVERTER, "-i", bbq_path,
-		"-B", "-2", "--html-to-image",
+		"-B", "-2", "-1", "--html-to-image",
 	]
 	result = subprocess.run(
 		argv,
@@ -71,8 +71,8 @@ def main() -> None:
 	if result.returncode != 0:
 		raise SystemExit(f"converter failed with {result.returncode}")
 	zips = sorted(glob.glob(os.path.join(work_dir, "*.zip")))
-	if len(zips) != 2:
-		raise SystemExit(f"expected two ZIPs, found {zips}")
+	if len(zips) != 3:
+		raise SystemExit(f"expected three ZIPs, found {zips}")
 	for zip_path in zips:
 		violations = package_integrity.check_package(zip_path)
 		if violations:

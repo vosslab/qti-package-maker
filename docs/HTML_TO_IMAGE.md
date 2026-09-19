@@ -8,9 +8,9 @@ repository: the pip `playwright` package and Chromium, not npm.
 
 Blackboard Ultra strips presentational table styles and does not run item
 JavaScript. Gels, restriction maps, and agglutination wells become empty boxes
-unless they are screenshots first. Pass `--html-to-image` on `-2`
-(`blackboard_qti_v2_1`) or `-B` (`blackboard_export_zip`). The flag is off by
-default.
+unless they are screenshots first. Pass `--html-to-image` on any ZIP packaging
+engine: `-1` (`canvas_qti_v1_2`), `-2` (`blackboard_qti_v2_1`), or `-B`
+(`blackboard_export_zip`). The flag is off by default.
 
 ## Playwright (tables)
 
@@ -43,7 +43,7 @@ or `pip install qti-package-maker[rdkit]` when using the package extras.
 ## Commands
 
 ```sh
-bbq_converter.py -i bbq-demo-questions.txt -B --html-to-image
+bbq_converter.py -i bbq-demo-questions.txt -1 -2 -B --html-to-image
 ```
 
 From Python:

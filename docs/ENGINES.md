@@ -161,7 +161,7 @@ surfaces them identically. The three file-packaging engines
 
 | Engine name | Media policy | Behavior |
 | --- | --- | --- |
-| `canvas_qti_v1_2` | **package** | Images packaged under `media/`; item `<img src>` uses a selectable token (relative default, or `$IMS-CC-FILEBASE$` for gate A). |
+| `canvas_qti_v1_2` | **package** | Images packaged under `media/`; item `<img src>` uses a selectable token (relative default, or `$IMS-CC-FILEBASE$` for gate A). Optional `html_to_image` constructor kwarg (default off) converts table-cell drawings to PNGs before collect_assets. |
 | `blackboard_qti_v2_1` | **package** | Images packaged at the QTI 2.1 root; `<img src>` uses the `../` form matching the Blackboard sample export. Optional `html_to_image` constructor kwarg (default off) converts table-cell drawings and RDKit canvases to PNGs before collect_assets. |
 | `blackboard_export_zip` | **package** | Images embedded via the Blackboard csfiles mechanism (binary + LOM sidecar, `res00005.dat` CSResourceLinks, `@X@` body token); write to read roundtrip preserves bytes and references. Optional `html_to_image` constructor kwarg (default off) converts table-cell drawings and RDKit canvases to PNGs before collect_assets. |
 | `html_selftest` | **package** | Images inlined as base64 `data:` URIs, so the single HTML file has zero external references (mkdocs-material fragment safe at any nav depth). |

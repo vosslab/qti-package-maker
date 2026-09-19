@@ -153,7 +153,11 @@ def main() -> None:
 	# Step 2: Apply question limit if specified
 	qti_packer.trim_item_bank(args.question_limit)
 
-	html_to_image_engines = ("blackboard_qti_v2_1", "blackboard_export_zip")
+	html_to_image_engines = (
+		"canvas_qti_v1_2",
+		"blackboard_qti_v2_1",
+		"blackboard_export_zip",
+	)
 
 	count = 0
 	if args.output_file:
@@ -161,8 +165,9 @@ def main() -> None:
 		if args.html_to_image:
 			if args.output_format[0] not in html_to_image_engines:
 				print(
-					"ERROR: --html-to-image applies only to "
-					"blackboard_qti_v2_1 and blackboard_export_zip"
+					"ERROR: --html-to-image applies only to ZIP packaging "
+					"engines (canvas_qti_v1_2, blackboard_qti_v2_1, "
+					"blackboard_export_zip)"
 				)
 				raise SystemExit(2)
 			engine_options = {"html_to_image": True}

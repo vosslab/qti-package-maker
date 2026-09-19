@@ -12,6 +12,8 @@
 
 ### Behavior or Interface Changes
 
+- `canvas_qti_v1_2` accepts `html_to_image` like the two Blackboard ZIP
+  engines. `--html-to-image` applies to `-1`, `-2`, and `-B`.
 - RDKit is an extra in [pip_extras.txt](../pip_extras.txt), not a required
   runtime dep. `render_canvas.py` imports it only when a canvas is drawn.
   Table-only `--html-to-image` needs pip Playwright Chromium only.

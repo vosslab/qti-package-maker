@@ -13,6 +13,7 @@ from qti_package_maker.common import package_integrity
 from qti_package_maker.html_to_image import selectors
 from qti_package_maker.engines.blackboard_export_zip import engine_class as bb_export_engine
 from qti_package_maker.engines.blackboard_qti_v2_1 import engine_class as bb_qti21_engine
+from qti_package_maker.engines.canvas_qti_v1_2 import engine_class as canvas_engine
 
 
 PNG_BYTES = base64.b64decode(
@@ -72,6 +73,7 @@ def _zip_item_text(zip_path: str) -> str:
 ENGINE_FACTORIES = {
 	"blackboard_export_zip": bb_export_engine.EngineClass,
 	"blackboard_qti_v2_1": bb_qti21_engine.EngineClass,
+	"canvas_qti_v1_2": canvas_engine.EngineClass,
 }
 
 

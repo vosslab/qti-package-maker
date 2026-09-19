@@ -36,9 +36,9 @@ qti_packer.save_package("canvas_qti_v1_2", "bio101.zip")
 `add_item` takes an item type and a tuple; mixing item types in one bank needs
 `allow_mixed=True`. To convert an existing BBQ file instead of building items by
 hand, call `qti_packer.read_package("bbq-demo-questions.txt", "bbq_text")` before
-`save_package`. For Blackboard table-cell drawings, pass
+`save_package`. For table-cell drawings in a ZIP package, pass
 `engine_options={"html_to_image": True}` to `save_package` on
-`blackboard_qti_v2_1` or `blackboard_export_zip`.
+`canvas_qti_v1_2`, `blackboard_qti_v2_1`, or `blackboard_export_zip`.
 
 ## CLI
 
@@ -53,15 +53,14 @@ bbq_converter.py -h
 - `-a`, `--all`: enable all CLI output formats.
 - `--allow-mixed`: allow mixed question types in one run.
 - `--html-to-image`: convert table-cell drawings to PNGs before packaging
-  (off by default; `blackboard_qti_v2_1` and `blackboard_export_zip` only).
-  RDKit canvases convert too if `rdkit` is installed; see
-  [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
+  (off by default; ZIP engines `-1`, `-2`, and `-B`). RDKit canvases convert
+  too if `rdkit` is installed; see [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - `-q`, `--quiet` / `-v`, `--verbose`: control logging (verbose by default).
 
 Format shortcuts: `-1` Canvas QTI v1.2, `-2` Blackboard QTI 2.1, `-r`
 human-readable, `-b` BBQ text upload, `-s` HTML self-test, `-A` Moodle Aiken,
-`-B` Blackboard pool export ZIP. `--html-to-image` is applied only to `-2` and
-`-B`; other selected formats in the same run are written without conversion.
+`-B` Blackboard pool export ZIP. `--html-to-image` is applied to `-1`, `-2`,
+and `-B`; other selected formats in the same run are written without conversion.
 The `exam_yaml`, `okla_chrst_bqgen`, and `text2qti` engines are reachable only
 through the library API and `save_package(engine_name)`.
 
@@ -83,10 +82,10 @@ See the per-engine media table in [docs/ENGINES.md](ENGINES.md) for exact behavi
 
 Table-cell drawings and RDKit JavaScript canvases lose their meaning in
 Blackboard Ultra, which strips presentational attributes and does not run
-item JavaScript. Pass `--html-to-image` (or `html_to_image=True` on
-`blackboard_qti_v2_1` / `blackboard_export_zip`) to replace those fragments
-with packaged PNGs. The flag is off by default; without it, packaged item HTML
-is the input HTML.
+item JavaScript. Pass `--html-to-image` (or `html_to_image=True` on any ZIP packaging engine:
+`canvas_qti_v1_2`, `blackboard_qti_v2_1`, `blackboard_export_zip`) to replace
+those fragments with packaged PNGs. The flag is off by default; without it,
+packaged item HTML is the input HTML.
 
 ## Examples
 

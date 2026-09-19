@@ -76,10 +76,10 @@ bbq_converter.py -i bbq-demo-questions.txt \
 	-f canvas_qti_v1_2 -f blackboard_qti_v2_1 -f html_selftest
 ```
 
-For a Blackboard pool ZIP whose table drawings should remain visible in Ultra:
+For ZIP packages whose table drawings should remain visible after import:
 
 ```sh
-bbq_converter.py -i bbq-demo-questions.txt -B --html-to-image
+bbq_converter.py -i bbq-demo-questions.txt -1 -B --html-to-image
 ```
 
 Use `-a` to select every CLI output or `bbq_converter.py -h` to see the available shortcuts. Some
@@ -100,8 +100,9 @@ bank.save_package("canvas_qti_v1_2", "bio101.zip")
 ```
 
 The result is a Canvas-ready QTI ZIP built through the same engine used by the command-line workflow.
-Pass `engine_options={"html_to_image": True}` to `save_package` for the two Blackboard packaging
-engines when table drawings must become PNGs.
+Pass `engine_options={"html_to_image": True}` to `save_package` for any ZIP
+packaging engine (`canvas_qti_v1_2`, `blackboard_qti_v2_1`,
+`blackboard_export_zip`) when table drawings must become PNGs.
 
 ## Documentation
 

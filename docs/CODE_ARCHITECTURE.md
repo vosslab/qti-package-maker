@@ -66,9 +66,9 @@ Upload) is the plain-text question format this tool grew up reading.
 
 ### Shared layers (used by readers and writers alike)
 - [html_to_image/transform.py](../qti_package_maker/html_to_image/transform.py) converts table-cell
-  drawings and RDKit canvases into PNG `<img>` tags on request. Engines
-  `blackboard_qti_v2_1` and `blackboard_export_zip` apply it when
-  `html_to_image=True`, before `collect_assets()`. Playwright never runs
+  drawings and RDKit canvases into PNG `<img>` tags on request. ZIP packaging
+  engines (`canvas_qti_v1_2`, `blackboard_qti_v2_1`, `blackboard_export_zip`)
+  apply it when `html_to_image=True`, before `collect_assets()`. Playwright never runs
   inside pytest; tests inject stub renderers. RDKit is imported only when a
   canvas is present; see [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - [common/media_assets.py](../qti_package_maker/common/media_assets.py) is the single
@@ -160,8 +160,9 @@ A typical read-then-write run moves through the hub once:
 
 ## Known gaps
 - Canvas live-import of packaged images still waits on an institutional sandbox.
-  Ultra packaged images use `blackboard_qti_v2_1` and `blackboard_export_zip`;
-  table-cell drawings convert with opt-in `html_to_image`.
+  Ultra packaged images use `blackboard_qti_v2_1` and `blackboard_export_zip`.
+  Table-cell drawings convert with opt-in `html_to_image` on every ZIP packaging
+  engine, including `canvas_qti_v1_2`.
 - The empirical results of the LMS image-import probe kits
   ([devel/build_canvas_media_probe.py](../devel/build_canvas_media_probe.py) and
   siblings) are tracked in [MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md); confirm which

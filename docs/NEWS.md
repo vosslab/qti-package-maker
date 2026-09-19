@@ -5,7 +5,8 @@
 ### Highlights
 
 - Blackboard Ultra can keep gel, restriction-map, and agglutination drawings:
-  `--html-to-image` screenshots those tables to packaged PNGs on `-2` and `-B`.
+  `--html-to-image` screenshots those tables to packaged PNGs on `-1`, `-2`,
+  and `-B`.
 - A 99-item paternity-gel pool imported into Ultra and showed the figures.
 - Default packaging is unchanged. The flag is off unless you pass it.
 

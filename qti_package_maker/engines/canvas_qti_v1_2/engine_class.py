@@ -20,6 +20,7 @@ from qti_package_maker.assessment_items.item_bank import CollectedAssets
 from qti_package_maker.engines.canvas_qti_v1_2 import write_item
 from qti_package_maker.engines.canvas_qti_v1_2 import assessment_meta
 from qti_package_maker.engines.canvas_qti_v1_2 import item_xml_helpers
+from qti_package_maker.html_to_image import transform
 
 # Common Cartridge convention: packaged images live under media/ at the
 # package root (text2qti prior art; no real Canvas sample confirms it yet).
@@ -57,7 +58,9 @@ class EngineClass(base_engine.BaseEngine):
 				self,
 				package_name: str,
 				verbose: bool = False,
-				canvas_src_variant: str = CANVAS_SRC_VARIANT_RELATIVE) -> None:
+				canvas_src_variant: str = CANVAS_SRC_VARIANT_RELATIVE,
+				html_to_image: bool = False,
+				html_to_image_renderers: list | None = None) -> None:
 		# Call the base engine constructor
 		super().__init__(package_name, verbose)
 		# set the write_item module (required)
@@ -73,6 +76,10 @@ class EngineClass(base_engine.BaseEngine):
 		# A plain instance attribute (not argparse) so probe kits can flip it
 		# after construction too: engine.canvas_src_variant = "filebase".
 		self.canvas_src_variant = canvas_src_variant
+		# Opt-in drawing conversion; html_to_image_renderers is the test-stub
+		# seam (None uses Playwright tables and RDKit canvases).
+		self.html_to_image = html_to_image
+		self.html_to_image_renderers = html_to_image_renderers
 
 	#==============
 	def _setup_directories(self) -> None:
@@ -250,6 +257,10 @@ class EngineClass(base_engine.BaseEngine):
 		# staging directories are created, so a rejected bank never leaks an
 		# empty timestamped output dir into the current working directory.
 		self.raise_on_unpackagable_media(item_bank)
+		converted_bank = None
+		if self.html_to_image:
+			item_bank = transform.convert_bank(item_bank, self.html_to_image_renderers)
+			converted_bank = item_bank
 		# Create necessary directories
 		os.makedirs(self.output_dir, exist_ok=True)
 		os.makedirs(self.assessment_dir, exist_ok=True)
@@ -267,6 +278,9 @@ class EngineClass(base_engine.BaseEngine):
 		archive_map = zip_writer.collect_directory(self.output_dir)
 		zip_writer.build_zip(outfile, archive_map)
 		self.clean_temp_files()
+		# Drop the derived PNG temp dir after the ZIP is written.
+		if converted_bank is not None:
+			converted_bank.cleanup()
 		if self.verbose is True:
 			print(f"Saved {self.save_count} assessment items to {outfile}")
 		return outfile

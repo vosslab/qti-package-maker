@@ -8,9 +8,9 @@
   package rewrites Ultra-stripped table-cell drawings to packaged PNGs using
   pip Playwright Chromium. RDKit JavaScript canvases convert the same way when
   `rdkit` is installed. `blackboard_qti_v2_1` and `blackboard_export_zip` take
-  `html_to_image=True` (default off).
+  `html_to_image=True` (default off). `canvas_qti_v1_2` takes the same keyword.
   [tools/bbq_converter.py](../tools/bbq_converter.py) `--html-to-image` applies
-  only to those two engines. Other formats in a mixed run stay as authored.
+  to `-1`, `-2`, and `-B`. Other formats in a mixed run stay as authored.
 - [qti_package_maker/package_interface.py](../qti_package_maker/package_interface.py)
   `save_package` forwards `engine_options`.
 - License file on disk is [LICENSE.LGPL-3.0](../LICENSE.LGPL-3.0).

@@ -127,14 +127,14 @@ are in [ENGINES.md](ENGINES.md) and [ENGINE_AUTHORING.md](ENGINE_AUTHORING.md).
 
 Table-cell drawings (gels, restriction maps, agglutination wells) are HTML
 tables, not `<img>` files. Blackboard Ultra strips their styles. Convert them
-to packaged PNGs on a Blackboard QTI 2.1 or pool-export run:
+to packaged PNGs on any ZIP packaging run (`-1`, `-2`, or `-B`):
 
 ```sh
-bbq_converter.py -i bbq-demo-questions.txt -B --html-to-image
+bbq_converter.py -i bbq-demo-questions.txt -1 -B --html-to-image
 ```
 
 From Python, pass `engine_options={"html_to_image": True}` to `save_package` on
-`blackboard_qti_v2_1` or `blackboard_export_zip`. Install Chromium once with
+`canvas_qti_v1_2`, `blackboard_qti_v2_1`, or `blackboard_export_zip`. Install Chromium once with
 `playwright install chromium`. Ordinary data tables are left as HTML. RDKit
 canvases need `pip install rdkit` (see [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md)).
 

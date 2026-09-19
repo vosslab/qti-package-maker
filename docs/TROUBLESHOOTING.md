@@ -23,7 +23,7 @@ errors come from the shared media layer in
 ## HTML tables in question text
 - Readable data tables stay HTML in packaged Blackboard output.
 - Table-cell drawings (gels, restriction maps, agglutination wells) collapse
-  in Blackboard Ultra unless you pass `--html-to-image` with `-2` or `-B`.
+  in Blackboard Ultra unless you pass `--html-to-image` with `-1`, `-2`, or `-B`.
 - If a text engine shows `[TABLE]`, the HTML may be malformed; verify `<table>`
   tags are well-formed.
 
