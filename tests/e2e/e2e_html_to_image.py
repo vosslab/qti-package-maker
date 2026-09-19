@@ -25,17 +25,16 @@ REPO_ROOT = file_utils.get_repo_root()
 CONVERTER = os.path.join(REPO_ROOT, "tools", "bbq_converter.py")
 OUTPUT_DIR = os.path.join(REPO_ROOT, "output_smoke", "html_to_image")
 
-DRAWING_TABLE = (
-	'<table><tr>'
-	'<td bgcolor="#000000" style="border-top: 4px solid #111111; width: 80px; height: 80px;"></td>'
-	'<td bgcolor="#eeeeee" style="border-top: 4px solid #333333; width: 80px; height: 80px;"></td>'
-	"</tr></table>"
-)
-
 
 #============================================
 def write_bbq(path: str) -> None:
-	question = f"<p>Which lane matches?</p>{DRAWING_TABLE}"
+	table = (
+		'<table><tr>'
+		'<td bgcolor="#000000" style="border-top: 4px solid #111111; width: 80px; height: 80px;"></td>'
+		'<td bgcolor="#eeeeee" style="border-top: 4px solid #333333; width: 80px; height: 80px;"></td>'
+		"</tr></table>"
+	)
+	question = f"<p>Which lane matches?</p>{table}"
 	line = f"MC\t{question}\tlane A\tcorrect\tlane B\tincorrect\n"
 	with open(path, "w", encoding="ascii") as handle:
 		handle.write(line)

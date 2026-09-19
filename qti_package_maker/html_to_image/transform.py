@@ -342,9 +342,8 @@ def convert_bank(
 
 	Args:
 		item_bank: Source bank; left unchanged.
-		renderers: Optional list of (finder, renderer) or
-			(finder, renderer, family). None uses Playwright tables and
-			RDKit canvases.
+		renderers: Optional list of (finder, renderer, family) triples.
+			None uses Playwright tables and RDKit canvases.
 
 	Returns:
 		A derived ItemBank. The caller owns cleanup() of its media dir.

@@ -23,6 +23,9 @@
 
 ### Fixes and Maintenance
 
+- Dropped the canvas-selector unit test and the Fischer `padding: 0`
+  case. Selector coverage is four inline HTML snippets: a gel cell, a
+  border-only well, a plain data table, and a `padding: 0 2px` label.
 - Archived the superseded Pillow rasterization plan
   (`docs/archive/floating-wiggling-castle.md`). Documented `--html-to-image`
   in [docs/COOKBOOK.md](COOKBOOK.md), [docs/NEWS.md](NEWS.md), and

@@ -15,12 +15,6 @@ from qti_package_maker.engines.blackboard_export_zip import engine_class as bb_e
 from qti_package_maker.engines.blackboard_qti_v2_1 import engine_class as bb_qti21_engine
 
 
-DRAWING_TABLE = (
-	'<table><tr>'
-	'<td bgcolor="#000000" style="border-top: 1px solid #111111;"></td>'
-	"</tr></table>"
-)
-
 PNG_BYTES = base64.b64decode(
 	"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGNkaPjPgA0wYRUdtBIALlIBjzTK6JgAAAAASUVORK5CYII="
 )
@@ -41,8 +35,13 @@ def _stub_renderers() -> list:
 
 #============================================
 def _bank_with_table() -> ItemBank:
+	table = (
+		'<table><tr>'
+		'<td bgcolor="#000000" style="border-top: 1px solid #111111;"></td>'
+		"</tr></table>"
+	)
 	bank = ItemBank(allow_mixed=False)
-	question = f"<p>Which lane matches?</p>{DRAWING_TABLE}"
+	question = f"<p>Which lane matches?</p>{table}"
 	bank.add_item("MC", (question, ["lane A", "lane B"], "lane A"))
 	bank.renumber_items()
 	return bank

@@ -13,12 +13,6 @@ from qti_package_maker.html_to_image import selectors
 from qti_package_maker.html_to_image import transform
 
 
-DRAWING_TABLE = (
-	'<table><tr>'
-	'<td bgcolor="#000000" style="border-top: 1px solid #111111;"></td>'
-	"</tr></table>"
-)
-
 # 8x8 PNG above package_integrity.MIN_IMAGE_DIMENSION_PX.
 PNG_BYTES = base64.b64decode(
 	"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGNkaPjPgA0wYRUdtBIALlIBjzTK6JgAAAAASUVORK5CYII="
@@ -40,7 +34,12 @@ def _stub_renderers() -> list:
 
 #============================================
 def test_convert_replaces_drawing_and_leaves_source_bank() -> None:
-	question = f"<p>Which lane matches?</p>{DRAWING_TABLE}"
+	table = (
+		'<table><tr>'
+		'<td bgcolor="#000000" style="border-top: 1px solid #111111;"></td>'
+		"</tr></table>"
+	)
+	question = f"<p>Which lane matches?</p>{table}"
 	bank = ItemBank(allow_mixed=False)
 	bank.add_item("MC", (question, ["lane A", "lane B"], "lane A"))
 	new_bank = transform.convert_bank(bank, renderers=_stub_renderers())
@@ -58,10 +57,15 @@ def test_convert_replaces_drawing_and_leaves_source_bank() -> None:
 
 #============================================
 def test_convert_keeps_mc_answer_in_choices() -> None:
-	choice_a = f"<p>yes</p>{DRAWING_TABLE}"
+	table = (
+		'<table><tr>'
+		'<td bgcolor="#000000" style="border-top: 1px solid #111111;"></td>'
+		"</tr></table>"
+	)
+	choice_a = f"<p>yes</p>{table}"
 	choice_b = "<p>no</p>"
 	bank = ItemBank(allow_mixed=False)
-	bank.add_item("MC", (f"<p>q</p>{DRAWING_TABLE}", [choice_a, choice_b], choice_a))
+	bank.add_item("MC", (f"<p>q</p>{table}", [choice_a, choice_b], choice_a))
 	new_bank = transform.convert_bank(bank, renderers=_stub_renderers())
 	item = list(new_bank)[0]
 	assert item.answer_text in item.choices_list
@@ -76,7 +80,12 @@ def test_render_error_does_not_create_a_media_directory(
 			monkeypatch: pytest.MonkeyPatch) -> None:
 	monkeypatch.setenv("TMPDIR", str(tmp_path))
 	monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
-	question = f"<p>Which lane matches?</p>{DRAWING_TABLE}"
+	table = (
+		'<table><tr>'
+		'<td bgcolor="#000000" style="border-top: 1px solid #111111;"></td>'
+		"</tr></table>"
+	)
+	question = f"<p>Which lane matches?</p>{table}"
 	bank = ItemBank(allow_mixed=False)
 	bank.add_item("MC", (question, ["lane A", "lane B"], "lane A"))
 
