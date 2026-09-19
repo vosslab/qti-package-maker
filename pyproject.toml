@@ -34,9 +34,11 @@ dependencies = [
     "num2words",
     "playwright",
     "pyyaml",
-    "rdkit",
     "tabulate",
 ]
+
+[project.optional-dependencies]
+rdkit = ["rdkit"]
 
 [tool.setuptools]
 license-files = ["LICENSE.LGPL-3.0"]

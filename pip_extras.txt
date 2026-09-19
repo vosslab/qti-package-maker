@@ -1,0 +1,3 @@
+# Optional runtime extras. Declared here so test_import_requirements.py
+# allows the import; not installed by pip_requirements.txt.
+rdkit

@@ -11,14 +11,16 @@ into your environment.
 - Python 3.11+ for development scripts that use the standard-library `tomllib` module.
 - pip, and Git for source installs.
 - Runtime dependencies: `crcmod`, `lxml`, `num2words`, `playwright`, `pyyaml`,
-  `rdkit`, `tabulate` (installed automatically by the pip steps below).
-- `--html-to-image` also needs Playwright Chromium after pip install:
+  `tabulate` (installed automatically by the pip steps below).
+- `--html-to-image` table conversion also needs Playwright Chromium after pip:
 
 ```sh
 playwright install chromium
 ```
 
-Skip that browser step unless you convert table-cell drawings or RDKit canvases.
+RDKit is optional. Install it only if items contain RDKit JavaScript canvases
+(`pip install rdkit`, or `pip install qti-package-maker[rdkit]`). See
+[HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 
 ## Quick start (no install)
 

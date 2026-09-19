@@ -14,7 +14,7 @@ The shape of the whole system is one hub with plug-in edges:
   +--------------+                                   +----------------+
   | BBQ text     |                                   | Canvas QTI zip |
   | Blackboard   |   parse    +---------------+  emit | Blackboard zip |
-  | export zip   | ---------> |   ItemBank    | ----> | Ultra QTI zip  |
+  | export zip   | ---------> |   ItemBank    | ----> | QTI 2.1 zip    |
   | text2qti     |            |  (CRC-keyed   |       | text / HTML    |
   | okla bqgen   |            |   questions   |       | YAML / Aiken   |
   | ...          |            |   + media)    |       | ...            |
@@ -69,7 +69,8 @@ Upload) is the plain-text question format this tool grew up reading.
   drawings and RDKit canvases into PNG `<img>` tags on request. Engines
   `blackboard_qti_v2_1` and `blackboard_export_zip` apply it when
   `html_to_image=True`, before `collect_assets()`. Playwright never runs
-  inside pytest; tests inject stub renderers.
+  inside pytest; tests inject stub renderers. RDKit is imported only when a
+  canvas is present; see [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - [common/media_assets.py](../qti_package_maker/common/media_assets.py) is the single
   image layer. It is file-reference-first: question content keeps the author's plain
   `<img src="images/foo.jpg">`, with no special scheme. This module scans HTML for
@@ -103,8 +104,13 @@ A typical read-then-write run moves through the hub once:
 - For a package that carries images (for example a Blackboard export ZIP), the reader
   extracts image bytes and points the bank's `media_base_dir` at them, or registers
   in-memory bytes through `ItemBank.add_image()`.
-- On save, `QTIPackageInterface.save_package(engine_name)` renumbers items and hands
-  the bank to the chosen writer engine.
+- On save, `QTIPackageInterface.save_package(engine_name, engine_options=...)`
+  renumbers items and hands the bank to the chosen writer. Extra kwargs such as
+  `html_to_image=True` go to engines that declare them.
+- When `html_to_image` is on, [html_to_image/transform.py](../qti_package_maker/html_to_image/transform.py)
+  `convert_bank()` rewrites drawing tables (and RDKit canvases, if present) to
+  PNG `<img>` tags on a derived bank, then the writer calls `collect_assets()`.
+  See [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - Just before rendering, a packaging writer calls `ItemBank.collect_assets()`, which
   scans every item's HTML, resolves each image reference once, and assigns output
   names across the whole set. The writer rewrites each item's `<img src>` to its
@@ -126,11 +132,15 @@ A typical read-then-write run moves through the hub once:
   integration round trips (for example
   [tests/integration/test_media_end_to_end.py](../tests/integration/test_media_end_to_end.py)),
   backed by the committed real-shape fixture
-  [tests/fixtures/bb_export_slice.zip](../tests/fixtures/bb_export_slice.zip), a
-  single 12K ZIP with `imsmanifest.xml` at its root; consumers read the ZIP
-  directly, since `package_integrity.check_package` accepts ZIP paths.
-- Slow end-to-end scripts live under `tests/e2e/` and `tests/playwright/`; see
-  [E2E_TESTS.md](E2E_TESTS.md).
+  [tests/fixtures/bb_export_slice.zip](../tests/fixtures/bb_export_slice.zip).
+- html-to-image contracts:
+  [tests/unit/test_html_to_image_selectors.py](../tests/unit/test_html_to_image_selectors.py),
+  [tests/unit/test_html_to_image_transform.py](../tests/unit/test_html_to_image_transform.py),
+  [tests/integration/test_html_to_image_packaging.py](../tests/integration/test_html_to_image_packaging.py).
+  CLI with real Chromium:
+  [tests/e2e/e2e_html_to_image.py](../tests/e2e/e2e_html_to_image.py).
+- Slow non-pytest scripts live under [tests/e2e](../tests/e2e); see
+  [E2E_TESTS.md](E2E_TESTS.md). `tests/playwright/` is an empty template slot.
 
 ## Extension points
 - Add a new format by adding an engine folder under
@@ -143,6 +153,9 @@ A typical read-then-write run moves through the hub once:
 - Extend cross-engine behavior in [common](../qti_package_maker/common) so every engine
   shares one implementation; the media, ZIP, and manifest layers are the pattern to
   follow.
+- Add a third HTML fragment family in
+  [html_to_image](../qti_package_maker/html_to_image) as another
+  (finder, renderer, family) triple; see [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - Add new command-line tools under [tools](../tools).
 
 ## Known gaps

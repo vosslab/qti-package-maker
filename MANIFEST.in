@@ -1,5 +1,6 @@
 include README.md
 include LICENSE.LGPL-3.0
 include pip_requirements.txt
+include pip_extras.txt
 include qti_package_maker/data/*
 recursive-include qti_package_maker *.py

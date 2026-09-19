@@ -33,6 +33,13 @@ errors come from the shared media layer in
 - Cause: pip `playwright` is installed, but the browser binary was not.
 - Fix: `playwright install chromium` (the pip package, not `npx`). The flag
   stays off by default; this step is only needed when converting drawings.
+  See [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
+
+## `--html-to-image` fails on an RDKit canvas
+- Symptom: `ImportError` naming `rdkit` while converting.
+- Cause: an item contains an RDKit JavaScript canvas, and RDKit is not
+  installed. Table-only banks never import it.
+- Fix: `pip install rdkit` (also listed in [pip_extras.txt](../pip_extras.txt)).
 
 ## HTML self-test styling
 - The HTML self-test output uses inline styles and helper functions in

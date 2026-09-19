@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-19
+
+### Fixes and Maintenance
+
+- Refreshed [docs/CODE_ARCHITECTURE.md](CODE_ARCHITECTURE.md) and
+  [docs/FILE_STRUCTURE.md](FILE_STRUCTURE.md) for html-to-image, `engine_options`,
+  and the pip Playwright path. Refreshed the v26.09 blocks in
+  [docs/NEWS.md](NEWS.md) and [docs/RELEASE_HISTORY.md](RELEASE_HISTORY.md)
+  from the changelog (news-release-docs).
+
+### Behavior or Interface Changes
+
+- RDKit is an extra in [pip_extras.txt](../pip_extras.txt), not a required
+  runtime dep. `render_canvas.py` imports it only when a canvas is drawn.
+  Table-only `--html-to-image` needs pip Playwright Chromium only.
+- Removed the vendored npm Playwright usage page. This repo's path is
+  [docs/HTML_TO_IMAGE.md](HTML_TO_IMAGE.md) (pip Playwright Chromium).
+
 ## 2026-09-18
 
 ### Additions and New Features
@@ -18,8 +36,9 @@
 ### Behavior or Interface Changes
 
 - Packaged item HTML is unchanged unless `html_to_image` is on. Version is
-  26.09. `playwright` and `rdkit` are required runtime dependencies;
+  26.09. `playwright` is a required runtime dependency;
   [docs/INSTALL.md](INSTALL.md) documents `playwright install chromium`.
+  RDKit is optional ([pip_extras.txt](../pip_extras.txt)).
 
 ### Fixes and Maintenance
 

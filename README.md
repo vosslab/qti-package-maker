@@ -108,6 +108,7 @@ engines when table drawings must become PNGs.
 Start here:
 
 - [docs/INSTALL.md](docs/INSTALL.md): Setup, dependencies, Chromium, and installation choices.
+- [docs/HTML_TO_IMAGE.md](docs/HTML_TO_IMAGE.md): pip Playwright table screenshots and optional RDKit canvases.
 - [docs/USAGE.md](docs/USAGE.md): CLI commands, Python API, images, and worked examples.
 - [docs/ENGINES.md](docs/ENGINES.md): Complete engine, question-type, and media compatibility tables.
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): Symptoms, error messages, and fixes.
@@ -125,7 +126,8 @@ The project is beta software. Runtime modules require Python 3.10 or newer, whil
 and test environment targets Python 3.12. Blackboard Learn and Ultra image paths have live-import
 evidence; Canvas image packaging follows the QTI structure and passes local integrity tests, but
 still needs verification in an institutional Canvas sandbox. `--html-to-image` needs Playwright
-Chromium (`playwright install chromium`) in addition to the Python package.
+Chromium (`playwright install chromium`). RDKit is optional and is loaded only when an item
+contains an RDKit canvas.
 
 ## License
 

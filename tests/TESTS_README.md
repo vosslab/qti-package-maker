@@ -26,7 +26,7 @@ tests/
 ## How to run
 
 - Fast pytest lane: `pytest tests/`
-- Single browser test: `node tests/playwright/test_<name>.mjs` (see [../docs/PLAYWRIGHT_USAGE.md](../docs/PLAYWRIGHT_USAGE.md))
+- HTML-to-image CLI (pip Playwright): `source source_me.sh && python3 tests/e2e/e2e_html_to_image.py` (see [../docs/HTML_TO_IMAGE.md](../docs/HTML_TO_IMAGE.md))
 - Single non-browser E2E: `bash tests/e2e/e2e_<name>.sh` or `source source_me.sh && python3 tests/e2e/e2e_<name>.py` (see [../docs/E2E_TESTS.md](../docs/E2E_TESTS.md))
 - Bulk non-browser E2E: `bash tests/e2e/run_all.sh` (if present)
 
@@ -49,4 +49,4 @@ Important: `collect_ignore` only affects pytest test collection. The repo's lint
 
 - [../docs/PYTEST_STYLE.md](../docs/PYTEST_STYLE.md) -- pytest test-writing rules and fast-lane discipline
 - [../docs/E2E_TESTS.md](../docs/E2E_TESTS.md) -- non-browser whole-system E2E conventions
-- [../docs/PLAYWRIGHT_USAGE.md](../docs/PLAYWRIGHT_USAGE.md) -- browser-driven test conventions
+- [../docs/HTML_TO_IMAGE.md](../docs/HTML_TO_IMAGE.md) -- pip Playwright for table-to-PNG conversion

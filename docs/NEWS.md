@@ -1,26 +1,20 @@
 # News
 
-## v26.09 - 2026-09-18
+## v26.09 - 2026-09-19
 
 ### Highlights
 
-- Blackboard Ultra no longer has to lose table-cell drawings. Opt-in
-  `--html-to-image` screenshots gels, restriction maps, and agglutination
-  wells to packaged PNGs on `-2` (QTI 2.1) and `-B` (pool export).
-- Live Ultra import of a 99-item paternity-gel pool confirmed the figures
-  render after upload.
-- RDKit JavaScript canvases can be redrawn the same way; that path is
-  available but is not required for the DNA-profiling and restriction-map
-  generators.
+- Blackboard Ultra can keep gel, restriction-map, and agglutination drawings:
+  `--html-to-image` screenshots those tables to packaged PNGs on `-2` and `-B`.
+- A 99-item paternity-gel pool imported into Ultra and showed the figures.
+- Default packaging is unchanged. The flag is off unless you pass it.
 
 ### Upgrade notes
 
-- New runtime dependencies: pip `playwright` and `rdkit`. For drawing
-  conversion, also run `playwright install chromium`.
-- `--html-to-image` is off by default and applies only to the two Blackboard
-  packaging engines. Mixed CLI runs leave other formats unchanged.
-- The npm Playwright/TypeScript toolchain is not used; Chromium comes from
-  the pip Playwright package.
+- Install pip `playwright`, then `playwright install chromium` before using
+  `--html-to-image`. See [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
+- RDKit is optional. Table-only banks do not need it. Canvas items need
+  `pip install rdkit` (also [pip_extras.txt](../pip_extras.txt)).
 
 ## v26.07 - 2026-07-02
 

@@ -135,7 +135,8 @@ bbq_converter.py -i bbq-demo-questions.txt -B --html-to-image
 
 From Python, pass `engine_options={"html_to_image": True}` to `save_package` on
 `blackboard_qti_v2_1` or `blackboard_export_zip`. Install Chromium once with
-`playwright install chromium`. Ordinary data tables are left as HTML.
+`playwright install chromium`. Ordinary data tables are left as HTML. RDKit
+canvases need `pip install rdkit` (see [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md)).
 
 ## References
 

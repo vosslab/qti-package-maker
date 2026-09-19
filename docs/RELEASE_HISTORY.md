@@ -1,18 +1,47 @@
 # Release history
 
-## v26.09 - 2026-09-18
+## v26.09 - 2026-09-19
 
 ### Highlights
 
-- New `qti_package_maker/html_to_image` package converts Ultra-stripped
-  table-cell drawings (Playwright screenshot) and RDKit canvases (RDKit
-  Python API) into packaged PNGs. `blackboard_qti_v2_1` and
-  `blackboard_export_zip` accept `html_to_image=True` (default off).
-  `QTIPackageInterface.save_package` forwards `engine_options`; the CLI flag
-  is `--html-to-image` and is scoped to those two engines.
-- Required runtime deps now include `playwright` and `rdkit`. Chromium is
-  installed with `playwright install chromium` for the drawing path only.
-- npm Playwright/`package.json` is not part of this release.
+- New [qti_package_maker/html_to_image](../qti_package_maker/html_to_image)
+  package rewrites Ultra-stripped table-cell drawings to packaged PNGs using
+  pip Playwright Chromium. RDKit JavaScript canvases convert the same way when
+  `rdkit` is installed. `blackboard_qti_v2_1` and `blackboard_export_zip` take
+  `html_to_image=True` (default off).
+  [tools/bbq_converter.py](../tools/bbq_converter.py) `--html-to-image` applies
+  only to those two engines. Other formats in a mixed run stay as authored.
+- [qti_package_maker/package_interface.py](../qti_package_maker/package_interface.py)
+  `save_package` forwards `engine_options`.
+- License file on disk is [LICENSE.LGPL-3.0](../LICENSE.LGPL-3.0).
+
+### Notable fixes
+
+- Mixed CLI runs no longer TypeError when `--html-to-image` is combined with
+  Canvas or text writers.
+- Support-dir import tests load `tools/bbq_converter.py` and devel probe
+  builders via importlib instead of importing `tools` or `devel` as packages.
+- Removed the npm Playwright/TypeScript toolchain (`package.json`,
+  `devel/setup_playwright.sh`). Chromium comes from pip Playwright.
+
+### Compatibility notes
+
+- New required runtime dependency: `playwright`. Table conversion also needs
+  `playwright install chromium`. See [docs/HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
+- `rdkit` moved to [pip_extras.txt](../pip_extras.txt) and
+  `qti-package-maker[rdkit]`. Convert imports it only when a canvas is present.
+- The `-u` Blackboard Ultra CLI shortcut stays gone; use `-2` or `-B`.
+- Default output HTML is unchanged unless `html_to_image` is on.
+
+### Validation
+
+- Unit and integration tests cover selector contracts, derived-bank rewrite,
+  MC answer identity, render-error cleanup, and switch-on/switch-off packaging
+  for both Blackboard engines.
+- [tests/e2e/e2e_html_to_image.py](../tests/e2e/e2e_html_to_image.py) runs the
+  CLI with real Chromium.
+- A 99-item who-father pool imported into Blackboard Ultra with visible gel
+  PNGs.
 
 ## v26.07 - 2026-07-02
 

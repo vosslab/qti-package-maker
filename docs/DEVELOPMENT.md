@@ -55,8 +55,8 @@ for style and [E2E_TESTS.md](E2E_TESTS.md) for the slow tiers.
 - `tests/integration/` and `tests/unit/` deeper pytest checks collected by the
   same `pytest tests/` run.
 - `tests/playwright/` is a starter-template slot; this repo has no npm
-  Playwright tests. HTML-to-image uses pip Playwright (see
-  [INSTALL.md](INSTALL.md)).
+  Playwright tests. HTML-to-image uses pip Playwright; see
+  [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - `tests/e2e/` whole-system runners, run directly, not via pytest. The
   html-to-image CLI check is `tests/e2e/e2e_html_to_image.py`.
 

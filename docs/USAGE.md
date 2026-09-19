@@ -52,9 +52,10 @@ bbq_converter.py -h
 - `-f`, `--format`: pick one or more output engines (repeatable).
 - `-a`, `--all`: enable all CLI output formats.
 - `--allow-mixed`: allow mixed question types in one run.
-- `--html-to-image`: convert table-cell drawings and RDKit canvases to PNGs
-  before packaging (off by default; `blackboard_qti_v2_1` and
-  `blackboard_export_zip` only).
+- `--html-to-image`: convert table-cell drawings to PNGs before packaging
+  (off by default; `blackboard_qti_v2_1` and `blackboard_export_zip` only).
+  RDKit canvases convert too if `rdkit` is installed; see
+  [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - `-q`, `--quiet` / `-v`, `--verbose`: control logging (verbose by default).
 
 Format shortcuts: `-1` Canvas QTI v1.2, `-2` Blackboard QTI 2.1, `-r`
@@ -63,6 +64,7 @@ human-readable, `-b` BBQ text upload, `-s` HTML self-test, `-A` Moodle Aiken,
 `-B`; other selected formats in the same run are written without conversion.
 The `exam_yaml`, `okla_chrst_bqgen`, and `text2qti` engines are reachable only
 through the library API and `save_package(engine_name)`.
+
 ## Images
 
 BBQ questions may embed a relative image reference such as

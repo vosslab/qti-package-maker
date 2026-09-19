@@ -22,6 +22,8 @@ matches your task. For how these pieces fit together, see
 - [pyproject.toml](../pyproject.toml): package metadata and build configuration.
 - [VERSION](../VERSION): version string kept in sync with `pyproject.toml`.
 - [pip_requirements.txt](../pip_requirements.txt): runtime dependencies.
+- [pip_requirements-dev.txt](../pip_requirements-dev.txt): developer tools (pytest).
+- [pip_extras.txt](../pip_extras.txt): optional extras (RDKit for canvases).
 - [source_me.sh](../source_me.sh): sets `PYTHONPATH` so the package runs without install.
 - [REPO_TYPE](../REPO_TYPE): project-type marker used by shared tooling.
 
@@ -45,8 +47,8 @@ qti_package_maker/
 |  `- ...                   more engines; see docs/ENGINES.md
 +- html_to_image/           opt-in table screenshot and RDKit canvas to PNG
 |  +- selectors.py          which fragments convert
-|  +- render_table.py       Playwright table screenshots
-|  +- render_canvas.py      RDKit Python canvas PNGs
+|  +- render_table.py       pip Playwright table screenshots
+|  +- render_canvas.py      RDKit canvas PNGs (extra; loaded only if present)
 |  `- transform.py          ItemBank -> ItemBank rewrite
 +- common/                  shared layers used by both readers and writers
 |  +- media_assets.py       image scan / classify / name / rewrite / policy
@@ -72,8 +74,9 @@ qti_package_maker/
   explains what was kept.
 - Top-level `tests/test_*.py` files are repo-wide gates (pyflakes, ASCII compliance,
   typing, imports, shebangs, markdown links) plus the all-engines smoke run.
-- `tests/e2e/` and `tests/playwright/` hold slow end-to-end scripts run outside
-  pytest; see [E2E_TESTS.md](E2E_TESTS.md).
+- [tests/e2e/e2e_html_to_image.py](../tests/e2e/e2e_html_to_image.py): CLI
+  `--html-to-image` with real Chromium. See [E2E_TESTS.md](E2E_TESTS.md).
+  `tests/playwright/` is an unused template slot.
 
 ### devel
 - The `build_*_probe.py` scripts
@@ -86,8 +89,8 @@ qti_package_maker/
 
 ## Generated artifacts
 - Ignored outputs include `output*/` directories and generated `*.html`, `*.zip`, and
-  `*.xml` files, plus `report_*.txt` and the `ULTRA/` scratch dir; see
-  [.gitignore](../.gitignore).
+  `*.xml` files, plus `report_*.txt`, `graphify-out/`, and the `ULTRA/` scratch dir;
+  see [.gitignore](../.gitignore).
 - Root-level `BB-Export-*` folders and `SAMPLES/` are local sample exports, not part of
   the tracked package.
 
@@ -100,7 +103,9 @@ qti_package_maker/
   [ENGINE_AUTHORING.md](ENGINE_AUTHORING.md),
   [QUESTION_TYPES.md](QUESTION_TYPES.md).
 - Install and run: [INSTALL.md](INSTALL.md), [USAGE.md](USAGE.md).
-- Media specifics: [MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md).
+- Media specifics: [MEDIA_LMS_PROBES.md](MEDIA_LMS_PROBES.md),
+  [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md),
+  [BLACKBOARD_ULTRA_NOTES.md](BLACKBOARD_ULTRA_NOTES.md).
 
 ## Where to add work
 - New format or LMS target: a new engine folder under
@@ -109,5 +114,7 @@ qti_package_maker/
   [assessment_items](../qti_package_maker/assessment_items).
 - Behavior shared across engines: [common](../qti_package_maker/common).
 - New command-line tool: [tools](../tools).
-- Tests: [tests/unit](../tests/unit) or [tests/integration](../tests/integration).
+- Tests: [tests/unit](../tests/unit) or [tests/integration](../tests/integration);
+  whole-system CLI under [tests/e2e](../tests/e2e).
+- Table-drawing conversion: [html_to_image](../qti_package_maker/html_to_image).
 - Documentation: [docs](.).

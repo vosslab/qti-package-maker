@@ -1,8 +1,9 @@
-"""Draw an RDKit canvas from extracted SMILES using RDKit's Python API."""
+"""Draw an RDKit canvas from extracted SMILES using RDKit's Python API.
 
-# PIP3 modules
-from rdkit import Chem
-from rdkit.Chem.Draw import rdMolDraw2D
+RDKit is an extra (`pip_extras.txt`). Import it only when a canvas is drawn so
+table-only --html-to-image runs do not require the package. A missing install
+raises ImportError at draw time.
+"""
 
 # local repo modules
 from qti_package_maker.html_to_image.selectors import CanvasSource
@@ -20,8 +21,11 @@ def render_canvas_png(source: CanvasSource) -> bytes:
 		PNG bytes from MolDraw2DCairo.
 
 	Raises:
+		ImportError: rdkit is not installed.
 		ValueError: RDKit cannot parse the SMILES.
 	"""
+	from rdkit import Chem
+	from rdkit.Chem.Draw import rdMolDraw2D
 	mol = Chem.MolFromSmiles(source.smiles)
 	if mol is None:
 		raise ValueError(f"RDKit could not parse SMILES: {source.smiles}")
