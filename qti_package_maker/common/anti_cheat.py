@@ -74,8 +74,10 @@ class AntiCheat:
 				setattr(item_copy, field_name, self.modify_string(value))
 			elif isinstance(value, list):
 				setattr(item_copy, field_name, self.modify_list(value))
+			elif field_name in ("min_answers_required", "allow_all_correct"):
+				continue
 			else:
-				print(f"Skipping field name, {field_name}")
+				raise TypeError(f"Unsupported anti-cheat field {field_name}: {type(value).__name__}")
 		return item_copy
 
 	# ============= MODIFY STRINGS/LISTS =============
@@ -297,5 +299,4 @@ def main() -> None:
 
 if __name__ == "__main__":
 	main()
-
 

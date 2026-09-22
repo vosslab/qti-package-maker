@@ -65,13 +65,17 @@ def serialize_fragment(root: lxml.html.HtmlElement) -> str:
 	Returns:
 		The inner HTML of the wrapper, including text nodes.
 	"""
+	# lxml decodes &nbsp; to U+00A0. Item CRC requires ASCII, so re-escape
+	# text nodes and serialized markup the same way blackboard ZIP repair does.
 	parts = []
 	if root.text:
-		parts.append(root.text)
+		parts.append(root.text.encode("ascii", "xmlcharrefreplace").decode("ascii"))
 	for child in root:
-		parts.append(lxml.html.tostring(child, encoding="unicode", method="xml"))
+		child_bytes = lxml.html.tostring(
+			child, encoding="ascii", method="xml", with_tail=False)
+		parts.append(child_bytes.decode("ascii"))
 		if child.tail:
-			parts.append(child.tail)
+			parts.append(child.tail.encode("ascii", "xmlcharrefreplace").decode("ascii"))
 	html = "".join(parts)
 	return html
 

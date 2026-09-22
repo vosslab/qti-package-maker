@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-20
+
+### Fixes and Maintenance
+
+- Re-serialize html-to-image fragments as ASCII (`&#160;` for decoded `&nbsp;`) so MATCH
+  CRC16 no longer fails on sequence tables that keep a leading non-breaking space.
+- Stopped anti-cheat processing from printing repetitive notices for the expected MA configuration
+  fields `min_answers_required` and `allow_all_correct`; unsupported non-text fields now fail
+  clearly instead of producing ambiguous console noise.
+
 ## 2026-09-19
 
 ### Fixes and Maintenance
