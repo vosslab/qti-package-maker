@@ -10,6 +10,8 @@
   `aminoacidlib` atom and peptide-bond highlights, including the requested canvas dimensions.
 - Opt-in HTML-to-image conversion removes the recognized RDKit CDN loader; canvas conversion also
   removes the drawing scripts it consumes.
+- Added `TableRenderer.render_mathml_png()` for the current biochemistry equation subset. This helper
+  is used by exam-formatting-tools and does not change package conversion or CLI defaults.
 
 ### Fixes and Maintenance
 
@@ -23,6 +25,9 @@
 
 - All 3,635 package tests pass, including PNG dimension checks and bright-green atom/bond color
   mapping checks.
+- The MathML helper's allowlist and legacy `mfenced` expansion are covered by focused tests. A real
+  Chromium render produced a legible Henderson-Hasselbalch equation PNG. The full package suite now
+  passes 3,645 tests.
 
 ## 2026-09-20
 

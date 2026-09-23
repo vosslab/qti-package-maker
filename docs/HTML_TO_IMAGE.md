@@ -58,6 +58,16 @@ An unmatched canvas, a dynamic option, or an unsupported drawing option raises
 an error instead of producing an empty or incomplete figure. The recognized
 CDN loader and consumed drawing scripts are removed when the field is converted.
 
+## MathML renderer helper
+
+`TableRenderer.render_mathml_png()` is a small rendering helper used by
+exam-formatting-tools when importing biochemistry questions. It accepts the
+current Henderson-Hasselbalch generator's MathML elements, expands legacy
+`mfenced` parentheses, and rejects unknown tags, attributes, or expression
+shapes. It renders only the validated MathML fragment; it does not execute
+item scripts or load external resources. This helper does not change the
+`--html-to-image` package conversion path or its default behavior.
+
 ## Commands
 
 ```sh
