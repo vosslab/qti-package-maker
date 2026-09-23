@@ -40,6 +40,17 @@ pip install rdkit
 
 or `pip install qti-package-maker[rdkit]` when using the package extras.
 
+The offline renderer reads the literal SMILES, canvas dimensions, legend,
+`explicitMethyl`, atom and bond highlight arrays, and RGB highlight colour. It
+also recognizes the `getPeptideBonds(mol)` helper emitted by `aminoacidlib`.
+The parser accepts the current static bptools form: a literal SMILES, an empty
+`mdetails` object, and literal option assignments. It never evaluates item
+JavaScript or loads the CDN. Canvas dimensions are limited to 4096 pixels per
+side; SMILES strings are limited to 4096 characters.
+An unmatched canvas, a dynamic option, or an unsupported drawing option raises
+an error instead of producing an empty or incomplete figure. The recognized
+CDN loader and consumed drawing scripts are removed when the field is converted.
+
 ## Commands
 
 ```sh

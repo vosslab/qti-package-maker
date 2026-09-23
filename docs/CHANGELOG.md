@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-09-23
+
+### Behavior or Interface Changes
+
+- Offline RDKit canvas rendering now preserves `moleculelib` labels and explicit methyls plus
+  `aminoacidlib` atom and peptide-bond highlights, including the requested canvas dimensions.
+- Opt-in HTML-to-image conversion removes the recognized RDKit CDN loader; canvas conversion also
+  removes the drawing scripts it consumes.
+
+### Fixes and Maintenance
+
+- RDKit canvas parsing accepts only static, supported drawing options. It rejects ambiguous canvas
+  scripts, dynamic options, malformed highlight values, and oversized dimensions or SMILES before
+  rendering; item JavaScript is never executed.
+- The conversion remains opt-in, RDKit remains an optional extra, and no CLI or item schema
+  changed.
+
+### Developer Tests and Notes
+
+- All 3,635 package tests pass, including PNG dimension checks and bright-green atom/bond color
+  mapping checks.
+
 ## 2026-09-20
 
 ### Fixes and Maintenance

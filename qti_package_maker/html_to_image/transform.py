@@ -89,6 +89,7 @@ def _make_img_element(src: str, alt: str) -> lxml.html.HtmlElement:
 	Returns:
 		An img HtmlElement.
 	"""
+	# ASVS V1.2.1: let lxml serialize src and alt in the HTML attribute context.
 	img = lxml.html.Element("img")
 	img.set("src", src)
 	img.set("alt", alt)
@@ -160,6 +161,7 @@ def _apply_jobs(html: str, grouped_jobs: list) -> str:
 				_replace_canvas(canvas_el, script_el, img_el)
 			continue
 		raise ValueError(f"unknown fragment family: {family}")
+	selectors.remove_rdkit_loader_scripts(root)
 	new_html = selectors.serialize_fragment(root)
 	return new_html
 

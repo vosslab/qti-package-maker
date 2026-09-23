@@ -99,3 +99,64 @@ def test_render_error_does_not_create_a_media_directory(
 		transform.convert_bank(bank, renderers=renderers)
 	leftovers = list(tmp_path.iterdir())
 	assert leftovers == []
+
+
+#============================================
+def test_canvas_conversion_removes_loader_and_drawing_scripts() -> None:
+	loader = (
+		'<script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js">'
+		"</script>")
+	canvas = (
+		'<p><canvas id="canvas_test" width="120" height="80"></canvas></p>'
+		'<script>initRDKitModule().then(function(i){RDKitModule=i;'
+		'let smiles="CCO";let mol=RDKitModule.get_mol(smiles);'
+		'let mdetails={};mdetails["explicitMethyl"]=true;'
+		'mol.draw_to_canvas_with_highlights(canvas,JSON.stringify(mdetails));});</script>')
+	bank = ItemBank(allow_mixed=False)
+	bank.add_item("MC", (loader + canvas, ["ethanol", "water"], "ethanol"))
+	renderers = [(selectors.find_canvas_fragments, lambda source: PNG_BYTES, "canvas")]
+	converted_bank = transform.convert_bank(bank, renderers=renderers)
+	converted = list(converted_bank)[0]
+	assert "<img" in converted.question_text
+	assert "initRDKitModule" not in converted.question_text
+	assert "RDKit_minimal.js" not in converted.question_text
+	converted_bank.cleanup()
+
+
+#============================================
+def test_canvas_in_choice_becomes_a_packaged_image() -> None:
+	canvas = (
+		'<canvas id="canvas_choice" width="120" height="80"></canvas>'
+		'<script>initRDKitModule();let smiles="CCO";'
+		'let mol=RDKitModule.get_mol(smiles);let mdetails={};'
+		'mdetails["explicitMethyl"]=true;'
+		'canvas=document.getElementById("canvas_choice");'
+		'mol.draw_to_canvas_with_highlights(canvas,JSON.stringify(mdetails));'
+		'</script>')
+	bank = ItemBank(allow_mixed=False)
+	bank.add_item("MC", ("<p>Which structure?</p>", [canvas, "water"], canvas))
+	renderers = [
+		(selectors.find_canvas_fragments, lambda source: PNG_BYTES, "canvas")]
+	converted_bank = transform.convert_bank(bank, renderers=renderers)
+	item = list(converted_bank)[0]
+	assert item.answer_text in item.choices_list
+	assert "<canvas" not in item.choices_list[0]
+	assert "<img" in item.choices_list[0]
+	assert len(converted_bank.collect_assets().assets) == 1
+	converted_bank.cleanup()
+
+
+#============================================
+def test_table_conversion_removes_recognized_rdkit_loader() -> None:
+	loader = (
+		'<script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js">'
+		"</script>")
+	table = '<table><tr><td style="border: 1px solid black">A</td></tr></table>'
+	bank = ItemBank(allow_mixed=False)
+	bank.add_item("MC", (loader + table, ["A", "B"], "A"))
+	renderers = [(selectors.find_table_fragments, stub_table_png, "table")]
+	converted_bank = transform.convert_bank(bank, renderers=renderers)
+	converted = list(converted_bank)[0]
+	assert "<img" in converted.question_text
+	assert "RDKit_minimal.js" not in converted.question_text
+	converted_bank.cleanup()
