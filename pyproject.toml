@@ -51,7 +51,7 @@ script-files = [
 include = ["qti_package_maker*"]
 
 [tool.setuptools.package-data]
-qti_package_maker = ["data/*"]
+qti_package_maker = ["data/*", "data/fonts/*"]
 
 [project.urls]
 Homepage = "https://biologyproblems.org"

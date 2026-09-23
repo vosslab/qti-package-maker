@@ -4,6 +4,8 @@
 
 ### Behavior or Interface Changes
 
+- Opt-in table screenshots use bundled Atkinson Hyperlegible Next and Mono
+  variable fonts where available, with Chromium's generic font fallbacks.
 - Offline RDKit canvas rendering now preserves `moleculelib` labels and explicit methyls plus
   `aminoacidlib` atom and peptide-bond highlights, including the requested canvas dimensions.
 - Opt-in HTML-to-image conversion removes the recognized RDKit CDN loader; canvas conversion also

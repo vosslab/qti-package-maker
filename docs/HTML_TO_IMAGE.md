@@ -27,6 +27,13 @@ browser for a whole bank convert.
 
 CLI evidence: `source source_me.sh && python3 tests/e2e/e2e_html_to_image.py`.
 
+Table screenshots use the bundled Atkinson Hyperlegible Next variable font for
+regular text and Atkinson Hyperlegible Mono for table text that requests the
+generic `monospace` family. The SIL Open Font License files ship with both
+fonts. If a font file cannot be read, Chromium uses its generic `sans-serif`
+or `monospace` fallback. This only changes rasterized table images; the
+`--html-to-image` flag remains off by default.
+
 ## RDKit (canvases only)
 
 RDKit is an extra, listed in [pip_extras.txt](../pip_extras.txt). Table-only
