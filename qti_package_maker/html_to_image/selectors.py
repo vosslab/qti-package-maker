@@ -1,10 +1,7 @@
-"""Select HTML fragments that lose meaning when Blackboard Ultra strips styles.
+"""Select HTML tables and RDKit canvases for opt-in image conversion.
 
-A table is a drawing when any descendant td/th carries a bgcolor attribute, or a
-style containing border, background, or exact padding: 0. Those are the
-attributes Ultra strips that carry visual meaning. A data table whose cells
-carry no style, or only text-align, is left alone. padding: 0 2px is not
-exact padding: 0 and does not select.
+Every table is selected regardless of styling. Nested tables are included in
+their outer table's screenshot so the complete layout becomes one image.
 
 A canvas is an RDKit drawing when a following script sibling (of the canvas, or
 of a wrapping parent) contains RDKitModule. The record carries SMILES, legend,
@@ -21,9 +18,6 @@ import re
 import lxml.html
 
 
-# Exact padding: 0 (optional px), not multi-value padding: 0 2px.
-_PADDING_ZERO_RE = re.compile(r"padding:\s*0(?:px)?\s*(;|$)", re.IGNORECASE)
-_PADDING_MULTI_RE = re.compile(r"padding:\s*0(?:px)?\s+\S", re.IGNORECASE)
 _SMILES_RE = re.compile(r'\bsmiles\s*=\s*"([^"]*)"\s*;')
 _LEGEND_RE = re.compile(
 	r'mdetails\s*\[\s*"legend"\s*\]\s*=\s*"([^"\\\r\n]*)"\s*;')
@@ -140,50 +134,9 @@ def outer_html(element: lxml.html.HtmlElement) -> str:
 
 
 #============================================
-def _style_has_drawing_attr(style: str) -> bool:
+def iter_tables(root: lxml.html.HtmlElement) -> list:
 	"""
-	Return True when a cell style carries a stripped drawing attribute.
-
-	Args:
-		style: The cell's style attribute value.
-
-	Returns:
-		True when border, background, or exact padding: 0 is present.
-	"""
-	style_lower = style.lower()
-	if "border" in style_lower or "background" in style_lower:
-		return True
-	if _PADDING_MULTI_RE.search(style):
-		return False
-	if _PADDING_ZERO_RE.search(style):
-		return True
-	return False
-
-
-#============================================
-def is_drawing_table(table_el: lxml.html.HtmlElement) -> bool:
-	"""
-	Return True when a table uses Ultra-stripped drawing attributes.
-
-	Args:
-		table_el: A table element.
-
-	Returns:
-		True when any descendant cell is a drawing cell.
-	"""
-	for cell in table_el.xpath(".//td|.//th"):
-		if cell.get("bgcolor") is not None:
-			return True
-		style = cell.get("style")
-		if style and _style_has_drawing_attr(style):
-			return True
-	return False
-
-
-#============================================
-def iter_drawing_tables(root: lxml.html.HtmlElement) -> list:
-	"""
-	Return drawing tables under root in document order.
+	Return outermost tables under root in document order, including nested content.
 
 	Args:
 		root: Parsed HTML wrapper.
@@ -191,17 +144,14 @@ def iter_drawing_tables(root: lxml.html.HtmlElement) -> list:
 	Returns:
 		The matching table elements.
 	"""
-	tables = []
-	for table_el in root.xpath(".//table"):
-		if is_drawing_table(table_el):
-			tables.append(table_el)
+	tables = root.xpath(".//table[not(ancestor::table)]")
 	return tables
 
 
 #============================================
 def find_table_fragments(html: str) -> list[str]:
 	"""
-	Return outer HTML of each drawing table in html.
+	Return outer HTML of every table in html, with nested tables included.
 
 	Args:
 		html: Item HTML.
@@ -211,7 +161,7 @@ def find_table_fragments(html: str) -> list[str]:
 	"""
 	root = parse_html_fragment(html)
 	fragments = []
-	for table_el in iter_drawing_tables(root):
+	for table_el in iter_tables(root):
 		fragments.append(outer_html(table_el))
 	return fragments
 

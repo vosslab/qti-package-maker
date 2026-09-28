@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-28
+
+### Behavior or Interface Changes
+
+- Blackboard pool exports now default to `bez-<name>.zip` for the converter's
+  `-B` / `--bbexport` option and the library API. Explicit output filenames and
+  the `blackboard_export_zip` engine name remain supported.
+
+### Fixes and Maintenance
+
+- HTML-to-image conversion now renders every HTML table as a packaged PNG,
+  including metabolic pathways, unstyled data tables, and labels. Nested tables
+  are captured inside the outer table's image.
+
 ## 2026-09-23
 
 ### Behavior or Interface Changes

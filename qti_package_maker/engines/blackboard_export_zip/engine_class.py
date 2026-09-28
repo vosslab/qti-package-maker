@@ -229,7 +229,7 @@ class EngineClass(base_engine.BaseEngine):
 		# writer. res00001/ is always an empty-directory marker; csfiles/ ships as
 		# an empty marker only when no images were embedded (otherwise its
 		# home_dir/ files already create the directory).
-		outfile = self.get_outfile_name("blackboard_export_zip", "zip", outfile)
+		outfile = self.get_outfile_name("bez", "zip", outfile)
 		empty_dirs = ["res00001/"]
 		if not image_plan.home_dir_files:
 			empty_dirs.append("csfiles/")

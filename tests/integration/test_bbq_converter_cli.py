@@ -70,7 +70,7 @@ def test_bbq_converter_blackboard_export_zip_flag(tmp_path: pathlib.Path) -> Non
 	)
 
 	# Verify the output ZIP exists and is openable
-	output_zip = tmp_path / "blackboard_export_zip-test_bbexport.zip"
+	output_zip = tmp_path / "bez-test_bbexport.zip"
 	assert output_zip.exists(), f"Expected output ZIP {output_zip.name} not found. Output:\n{result.stdout}"
 	# Confirm the ZIP contains imsmanifest.xml (structural sanity check)
 	with zipfile.ZipFile(str(output_zip)) as zf:

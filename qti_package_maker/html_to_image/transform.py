@@ -139,7 +139,7 @@ def _apply_jobs(html: str, grouped_jobs: list) -> str:
 	root = selectors.parse_html_fragment(html)
 	for family, jobs in grouped_jobs:
 		if family == "table":
-			tables = selectors.iter_drawing_tables(root)
+			tables = selectors.iter_tables(root)
 			if len(tables) != len(jobs):
 				raise ValueError(
 					f"table render plan length {len(jobs)} does not match "

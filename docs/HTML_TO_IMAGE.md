@@ -1,6 +1,6 @@
 # HTML to image
 
-Convert Blackboard Ultra-stripped table-cell drawings (and, when present, RDKit
+Convert all HTML tables (and, when present, RDKit
 JavaScript canvases) into packaged PNGs. This is the Playwright path for this
 repository: the pip `playwright` package and Chromium, not npm.
 
@@ -83,6 +83,8 @@ bank.save_package(
 )
 ```
 
-Ordinary data tables and `padding: 0 2px` labels stay HTML. See
+With `--html-to-image` (biology generators: `-I`), every HTML table becomes an
+image, including unstyled data tables and labels. Nested tables are captured
+inside their outer table's image. See
 [USAGE.md](USAGE.md), [COOKBOOK.md](COOKBOOK.md), and
 [TROUBLESHOOTING.md](TROUBLESHOOTING.md).

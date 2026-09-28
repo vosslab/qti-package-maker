@@ -21,7 +21,7 @@ errors come from the shared media layer in
 - Try a small sample file and increase `--limit` to isolate a bad row.
 
 ## HTML tables in question text
-- Readable data tables stay HTML in packaged Blackboard output.
+- `--html-to-image` converts every HTML table, including data tables, to PNGs.
 - Table-cell drawings (gels, restriction maps, agglutination wells) collapse
   in Blackboard Ultra unless you pass `--html-to-image` with `-1`, `-2`, or `-B`.
 - If a text engine shows `[TABLE]`, the HTML may be malformed; verify `<table>`

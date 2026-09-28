@@ -1,1 +1,1 @@
-"""Convert Ultra-stripped table drawings and RDKit canvases into packaged PNGs."""
+"""Convert all HTML tables and RDKit canvases into packaged PNGs."""

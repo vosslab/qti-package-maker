@@ -36,7 +36,7 @@ def _stub_renderers() -> list:
 def test_convert_replaces_drawing_and_leaves_source_bank() -> None:
 	table = (
 		'<table><tr>'
-		'<td bgcolor="#000000" style="border-top: 1px solid #111111;"></td>'
+		'<td>M</td><td><table><tr><td>&xrarr;</td></tr></table></td><td>N</td>'
 		"</tr></table>"
 	)
 	question = f"<p>Which lane matches?</p>{table}"

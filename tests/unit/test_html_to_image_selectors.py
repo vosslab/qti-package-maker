@@ -5,7 +5,7 @@ from qti_package_maker.html_to_image import selectors
 
 
 #============================================
-def test_drawing_tables_are_selected_data_tables_are_not() -> None:
+def test_all_tables_are_selected_regardless_of_style() -> None:
 	gel = (
 		'<table><tr>'
 		'<td bgcolor="#000000" style="border-top: 1px solid #111111;"></td>'
@@ -15,6 +15,11 @@ def test_drawing_tables_are_selected_data_tables_are_not() -> None:
 		'<table><tr>'
 		'<td style="border: 2px solid gray;">+</td>'
 		"</tr></table>"
+	)
+	pathway = (
+		'<table style="background-color: #efefef; border: 1px solid black;">'
+		'<tr><td></td><td>enzyme 1</td></tr>'
+		'<tr><td>M</td><td>&xrarr;</td><td>N</td></tr></table>'
 	)
 	data_table = (
 		"<table><tr><th>Substrate</th><th>Velocity</th></tr>"
@@ -27,8 +32,9 @@ def test_drawing_tables_are_selected_data_tables_are_not() -> None:
 	)
 	assert len(selectors.find_table_fragments(gel)) == 1
 	assert len(selectors.find_table_fragments(border_only)) == 1
-	assert selectors.find_table_fragments(data_table) == []
-	assert selectors.find_table_fragments(label_table) == []
+	assert len(selectors.find_table_fragments(pathway)) == 1
+	assert len(selectors.find_table_fragments(data_table)) == 1
+	assert len(selectors.find_table_fragments(label_table)) == 1
 
 
 #============================================

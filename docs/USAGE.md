@@ -52,7 +52,7 @@ bbq_converter.py -h
 - `-f`, `--format`: pick one or more output engines (repeatable).
 - `-a`, `--all`: enable all CLI output formats.
 - `--allow-mixed`: allow mixed question types in one run.
-- `--html-to-image`: convert table-cell drawings to PNGs before packaging
+- `--html-to-image`: convert every HTML table to PNGs before packaging
   (off by default; ZIP engines `-1`, `-2`, and `-B`). RDKit canvases convert
   too if `rdkit` is installed; see [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - `-q`, `--quiet` / `-v`, `--verbose`: control logging (verbose by default).
@@ -61,6 +61,8 @@ Format shortcuts: `-1` Canvas QTI v1.2, `-2` Blackboard QTI 2.1, `-r`
 human-readable, `-b` BBQ text upload, `-s` HTML self-test, `-A` Moodle Aiken,
 `-B` Blackboard pool export ZIP. `--html-to-image` is applied to `-1`, `-2`,
 and `-B`; other selected formats in the same run are written without conversion.
+Blackboard pool exports default to `bez-<name>.zip`; `-o` overrides that filename.
+The library engine name remains `blackboard_export_zip`.
 The `exam_yaml`, `okla_chrst_bqgen`, and `text2qti` engines are reachable only
 through the library API and `save_package(engine_name)`.
 
