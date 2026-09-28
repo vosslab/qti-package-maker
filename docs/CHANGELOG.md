@@ -10,6 +10,8 @@
 
 ### Fixes and Maintenance
 
+- Generate CAM16 palettes through the color generator directly, so color-wheel imports avoid
+  the diagnostic HTML and color-name helpers that load Seaborn and Matplotlib.
 - HTML-to-image conversion now renders every HTML table as a packaged PNG,
   including metabolic pathways, unstyled data tables, and labels. Nested tables
   are captured inside the outer table's image.

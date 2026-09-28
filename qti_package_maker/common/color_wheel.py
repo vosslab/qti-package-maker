@@ -40,8 +40,8 @@ def generate_color_wheel(num_colors: int, backend: str = "cam16", **kwargs) -> l
 	if backend == "legacy":
 		return _legacy_color_wheel.default_color_wheel(num_colors, **kwargs)
 	if backend == "cam16":
-		from qti_package_maker.common.color_theory import next_gen
-		return next_gen.generate_color_wheel(num_colors, **kwargs)
+		from qti_package_maker.common.color_theory import generator
+		return generator.generate_color_wheel(num_colors, **kwargs)
 	raise ValueError(f"Unknown backend: {backend}")
 
 
