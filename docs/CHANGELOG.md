@@ -10,6 +10,11 @@
 
 ### Fixes and Maintenance
 
+- Self-test MC/MA answers now use block content containers that fill available
+  space and scroll only oversized content. Block and graphical choices use full
+  rows. Shared self-test CSS preserves normal cell sizing for unclassed tables
+  under host themes, without imposing table widths.
+
 - Generate CAM16 palettes through the color generator directly, so color-wheel imports avoid
   the diagnostic HTML and color-name helpers that load Seaborn and Matplotlib.
 - HTML-to-image conversion now renders every HTML table as a packaged PNG,

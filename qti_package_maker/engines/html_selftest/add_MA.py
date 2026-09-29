@@ -39,10 +39,10 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 		html_content += f" name=\"answer_{crc16_text}\" "
 		# Store whether the choice is correct as a custom data attribute
 		html_content += f" data-correct=\"{str(is_correct_bool).lower()}\">\n"
-		# Add a label with bold letter prefix and text wrapped in span for proper sub/sup rendering
+		# Block content can contain both text and table-based drawings.
 		html_content += f"    <label for=\"option_{crc16_text}_{idx}\">"
 		html_content += f"<span style=\"font-weight: bold;\">{choice_letter}.</span> "
-		html_content += f"<span>{choice_text}</span></label>\n"
+		html_content += f'<div class="qti-choice-content">{choice_text}</div></label>\n'
 		# Close the list item
 		html_content += "  </li>\n"
 	# Close the unordered list of choices

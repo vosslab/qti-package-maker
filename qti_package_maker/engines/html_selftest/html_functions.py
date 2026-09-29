@@ -115,11 +115,25 @@ def add_selftest_theme_css() -> str:
   gap: 6px 12px;
 }
 .qti-selftest ul[id^="choices_"] > li > label {
-  display: inline-flex;
+  display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   gap: 10px;
   margin: 0;
   cursor: pointer;
+}
+.qti-selftest ul[id^="choices_"] > li > label > span:first-child {
+  flex-shrink: 0;
+}
+.qti-selftest .qti-choice-content {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+/* Preserve cell sizing when a host theme makes tables inline blocks. */
+.qti-selftest table:not([class]) {
+  display: table;
 }
 /* Enlarged radio/checkbox inputs: ~1.4em via width/height, transform-origin top-left keeps layout aligned */
 .qti-selftest ul[id^="choices_"] > li > input[type="radio"],
@@ -413,6 +427,10 @@ def determine_choice_layout_class(choices_list: list) -> str:
 	- "qti-auto-grid": responsive grid with min 200px columns (6+ short choices)
 	"""
 	num_choices = len(choices_list)
+	# Drawings and block content need an entire answer row, regardless of text length.
+	if any(re.search(r'<\s*(?:table|div|p|ul|ol|svg|canvas|img)\b', choice, re.I)
+		for choice in choices_list):
+		return ""
 
 	# For 2-3 choices, keep vertical layout (clearest to read)
 	if num_choices <= 3:

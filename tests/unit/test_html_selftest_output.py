@@ -153,6 +153,19 @@ def test_determine_choice_layout_class(num_choices: int, expected_class: str) ->
 	assert result == expected_class
 
 
+@pytest.mark.parametrize("choice", [
+	'<table><tr><td>1</td></tr></table>',
+	'<div style="position: relative;"><span>1</span></div>',
+	'<img src="diagram.png" alt="Diagram">',
+])
+def test_graphical_choices_use_full_rows(choice: str) -> None:
+	"""Short diagram labels must not send drawings into compact text columns."""
+	result = qti_package_maker.engines.html_selftest.html_functions.determine_choice_layout_class(
+		[choice, "A", "B", "C", "D"]
+	)
+	assert result == ""
+
+
 @pytest.mark.parametrize("num_choices,expected_class", [
 	(3, None),  # 3 choices: no grid class expected
 	(4, "qti-auto-grid-compact"),
