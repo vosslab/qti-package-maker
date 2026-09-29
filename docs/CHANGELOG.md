@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-09-29
+
+### Fixes and Maintenance
+
+- HTML-to-image conversion prepares RDKit canvas PNGs before screenshotting
+  their enclosing tables. Nested tables remain HTML inside one outermost-table
+  screenshot, and intermediate canvas PNGs are omitted from the package.
+  This fixes macromolecule exports that failed after table replacement removed
+  a still-scheduled canvas.
+
+### Developer Tests and Notes
+
+- Added one regression test for a canvas inside four nested tables alongside
+  a standalone canvas: the table renderer receives an embedded molecule image,
+  and the package contains the final table image plus the standalone molecule.
+- All 3,661 pytest tests pass. A one-time real Chromium export of all 50 current
+  macromolecule questions passes package integrity checks; visual inspection of
+  the first question confirms its molecule appears beside the information table.
+
 ## 2026-09-28
 
 ### Behavior or Interface Changes

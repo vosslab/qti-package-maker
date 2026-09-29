@@ -1,5 +1,8 @@
 """Rewrite an ItemBank, replacing selected HTML fragments with packaged PNGs."""
 
+# Standard Library
+import base64
+
 # PIP3 modules
 import lxml.html
 
@@ -167,6 +170,22 @@ def _apply_jobs(html: str, grouped_jobs: list) -> str:
 
 
 #============================================
+def _inline_rendered_images(table_html: str, images: dict[str, bytes]) -> str:
+	"""Embed generated canvas PNGs so the table renderer needs no media files."""
+	root = selectors.parse_html_fragment(table_html)
+	for img in root.xpath(".//img"):
+		src = img.get("src")
+		if src in images:
+			# ASVS V1.2.1, V1.3.2: embed only our rendered PNG bytes through
+			# an HTML attribute; the canvas drawing script is never evaluated.
+			encoded = base64.b64encode(images[src]).decode("ascii")
+			img.set("src", f"data:image/png;base64,{encoded}")
+	selectors.remove_rdkit_loader_scripts(root)
+	prepared = selectors.serialize_fragment(root)
+	return prepared
+
+
+#============================================
 def _convert_html_field(
 			html: str,
 			render_pairs: list,
@@ -174,7 +193,7 @@ def _convert_html_field(
 			item_crc16: str,
 			cache: dict) -> tuple[str, list]:
 	"""
-	Render selected fragments in one HTML field into memory, then replace.
+	Prepare canvases first, then render outermost tables with embedded PNGs.
 
 	Args:
 		html: One item HTML field.
@@ -189,26 +208,37 @@ def _convert_html_field(
 	"""
 	if html in cache:
 		return cache[html]
-	grouped_jobs = []
-	images = []
+	new_html = html
+	images = {}
 	any_jobs = False
-	for finder, renderer, family in render_pairs:
+	# Canvas images must exist before their containing table is screenshotted,
+	# regardless of the order in which callers supply the renderers.
+	ordered_pairs = sorted(render_pairs, key=lambda pair: pair[2] != "canvas")
+	for finder, renderer, family in ordered_pairs:
 		jobs = []
-		for fragment in finder(html):
+		for fragment in finder(new_html):
 			any_jobs = True
-			png_bytes = renderer(fragment)
+			prepared = fragment
+			if family == "table":
+				prepared = _inline_rendered_images(fragment, images)
+			png_bytes = renderer(prepared)
 			counters[family] = counters.get(family, 0) + 1
 			name = f"{item_crc16}_{family}_{counters[family]}.png"
 			alt = _alt_for_fragment(fragment, family)
 			jobs.append((name, alt))
-			images.append((name, png_bytes))
-		grouped_jobs.append((family, jobs))
+			images[name] = png_bytes
+		if jobs:
+			new_html = _apply_jobs(new_html, [(family, jobs)])
 	if not any_jobs:
 		cache[html] = (html, [])
 		return html, []
-	new_html = _apply_jobs(html, grouped_jobs)
-	cache[html] = (new_html, images)
-	return new_html, images
+	# Canvases captured inside a table are intermediate images. Only PNGs
+	# still referenced by the finished field need to travel with the package.
+	root = selectors.parse_html_fragment(new_html)
+	referenced = set(root.xpath(".//img/@src"))
+	packaged_images = [(name, png) for name, png in images.items() if name in referenced]
+	cache[html] = (new_html, packaged_images)
+	return new_html, packaged_images
 
 
 #============================================

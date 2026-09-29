@@ -58,6 +58,11 @@ An unmatched canvas, a dynamic option, or an unsupported drawing option raises
 an error instead of producing an empty or incomplete figure. The recognized
 CDN loader and consumed drawing scripts are removed when the field is converted.
 
+Canvases inside tables are rendered first and embedded as PNGs in the table
+renderer input. The outermost table is then captured once, including its nested
+tables and molecule images. These intermediate canvas PNGs are not packaged
+separately; standalone canvases remain separate packaged images.
+
 ## MathML renderer helper
 
 `TableRenderer.render_mathml_png()` is a small rendering helper used by

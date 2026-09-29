@@ -6,6 +6,7 @@ import tempfile
 
 # PIP3 modules
 import pytest
+import lxml.html
 
 # local repo modules
 from qti_package_maker.assessment_items.item_bank import ItemBank
@@ -159,4 +160,53 @@ def test_table_conversion_removes_recognized_rdkit_loader() -> None:
 	converted = list(converted_bank)[0]
 	assert "<img" in converted.question_text
 	assert "RDKit_minimal.js" not in converted.question_text
+	converted_bank.cleanup()
+
+
+#============================================
+def test_nested_canvas_is_embedded_before_outermost_table_render() -> None:
+	"""Keep the molecule in its table image and standalone canvases in the package."""
+	canvas = (
+		'<canvas id="canvas_nested" width="120" height="80"></canvas>'
+		'<script>initRDKitModule();let smiles="CCO";'
+		'let mol=RDKitModule.get_mol(smiles);let mdetails={};'
+		'canvas=document.getElementById("canvas_nested");'
+		'mol.draw_to_canvas_with_highlights(canvas,JSON.stringify(mdetails));'
+		'</script>')
+	nested_table = canvas
+	for label in ("inner", "middle", "outer", "layout"):
+		nested_table = f'<table><tr><td>{label}</td><td>{nested_table}</td></tr></table>'
+	standalone = canvas.replace("canvas_nested", "canvas_standalone")
+	question = nested_table + standalone
+	bank = ItemBank(allow_mixed=False)
+	bank.add_item("MC", (question, ["ethanol", "water"], "ethanol"))
+	rendered_tables = []
+
+	def render_table(table_html: str) -> bytes:
+		rendered_tables.append(table_html)
+		root = lxml.html.fromstring(table_html)
+		assert not root.xpath(".//canvas|.//script")
+		image_src = root.xpath(".//img/@src")[0]
+		assert image_src.startswith("data:image/png;base64,")
+		png = base64.b64decode(image_src.split(",", 1)[1])
+		assert png.startswith(b"\x89PNG\r\n\x1a\n")
+		labels = ("inner", "middle", "outer", "layout")
+		assert all(label in root.text_content() for label in labels)
+		return PNG_BYTES
+
+	def render_canvas(source: selectors.CanvasSource) -> bytes:
+		return PNG_BYTES
+
+	renderers = [
+		(selectors.find_table_fragments, render_table, "table"),
+		(selectors.find_canvas_fragments, render_canvas, "canvas"),
+	]
+	converted_bank = transform.convert_bank(bank, renderers=renderers)
+	converted = list(converted_bank)[0]
+	assert len(rendered_tables) == 1
+	assert len(converted_bank.collect_assets().assets) == 2
+	assert "<table" not in converted.question_text
+	assert "<canvas" not in converted.question_text
+	assert "data:image" not in converted.question_text
+	assert list(bank)[0].question_text == question
 	converted_bank.cleanup()
