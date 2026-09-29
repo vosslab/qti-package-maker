@@ -73,7 +73,7 @@ def test_html_selftest_choice_palette_classes(sample_items: dict, item_type: str
 	html_text = getattr(qti_package_maker.engines.html_selftest.write_item, item_type)(item_cls)
 	assert "qti-choice-" in html_text
 	assert "var(--qti-choice-" in html_text
-	assert "qti-dropzone" in html_text
+	assert 'draggable="true"' in html_text
 
 
 def test_html_selftest_num_input_uses_theme_class(sample_items: dict) -> None:
@@ -107,34 +107,60 @@ def test_multi_fib_answers_round_trip_through_html_attribute() -> None:
 	assert json.loads(input_element.attrib["data-answers"]) == answers
 
 
-def _assert_scoped_dropzone_queries(html_text: str, crc16_text: str) -> None:
+def _assert_scoped_control_queries(html_text: str, crc16_text: str, selector: str) -> None:
 	container_marker = f"question_html_{crc16_text}"
 	assert container_marker in html_text
 	assert f"document.getElementById('question_html_{crc16_text}')" in html_text
 	assert (
-		'container.querySelectorAll(".dropzone")' in html_text
-		or "container.querySelectorAll('.dropzone')" in html_text
+		f'container.querySelectorAll("{selector}")' in html_text
+		or f"container.querySelectorAll('{selector}')" in html_text
 	)
 	assert (
 		'container.querySelectorAll(".feedback")' in html_text
 		or "container.querySelectorAll('.feedback')" in html_text
 	)
-	assert 'document.querySelectorAll(".dropzone")' not in html_text
-	assert "document.querySelectorAll('.dropzone')" not in html_text
+	assert 'document.querySelectorAll(' not in html_text
+	assert 'document.querySelector(' not in html_text
 	assert 'document.querySelectorAll(".feedback")' not in html_text
 	assert "document.querySelectorAll('.feedback')" not in html_text
 
 
-def test_html_selftest_match_scopes_dropzone_queries(sample_items: dict) -> None:
+def test_html_selftest_match_scopes_control_queries(sample_items: dict) -> None:
 	item_cls = _build_item("MATCH", sample_items["MATCH"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.MATCH(item_cls)
-	_assert_scoped_dropzone_queries(html_text, item_cls.item_crc16)
+	_assert_scoped_control_queries(html_text, item_cls.item_crc16, '.qti-match-slot')
 
 
-def test_html_selftest_order_scopes_dropzone_queries(sample_items: dict) -> None:
+def test_html_selftest_order_scopes_control_queries(sample_items: dict) -> None:
 	item_cls = _build_item("ORDER", sample_items["ORDER"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.ORDER(item_cls)
-	_assert_scoped_dropzone_queries(html_text, item_cls.item_crc16)
+	_assert_scoped_control_queries(html_text, item_cls.item_crc16, '.qti-order-row')
+
+
+def test_order_and_match_controls_are_accessible_and_have_unique_ids() -> None:
+	"""Practice controls must remain keyboard reachable and independent on a shared page."""
+	items = [
+		qti_package_maker.assessment_items.item_types.ORDER('Arrange stages.', ['First', 'Middle', 'Last']),
+		qti_package_maker.assessment_items.item_types.MATCH(
+			'Match labels.', ['Prompt one', 'Prompt two'], ['A "quote"', "O'Reilly", 'Extra']),
+		qti_package_maker.assessment_items.item_types.MATCH(
+			'Match more labels.', ['Prompt three', 'Prompt four'], ['Different', 'Another']),
+	]
+	fragments = [getattr(qti_package_maker.engines.html_selftest.write_item, item.item_type)(item)
+		for item in items]
+	document = lxml.html.fromstring('<div>' + ''.join(fragments) + '</div>')
+	element_ids = document.xpath('//*[@id]/@id')
+	assert len(element_ids) == len(set(element_ids))
+	assert len(document.xpath('//li[@draggable="true"]')) == 3
+	assert len(document.xpath('//button[@draggable="true"]')) == 5
+	for item in items:
+		container = document.get_element_by_id(f'question_html_{item.item_crc16}')
+		controls = container.xpath('.//button[not(@onclick)]')
+		assert controls
+		assert all(button.get('type') == 'button' and button.get('aria-label') for button in controls)
+		assert container.xpath('.//*[@role="status" and @aria-live="polite"]')
+	quote_choice = document.xpath('//button[starts-with(@aria-label, \'Select\') and contains(@aria-label, \'quote\')]')
+	assert 'A "quote"' in quote_choice[0].get('aria-label')
 
 
 @pytest.mark.parametrize("num_choices,expected_class", [

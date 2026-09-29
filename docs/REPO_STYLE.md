@@ -118,6 +118,10 @@ Preferred structure:
 ## Source file size
 - Tracked authored source files stay under 1000 physical lines: 999 passes; 1000 fails.
   `tests/test_source_file_line_limit.py` defines the scope.
+- Files from 900 through 999 lines emit a non-blocking advisory. Split them into cohesive modules
+  by responsibility instead of trimming them to defer the problem.
+- `docs/CHANGELOG.md` and `docs/CHANGELOG-*.md` are exempt from the advisory band because the
+  changelog rotation policy below owns their size.
 - Markdown beneath any `docs/active_plans/` or `docs/archive/` tree is planning or historical
   material and stays outside this source-code line budget. Other source types in those trees remain
   covered.

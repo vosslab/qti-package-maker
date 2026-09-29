@@ -15,7 +15,6 @@ _temp*.?*
 # -------------------- LOCAL REPOSITORY RULES --------------------
 # ADD YOUR CUSTOM IGNORES BELOW
 # Propagation preserves this section.
-# ------------------ END LOCAL REPOSITORY RULES ------------------
 # Byte-compiled / optimized / DLL files
 ULTRA/
 *.html

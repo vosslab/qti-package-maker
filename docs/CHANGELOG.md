@@ -2,6 +2,29 @@
 
 ## 2026-09-29
 
+### Behavior or Interface Changes
+
+- MATCH slots return to a fixed 180px width and 44px height (bounded by available width on
+  narrow screens). Assigned slots again show truncated plain text, keeping rows compact while full
+  formatted choices remain in the bank below. Tooltips and accessible names retain the full
+  text; Reset clears the tooltip along with the assignment.
+- Self-test retains native drag and drop: drag ORDER rows to reorder them and MATCH bank answers
+  into prompt slots. ORDER also has Move up/down buttons and arrow-key shortcuts. MATCH also has
+  select-then-assign buttons, one Reset beside Check Answer, and Escape cancellation. Keyboard and touch
+  controls supplement dragging. MATCH keeps the prompt table above a wrapping colored choice
+  bank; removed the extra progress/status displays, used-choice labels, and per-row Clear buttons.
+  MATCH Reset stays visible and resets all assignments, pending selection, and grading using
+  the existing reset logic. The label describes the complete reset, including grading.
+- Preserved the self-test palettes, bordered matching table, Check/Reset styling, partial scores,
+  per-row feedback, and website result strings. Controls stack on narrow screens and announce
+  changes through a polite live region. Reset restores the initial order or clears all matches;
+  edits clear stale grading marks and re-enable Check.
+- README screenshots show the earlier controls and have not been regenerated.
+- HTML builders, ORDER/MATCH interaction scripts, and control CSS now live in separate
+  modules. A shared item-scoped native drag module handles payloads, target highlighting, and
+  cancellation; each interaction reuses its movement or assignment logic for every input path.
+  Shared grading/reset helpers preserve the website integration contract.
+
 ### Fixes and Maintenance
 
 - HTML-to-image conversion prepares RDKit canvas PNGs before screenshotting
@@ -9,9 +32,23 @@
   screenshot, and intermediate canvas PNGs are omitted from the package.
   This fixes macromolecule exports that failed after table replacement removed
   a still-scheduled canvas.
+- Synchronized shared style guides, tests, and repository support files from the starter template.
 
 ### Developer Tests and Notes
 
+- Compact MATCH slots pass the existing native drag journey in Firefox, Chromium, and WebKit,
+  including unchanged slot dimensions after assignment, full bank text, tooltips, grading,
+  keyboard interaction, and Reset. The 60 focused self-test output/contract tests also pass.
+- Native drag regression checks pass in Firefox, Chromium, and WebKit using real mouse drags:
+  ORDER movement in both directions, MATCH assignment/replacement, partial/full grading,
+  Clear, cancellation, Reset, and item isolation. Keyboard paths and Chromium/WebKit touch
+  alternatives also pass. The permanent runner is `tests/playwright/playwright_selftest_drag.py`;
+  failures require repairing the interaction before accepting a control change. All 3,702
+  pytest tests pass after restoring dragging.
+- Self-test update: all 3,702 pytest tests pass. Temporary browser walkthroughs pass in
+  Firefox, Chromium, and WebKit, including keyboard completion, scoring, reset, and item
+  isolation; Chromium/WebKit touch emulation also passes. Light/dark checks at 320-1100px
+  and oversized graphical answers pass with no serious or critical axe findings.
 - Added one regression test for a canvas inside four nested tables alongside
   a standalone canvas: the table renderer receives an embedded molecule image,
   and the package contains the final table image plus the standalone molecule.

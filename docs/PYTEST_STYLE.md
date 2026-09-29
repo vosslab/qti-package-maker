@@ -74,8 +74,18 @@ Pytest excludes only `tests/e2e/` and `tests/playwright/` through `tests/conftes
 - Use `tests/e2e/` or `tests/playwright/` when real processes, services, browsers, networks, or
   whole-system workflows are essential to the behavior.
 
-`tests/test_checkout_disk_budget.py` is the documented exception to the no-subprocess fast-lane
-default. Its local `du` call measures the checkout that the gate protects.
+The three disk-budget tests are mandatory base-lane exceptions to the no-subprocess default, not
+optional or E2E-only checks:
+
+- `tests/test_checkout_disk_budget.py` measures the complete checkout with local `du`.
+- `tests/test_podman_disk_budget.py` measures machine-wide Podman storage in every repository.
+- Rust repositories receive `tests/test_target_disk_budget.py`, which measures local `target/`
+  build artifacts with `du`.
+
+These checks make responsible use of finite disk space part of continuous development. A failure
+means development has exceeded a storage budget. Inspect the reported storage, remove stale
+generated artifacts deliberately, and rerun the base suite. Do not skip or delete the check;
+propagation restores vendored disk-budget tests.
 
 ## FIXTURE POLICY
 

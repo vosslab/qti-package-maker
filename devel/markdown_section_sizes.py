@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# This file is vendored. Local changes can and will be overwritten by propagation.
+
 """List Markdown headings with their line numbers, sorted by bullet count.
 
 Counts the '- ' bullet lines that sit directly under each heading (up to the

@@ -67,6 +67,24 @@ engine's development), see
 - **Compatible LMS:** Any web-based environment
 - **File output:** A self-contained HTML file
 - **Use case:** Self-assessment quizzes without LMS integration
+- **ORDER controls:** Drag and drop shuffled colored rows to reorder them, or use Move up/down
+  buttons and arrow-key shortcuts. The highlighted edge shows the insertion position.
+- **MATCH controls:** The bordered prompt table sits above a wrapping bank of colored choices.
+  Drag a choice into its prompt slot, or select a choice and then select its prompt.
+  Slots have a fixed size, bounded by available width on narrow screens. Assigned slots show
+  compact plain text; full formatted answers remain in the bank below.
+  The full text is also available through the slot's tooltip and accessible name.
+  One Reset button beside Check Answer resets all matches, pending selection, and grading; Escape
+  cancels selection.
+  Used choices cannot fill another prompt. Choices include distractors. Feedback follows Check;
+  screen-reader announcements do not add visible status or progress panels.
+- **Practice feedback:** Client-side partial scores and per-row marks; ORDER Reset restores the
+  initial shuffled order and MATCH Reset empties all matches. Dragging, keyboard, and click/tap controls share the same
+  state, using the existing light, dark, and MkDocs colors. Drops are confined to the same item.
+
+Run the permanent native drag regression journey in Firefox, Chromium, and WebKit:
+`source source_me.sh && python3 tests/playwright/playwright_selftest_drag.py`.
+If it fails, repair the failing interaction before accepting an ORDER/MATCH UI change.
 
 ### Exam YAML engine
 - **Engine name:** `exam_yaml`

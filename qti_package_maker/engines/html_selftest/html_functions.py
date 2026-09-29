@@ -11,7 +11,7 @@ import lxml.html
 # Import modules from external Pypi libraries
 
 # Import modules from local libraries
-#from qti_package_maker.common import string_functions
+from qti_package_maker.engines.html_selftest import control_styles
 
 #============================================
 def format_question_text(crc16_text: str, question_text: str) -> str:
@@ -64,11 +64,10 @@ def add_selftest_theme_css() -> str:
   --qti-choice-3-bg: #e6fff3; --qti-choice-3-fg: #008066;
   --qti-choice-4-bg: #f5e6cc; --qti-choice-4-fg: #803300;
   --qti-choice-5-bg: #ffd6ff; --qti-choice-5-fg: #660033;
-  --qti-dropzone-bg: #f8f8f8;
-  --qti-dropzone-hover-bg: #e6e6e6;
+  --qti-slot-bg: #f8f8f8;
+  --qti-surface-hover-bg: #e6e6e6;
   --qti-border: #999999;
-  --qti-dropzone-border: #bbbbbb;
-  --qti-dropzone-border-filled: #888888;
+  --qti-slot-border: #bbbbbb;
   --qti-success-bg: #ccffcc;
   --qti-error-bg: #ffcccc;
   --qti-success-fg: #008000;
@@ -145,12 +144,6 @@ def add_selftest_theme_css() -> str:
   cursor: pointer;
   accent-color: var(--qti-btn-bg, #3a5acd);
 }
-.qti-dropzone {
-  background-color: var(--qti-dropzone-bg, #f8f8f8);
-}
-.qti-dropzone-hover {
-  background-color: var(--qti-dropzone-hover-bg, #e6e6e6);
-}
 /* Primary filled button (Check Answer) */
 .qti-btn {
   background-color: var(--qti-btn-bg, #3a5acd);
@@ -183,7 +176,7 @@ def add_selftest_theme_css() -> str:
   cursor: pointer;
 }
 .qti-btn-reset:hover {
-  background-color: var(--qti-dropzone-hover-bg, #e6e6e6);
+  background-color: var(--qti-surface-hover-bg, #e6e6e6);
 }
 /* Text input styling */
 .qti-input {
@@ -254,11 +247,10 @@ def add_selftest_theme_css() -> str:
     --qti-choice-3-bg: #10493c; --qti-choice-3-fg: #b6f2e1;
     --qti-choice-4-bg: #4a2300; --qti-choice-4-fg: #f1c7a0;
     --qti-choice-5-bg: #4b0030; --qti-choice-5-fg: #f7b2df;
-    --qti-dropzone-bg: #2b2b2b;
-    --qti-dropzone-hover-bg: #3a3a3a;
+    --qti-slot-bg: #2b2b2b;
+    --qti-surface-hover-bg: #3a3a3a;
     --qti-border: #777777;
-    --qti-dropzone-border: #666666;
-    --qti-dropzone-border-filled: #888888;
+    --qti-slot-border: #666666;
     --qti-success-bg: #1f4d2a;
     --qti-error-bg: #5a1f1f;
     --qti-success-fg: #a8e6b0;
@@ -284,11 +276,10 @@ body[data-md-color-scheme="default"] .qti-selftest {
   --qti-choice-3-bg: #e6fff3; --qti-choice-3-fg: #008066;
   --qti-choice-4-bg: #f5e6cc; --qti-choice-4-fg: #803300;
   --qti-choice-5-bg: #ffd6ff; --qti-choice-5-fg: #660033;
-  --qti-dropzone-bg: #f8f8f8;
-  --qti-dropzone-hover-bg: #e6e6e6;
+  --qti-slot-bg: #f8f8f8;
+  --qti-surface-hover-bg: #e6e6e6;
   --qti-border: #999999;
-  --qti-dropzone-border: #bbbbbb;
-  --qti-dropzone-border-filled: #888888;
+  --qti-slot-border: #bbbbbb;
   --qti-success-bg: #ccffcc;
   --qti-error-bg: #ffcccc;
   --qti-success-fg: #008000;
@@ -313,11 +304,10 @@ body[data-md-color-scheme="slate"] .qti-selftest {
   --qti-choice-3-bg: #10493c; --qti-choice-3-fg: #b6f2e1;
   --qti-choice-4-bg: #4a2300; --qti-choice-4-fg: #f1c7a0;
   --qti-choice-5-bg: #4b0030; --qti-choice-5-fg: #f7b2df;
-  --qti-dropzone-bg: #2b2b2b;
-  --qti-dropzone-hover-bg: #3a3a3a;
+  --qti-slot-bg: #2b2b2b;
+  --qti-surface-hover-bg: #3a3a3a;
   --qti-border: #777777;
-  --qti-dropzone-border: #666666;
-  --qti-dropzone-border-filled: #888888;
+  --qti-slot-border: #666666;
   --qti-success-bg: #1f4d2a;
   --qti-error-bg: #5a1f1f;
   --qti-success-fg: #a8e6b0;
@@ -335,6 +325,7 @@ body[data-md-color-scheme="slate"] .qti-selftest {
   --qti-input-border: #666666;
 }
 """
+	css += control_styles.get_css()
 	style_text = json.dumps(css.strip())
 	script = "<script>(function() {"
 	script += "if (document.getElementById('qti-selftest-theme')) return;"
