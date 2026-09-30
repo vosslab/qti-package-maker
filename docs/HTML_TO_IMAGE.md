@@ -22,8 +22,10 @@ playwright install chromium
 ```
 
 That downloads Chromium for the Python package. Do not use `npx playwright
-install` or `devel/setup_playwright.sh` (removed). `TableRenderer` holds one
-browser for a whole bank convert.
+install` or `devel/setup_playwright.sh` (removed). `TableRenderer` starts one
+browser lazily on the first uncached table render, then reuses one page with
+the bundled font CSS loaded once. Canvas-only and fully cached conversions
+start no browser. The MathML helper uses the same lazy page.
 
 CLI evidence: `source source_me.sh && python3 tests/e2e/e2e_html_to_image.py`.
 
@@ -62,6 +64,18 @@ Canvases inside tables are rendered first and embedded as PNGs in the table
 renderer input. The outermost table is then captured once, including its nested
 tables and molecule images. These intermediate canvas PNGs are not packaged
 separately; standalone canvases remain separate packaged images.
+
+Each `QTIPackageInterface` shares a renderer- and content-keyed PNG cache across items and
+output engines for its entire lifetime, including later `save_package` calls.
+A three-format CLI run renders each distinct prepared table
+and canvas once, while each package retains its existing image filenames and
+owns its media directory. Direct engine callers may pass `html_to_image_cache`
+to share a cache; direct `convert_bank` callers may pass `cache`. Omitted caches
+remain local to one conversion. Changing a custom renderer callback uses separate
+cached images; reusing the same callback object reuses its images. See
+[ENGINES.md](ENGINES.md) for options and callback configuration. Shipped selectors parse each HTML field once and
+replace canvases and tables on that tree; custom string finder callbacks remain
+supported.
 
 ## MathML renderer helper
 

@@ -66,11 +66,22 @@ Upload) is the plain-text question format this tool grew up reading.
 
 ### Shared layers (used by readers and writers alike)
 - [html_to_image/transform.py](../qti_package_maker/html_to_image/transform.py) converts table-cell
-  drawings and RDKit canvases into PNG `<img>` tags on request. ZIP packaging
-  engines (`canvas_qti_v1_2`, `blackboard_qti_v2_1`, `blackboard_export_zip`)
-  apply it when `html_to_image=True`, before `collect_assets()`. Playwright never runs
-  inside pytest; tests inject stub renderers. RDKit is imported only when a
-  canvas is present; see [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
+  drawings and RDKit canvases into PNG `<img>` tags on request. It parses each
+  shipped-selector HTML field once, renders canvases before their enclosing
+  tables, then rewrites that same tree and keeps only images still referenced
+  by the finished field. ZIP packaging engines (`canvas_qti_v1_2`,
+  `blackboard_qti_v2_1`, `blackboard_export_zip`) apply it when
+  `html_to_image=True`, before `collect_assets()`. The established custom
+  `(finder, renderer, family)` triples remain supported for string-based
+  finder compatibility. Playwright never runs inside pytest; tests inject stub
+  renderers. RDKit is imported only when a canvas is present; see
+  [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
+- [html_to_image/render_cache.py](../qti_package_maker/html_to_image/render_cache.py)
+  holds PNG bytes for the lifetime of its owning interface or explicit cache. It keys by
+  renderer identity and prepared table HTML or the complete `CanvasSource`, avoiding duplicate renders without
+  changing image names or package media ownership. The cache has no browser
+  dependency. Default table sessions share a stable implementation identity; custom
+  callback objects receive separate entries and remain retained by the cache.
 - [common/media_assets.py](../qti_package_maker/common/media_assets.py) is the single
   image layer. It is file-reference-first: question content keeps the author's plain
   `<img src="images/foo.jpg">`, with no special scheme. This module scans HTML for
@@ -106,11 +117,14 @@ A typical read-then-write run moves through the hub once:
   in-memory bytes through `ItemBank.add_image()`.
 - On save, `QTIPackageInterface.save_package(engine_name, engine_options=...)`
   renumbers items and hands the bank to the chosen writer. Extra kwargs such as
-  `html_to_image=True` go to engines that declare them.
+  `html_to_image=True` go to engines that declare them. For an html-to-image
+  writer, the interface provides the cache it retains across saves unless the
+  caller supplied `html_to_image_cache` explicitly.
 - When `html_to_image` is on, [html_to_image/transform.py](../qti_package_maker/html_to_image/transform.py)
   `convert_bank()` rewrites drawing tables (and RDKit canvases, if present) to
   PNG `<img>` tags on a derived bank, then the writer calls `collect_assets()`.
-  See [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
+  A direct `convert_bank()` call uses a fresh cache unless its caller supplies
+  one. See [HTML_TO_IMAGE.md](HTML_TO_IMAGE.md).
 - Just before rendering, a packaging writer calls `ItemBank.collect_assets()`, which
   scans every item's HTML, resolves each image reference once, and assigns output
   names across the whole set. The writer rewrites each item's `<img src>` to its

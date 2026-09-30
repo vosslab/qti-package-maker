@@ -101,8 +101,15 @@ def _prepare_mathml_html(mathml_html: str) -> str:
 
 
 TABLE_FONT_MAPPING_SCRIPT = """
-() => {
-	for (const element of document.querySelectorAll("table, table *")) {
+async (tableHtml) => {
+	const tableRoot = document.getElementById("table-render-root");
+	const mathRoot = document.getElementById("mathml-render-root");
+	mathRoot.replaceChildren();
+	tableRoot.replaceChildren();
+	// ASVS V1.2.1, V1.3.2: Playwright supplies tableHtml as an argument rather
+	// than JavaScript source. Scripts inserted with innerHTML do not execute.
+	tableRoot.innerHTML = tableHtml;
+	for (const element of tableRoot.querySelectorAll("table, table *")) {
 		const family = getComputedStyle(element).fontFamily.trim().toLowerCase();
 		if (family === "monospace") {
 			element.style.setProperty(
@@ -112,6 +119,18 @@ TABLE_FONT_MAPPING_SCRIPT = """
 				"font-family", '"Atkinson Hyperlegible Next", sans-serif', "important");
 		}
 	}
+	await document.fonts.ready;
+}
+"""
+
+MATHML_RENDER_SCRIPT = """
+async (mathmlHtml) => {
+	const tableRoot = document.getElementById("table-render-root");
+	const mathRoot = document.getElementById("mathml-render-root");
+	tableRoot.replaceChildren();
+	mathRoot.replaceChildren();
+	mathRoot.innerHTML = mathmlHtml;
+	await document.fonts.ready;
 }
 """
 
@@ -124,15 +143,37 @@ class TableRenderer:
 		self._playwright = None
 		self._browser = None
 		self._context = None
+		self._page = None
 		self._font_face_css = ""
 
 	#============================================
 	def __enter__(self) -> "TableRenderer":
+		"""Enter an idle renderer; Chromium starts only for a render miss."""
+		return self
+
+	#============================================
+	def _ensure_started(self) -> None:
+		"""Start one browser and load the static renderer page once."""
+		if self._page is not None:
+			return
 		self._playwright = sync_playwright().start()
 		self._browser = self._playwright.chromium.launch()
 		self._context = self._browser.new_context(device_scale_factor=DEVICE_SCALE_FACTOR)
+		self._page = self._context.new_page()
 		self._font_face_css = _font_face_css()
-		return self
+		font_styles = ""
+		if self._font_face_css:
+			font_styles = "<style>" + self._font_face_css + "</style>"
+		# The MathML size rule applies only to the MathML root, so a previous
+		# equation cannot change the layout of MathML contained in a table.
+		equation_style = "<style>#mathml-render-root math { font-size: 1.2em; }</style>"
+		html_doc = (
+			"<html><head>" + font_styles + equation_style + "</head><body style='"
+			+ WRAPPER_BODY_STYLE
+			+ "'><div id='table-render-root'></div>"
+			+ "<div id='mathml-render-root'></div></body></html>"
+		)
+		self._page.set_content(html_doc)
 
 	#============================================
 	def __exit__(
@@ -146,6 +187,10 @@ class TableRenderer:
 			self._browser.close()
 		if self._playwright is not None:
 			self._playwright.stop()
+		self._page = None
+		self._context = None
+		self._browser = None
+		self._playwright = None
 
 	#============================================
 	def render_table_png(self, table_html: str) -> bytes:
@@ -158,23 +203,10 @@ class TableRenderer:
 		Returns:
 			PNG bytes of the table element.
 		"""
-		font_styles = ""
-		if self._font_face_css:
-			font_styles = "<style>" + self._font_face_css + "</style>"
-		html_doc = (
-			"<html><head>" + font_styles + "</head><body style='"
-			+ WRAPPER_BODY_STYLE
-			+ "'>"
-			+ table_html
-			+ "</body></html>"
-		)
-		page = self._context.new_page()
-		page.set_content(html_doc)
-		page.evaluate(TABLE_FONT_MAPPING_SCRIPT)
-		page.evaluate("async () => { await document.fonts.ready; }")
-		locator = page.locator("table").first
+		self._ensure_started()
+		self._page.evaluate(TABLE_FONT_MAPPING_SCRIPT, table_html)
+		locator = self._page.locator("#table-render-root table").first
 		png_bytes = locator.screenshot(type="png")
-		page.close()
 		return png_bytes
 
 	#============================================
@@ -183,20 +215,7 @@ class TableRenderer:
 		# ASVS V1.2.1, V1.3.2, and V2.2.1: pass only validated MathML markup
 		# to Chromium; scripts, external resources, and arbitrary HTML are excluded.
 		prepared_mathml = _prepare_mathml_html(mathml_html)
-		font_styles = ""
-		if self._font_face_css:
-			font_styles = "<style>" + self._font_face_css + "</style>"
-		equation_style = "<style>math { font-size: 1.2em; }</style>"
-		html_doc = (
-			"<html><head>" + font_styles + equation_style + "</head><body style='"
-			+ WRAPPER_BODY_STYLE
-			+ "'>"
-			+ prepared_mathml
-			+ "</body></html>"
-		)
-		page = self._context.new_page()
-		page.set_content(html_doc)
-		page.evaluate("async () => { await document.fonts.ready; }")
-		png_bytes = page.locator("math").screenshot(type="png")
-		page.close()
+		self._ensure_started()
+		self._page.evaluate(MATHML_RENDER_SCRIPT, prepared_mathml)
+		png_bytes = self._page.locator("#mathml-render-root math").screenshot(type="png")
 		return png_bytes

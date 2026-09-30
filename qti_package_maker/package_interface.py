@@ -9,6 +9,7 @@ import random
 from qti_package_maker.assessment_items import item_bank
 from qti_package_maker.engines import base_engine
 from qti_package_maker.engines import engine_registration
+from qti_package_maker.html_to_image.render_cache import RenderCache
 
 class QTIPackageInterface:
 	#=====================================================================
@@ -17,6 +18,8 @@ class QTIPackageInterface:
 		self.verbose = verbose
 		self.allow_mixed = allow_mixed
 		self.item_bank = item_bank.ItemBank(self.allow_mixed)
+		# Share rendered bytes across output formats; each engine owns its media files.
+		self.render_cache = RenderCache()
 		if not package_name:
 			raise ValueError("package_name not defined")
 		self._set_engine_data()
@@ -69,6 +72,10 @@ class QTIPackageInterface:
 		if engine_options is None:
 			engine_cls = engine_info["class"](self.package_name, self.verbose)
 		else:
+			# Copy caller options so selecting images does not mutate their configuration.
+			engine_options = dict(engine_options)
+			if engine_options.get("html_to_image", False):
+				engine_options.setdefault("html_to_image_cache", self.render_cache)
 			engine_cls = engine_info["class"](
 				self.package_name, self.verbose, **engine_options)
 		if self.verbose:

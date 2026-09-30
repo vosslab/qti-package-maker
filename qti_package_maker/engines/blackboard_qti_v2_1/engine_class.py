@@ -19,6 +19,7 @@ from qti_package_maker.assessment_items.item_bank import CollectedAssets
 from qti_package_maker.engines.blackboard_qti_v2_1 import write_item
 from qti_package_maker.engines.blackboard_qti_v2_1 import assessment_meta
 from qti_package_maker.html_to_image import transform
+from qti_package_maker.html_to_image.render_cache import RenderCache
 #from qti_package_maker.engines.blackboard_qti_v2_1 import item_xml_helpers
 
 #==============
@@ -47,7 +48,8 @@ class EngineClass(base_engine.BaseEngine):
 				package_name: str,
 				verbose: bool=False,
 				html_to_image: bool = False,
-				html_to_image_renderers: list | None = None) -> None:
+				html_to_image_renderers: list | None = None,
+				html_to_image_cache: RenderCache | None = None) -> None:
 		# Call the base engine constructor
 		super().__init__(package_name, verbose)
 		# set the write_item module (required)
@@ -58,6 +60,7 @@ class EngineClass(base_engine.BaseEngine):
 		# test-stub seam (None uses Playwright tables and RDKit canvases).
 		self.html_to_image = html_to_image
 		self.html_to_image_renderers = html_to_image_renderers
+		self.html_to_image_cache = html_to_image_cache
 		# Setup Directories
 		self._setup_directories()
 
@@ -252,7 +255,8 @@ class EngineClass(base_engine.BaseEngine):
 		self.raise_on_unpackagable_media(item_bank)
 		converted_bank = None
 		if self.html_to_image:
-			item_bank = transform.convert_bank(item_bank, self.html_to_image_renderers)
+			item_bank = transform.convert_bank(
+				item_bank, self.html_to_image_renderers, cache=self.html_to_image_cache)
 			converted_bank = item_bank
 		# Create necessary directories
 		os.makedirs(self.output_dir, exist_ok=True)

@@ -21,6 +21,7 @@ from qti_package_maker.engines.canvas_qti_v1_2 import write_item
 from qti_package_maker.engines.canvas_qti_v1_2 import assessment_meta
 from qti_package_maker.engines.canvas_qti_v1_2 import item_xml_helpers
 from qti_package_maker.html_to_image import transform
+from qti_package_maker.html_to_image.render_cache import RenderCache
 
 # Common Cartridge convention: packaged images live under media/ at the
 # package root (text2qti prior art; no real Canvas sample confirms it yet).
@@ -60,7 +61,8 @@ class EngineClass(base_engine.BaseEngine):
 				verbose: bool = False,
 				canvas_src_variant: str = CANVAS_SRC_VARIANT_RELATIVE,
 				html_to_image: bool = False,
-				html_to_image_renderers: list | None = None) -> None:
+				html_to_image_renderers: list | None = None,
+				html_to_image_cache: RenderCache | None = None) -> None:
 		# Call the base engine constructor
 		super().__init__(package_name, verbose)
 		# set the write_item module (required)
@@ -80,6 +82,7 @@ class EngineClass(base_engine.BaseEngine):
 		# seam (None uses Playwright tables and RDKit canvases).
 		self.html_to_image = html_to_image
 		self.html_to_image_renderers = html_to_image_renderers
+		self.html_to_image_cache = html_to_image_cache
 
 	#==============
 	def _setup_directories(self) -> None:
@@ -259,7 +262,8 @@ class EngineClass(base_engine.BaseEngine):
 		self.raise_on_unpackagable_media(item_bank)
 		converted_bank = None
 		if self.html_to_image:
-			item_bank = transform.convert_bank(item_bank, self.html_to_image_renderers)
+			item_bank = transform.convert_bank(
+				item_bank, self.html_to_image_renderers, cache=self.html_to_image_cache)
 			converted_bank = item_bank
 		# Create necessary directories
 		os.makedirs(self.output_dir, exist_ok=True)

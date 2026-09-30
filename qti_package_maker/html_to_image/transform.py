@@ -2,6 +2,8 @@
 
 # Standard Library
 import base64
+import dataclasses
+import functools
 
 # PIP3 modules
 import lxml.html
@@ -10,24 +12,24 @@ import lxml.html
 from qti_package_maker.assessment_items.item_bank import ItemBank
 from qti_package_maker.html_to_image import selectors
 from qti_package_maker.html_to_image.render_canvas import render_canvas_png
+from qti_package_maker.html_to_image.render_cache import RenderCache
 from qti_package_maker.html_to_image.render_table import TableRenderer
 from qti_package_maker.html_to_image.selectors import CanvasSource
 
 
 #============================================
-def _table_alt_text(table_html: str) -> str:
+def _table_alt_text(table_el: lxml.html.HtmlElement) -> str:
 	"""
 	Collapse a table to one-line ASCII alt text.
 
 	Args:
-		table_html: Selected table HTML.
+		table_el: Selected table element.
 
 	Returns:
 		Whitespace-collapsed plain text.
 	"""
-	root = lxml.html.fromstring(table_html)
 	texts = []
-	for cell in root.xpath(".//td|.//th"):
+	for cell in table_el.xpath(".//td|.//th"):
 		cell_text = " ".join(cell.text_content().split())
 		if cell_text:
 			texts.append(cell_text)
@@ -58,25 +60,6 @@ def _canvas_alt_text(source: CanvasSource) -> str:
 		alt = f"SMILES {source.smiles}"
 		return alt
 	alt = f"{source.legend} (SMILES {source.smiles})"
-	return alt
-
-
-#============================================
-def _alt_for_fragment(fragment: object, family: str) -> str:
-	"""
-	Choose alt text for a selected fragment.
-
-	Args:
-		fragment: Table HTML string or CanvasSource.
-		family: table or canvas.
-
-	Returns:
-		Alt text for the replacement img.
-	"""
-	if family == "canvas":
-		alt = _canvas_alt_text(fragment)
-		return alt
-	alt = _table_alt_text(fragment)
 	return alt
 
 
@@ -128,61 +111,28 @@ def _replace_canvas(
 
 
 #============================================
-def _apply_jobs(html: str, grouped_jobs: list) -> str:
-	"""
-	Replace selected fragments in html with img tags.
-
-	Args:
-		html: Original field HTML.
-		grouped_jobs: (family, list of (name, alt)) in finder order.
-
-	Returns:
-		HTML with selected fragments replaced.
-	"""
-	root = selectors.parse_html_fragment(html)
-	for family, jobs in grouped_jobs:
-		if family == "table":
-			tables = selectors.iter_tables(root)
-			if len(tables) != len(jobs):
-				raise ValueError(
-					f"table render plan length {len(jobs)} does not match "
-					f"{len(tables)} selected tables"
-				)
-			for table_el, (name, alt) in zip(tables, jobs):
-				img_el = _make_img_element(name, alt)
-				table_el.getparent().replace(table_el, img_el)
-			continue
-		if family == "canvas":
-			targets = selectors.iter_canvas_targets(root)
-			if len(targets) != len(jobs):
-				raise ValueError(
-					f"canvas render plan length {len(jobs)} does not match "
-					f"{len(targets)} selected canvases"
-				)
-			for (canvas_el, script_el, _source), (name, alt) in zip(targets, jobs):
-				img_el = _make_img_element(name, alt)
-				_replace_canvas(canvas_el, script_el, img_el)
-			continue
-		raise ValueError(f"unknown fragment family: {family}")
-	selectors.remove_rdkit_loader_scripts(root)
-	new_html = selectors.serialize_fragment(root)
-	return new_html
-
-
-#============================================
-def _inline_rendered_images(table_html: str, images: dict[str, bytes]) -> str:
-	"""Embed generated canvas PNGs so the table renderer needs no media files."""
-	root = selectors.parse_html_fragment(table_html)
-	for img in root.xpath(".//img"):
+def _inline_rendered_images(
+			table_el: lxml.html.HtmlElement, images: dict[str, bytes]) -> None:
+	"""Embed generated canvas PNGs directly in a selected table element."""
+	for img in table_el.xpath(".//img"):
 		src = img.get("src")
 		if src in images:
 			# ASVS V1.2.1, V1.3.2: embed only our rendered PNG bytes through
 			# an HTML attribute; the canvas drawing script is never evaluated.
 			encoded = base64.b64encode(images[src]).decode("ascii")
 			img.set("src", f"data:image/png;base64,{encoded}")
-	selectors.remove_rdkit_loader_scripts(root)
-	prepared = selectors.serialize_fragment(root)
-	return prepared
+	selectors.remove_rdkit_loader_scripts(table_el)
+
+
+#============================================
+def _prepare_custom_table_fragment(
+			fragment: str, images: dict[str, bytes]) -> tuple[str, str]:
+	"""Inline generated PNGs in a custom finder result for its renderer."""
+	fragment_root = selectors.parse_html_fragment(fragment)
+	alt = _table_alt_text(fragment_root)
+	_inline_rendered_images(fragment_root, images)
+	prepared = selectors.serialize_fragment(fragment_root)
+	return prepared, alt
 
 
 #============================================
@@ -191,53 +141,88 @@ def _convert_html_field(
 			render_pairs: list,
 			counters: dict,
 			item_crc16: str,
-			cache: dict) -> tuple[str, list]:
-	"""
-	Prepare canvases first, then render outermost tables with embedded PNGs.
-
-	Args:
-		html: One item HTML field.
-		render_pairs: (finder, renderer, family) triples.
-		counters: Per-family image index, mutated in place.
-		item_crc16: Original item CRC used in image names.
-		cache: Maps original HTML to (new_html, images) so identical choice
-			and answer strings keep the same img src.
-
-	Returns:
-		(new_html, list of (src, png_bytes)).
-	"""
-	if html in cache:
-		return cache[html]
-	new_html = html
+			html_cache: dict,
+			render_cache: RenderCache) -> tuple[str, list]:
+	"""Convert one field on one tree while retaining custom finder callbacks."""
+	if html in html_cache:
+		return html_cache[html]
+	root = selectors.parse_html_fragment(html)
 	images = {}
 	any_jobs = False
-	# Canvas images must exist before their containing table is screenshotted,
-	# regardless of the order in which callers supply the renderers.
+	# Canvas images must exist before containing tables are rendered.
 	ordered_pairs = sorted(render_pairs, key=lambda pair: pair[2] != "canvas")
-	for finder, renderer, family in ordered_pairs:
-		jobs = []
-		for fragment in finder(new_html):
-			any_jobs = True
-			prepared = fragment
-			if family == "table":
-				prepared = _inline_rendered_images(fragment, images)
-			png_bytes = renderer(prepared)
-			counters[family] = counters.get(family, 0) + 1
-			name = f"{item_crc16}_{family}_{counters[family]}.png"
-			alt = _alt_for_fragment(fragment, family)
-			jobs.append((name, alt))
-			images[name] = png_bytes
-		if jobs:
-			new_html = _apply_jobs(new_html, [(family, jobs)])
+	for finder, renderer, family, renderer_key in ordered_pairs:
+		if family == "canvas":
+			is_default_finder = finder is selectors.find_canvas_fragments
+			if is_default_finder:
+				targets = selectors.iter_canvas_targets(root)
+				fragments = [source for _canvas, _script, source in targets]
+			else:
+				finder_html = html if not any_jobs else selectors.serialize_fragment(root)
+				fragments = finder(finder_html)
+			if not fragments:
+				continue
+			if not is_default_finder:
+				targets = selectors.iter_canvas_targets(root)
+			if len(targets) != len(fragments):
+				raise ValueError(
+					f"canvas render plan length {len(fragments)} does not match "
+					f"{len(targets)} selected canvases")
+			for (canvas_el, script_el, source), fragment in zip(targets, fragments):
+				any_jobs = True
+				key = dataclasses.astuple(fragment) if isinstance(
+					fragment, CanvasSource) else fragment
+				png_bytes = render_cache.get_or_render(
+					family, key, functools.partial(renderer, fragment), renderer=renderer_key)
+				counters[family] = counters.get(family, 0) + 1
+				name = f"{item_crc16}_{family}_{counters[family]}.png"
+				images[name] = png_bytes
+				alt_source = source if is_default_finder else fragment
+				_replace_canvas(
+					canvas_el, script_el,
+					_make_img_element(name, _canvas_alt_text(alt_source)))
+			continue
+		if family == "table":
+			is_default_finder = finder is selectors.find_table_fragments
+			if is_default_finder:
+				tables = selectors.iter_tables(root)
+				fragments = tables
+			else:
+				finder_html = html if not any_jobs else selectors.serialize_fragment(root)
+				fragments = finder(finder_html)
+			if not fragments:
+				continue
+			if not is_default_finder:
+				tables = selectors.iter_tables(root)
+			if len(tables) != len(fragments):
+				raise ValueError(
+					f"table render plan length {len(fragments)} does not match "
+					f"{len(tables)} selected tables")
+			for table_el, fragment in zip(tables, fragments):
+				any_jobs = True
+				if is_default_finder:
+					alt = _table_alt_text(table_el)
+					_inline_rendered_images(table_el, images)
+					prepared = selectors.outer_html(table_el)
+				else:
+					prepared, alt = _prepare_custom_table_fragment(fragment, images)
+				png_bytes = render_cache.get_or_render(
+					family, prepared, functools.partial(renderer, prepared), renderer=renderer_key)
+				counters[family] = counters.get(family, 0) + 1
+				name = f"{item_crc16}_{family}_{counters[family]}.png"
+				images[name] = png_bytes
+				table_el.getparent().replace(table_el, _make_img_element(name, alt))
+			continue
+		raise ValueError(f"unknown fragment family: {family}")
 	if not any_jobs:
-		cache[html] = (html, [])
+		html_cache[html] = (html, [])
 		return html, []
-	# Canvases captured inside a table are intermediate images. Only PNGs
-	# still referenced by the finished field need to travel with the package.
-	root = selectors.parse_html_fragment(new_html)
+	selectors.remove_rdkit_loader_scripts(root)
 	referenced = set(root.xpath(".//img/@src"))
-	packaged_images = [(name, png) for name, png in images.items() if name in referenced]
-	cache[html] = (new_html, packaged_images)
+	packaged_images = [
+		(name, png) for name, png in images.items() if name in referenced]
+	new_html = selectors.serialize_fragment(root)
+	html_cache[html] = (new_html, packaged_images)
 	return new_html, packaged_images
 
 
@@ -247,7 +232,8 @@ def _convert_value(
 			render_pairs: list,
 			counters: dict,
 			item_crc16: str,
-			cache: dict) -> tuple[object, list]:
+			html_cache: dict,
+			render_cache: RenderCache) -> tuple[object, list]:
 	"""
 	Convert HTML strings nested in an item supporting field.
 
@@ -256,21 +242,22 @@ def _convert_value(
 		render_pairs: (finder, renderer, family) triples.
 		counters: Per-family image index, mutated in place.
 		item_crc16: Original item CRC used in image names.
-		cache: Per-item original-HTML to converted-HTML map.
+		html_cache: Per-item original-HTML to converted-HTML map.
+		render_cache: Run-scoped rendered PNG cache.
 
 	Returns:
 		(new_value, list of (src, png_bytes)).
 	"""
 	if isinstance(value, str):
 		new_html, images = _convert_html_field(
-			value, render_pairs, counters, item_crc16, cache)
+			value, render_pairs, counters, item_crc16, html_cache, render_cache)
 		return new_html, images
 	if isinstance(value, list):
 		new_list = []
 		images = []
 		for element in value:
 			new_element, element_images = _convert_value(
-				element, render_pairs, counters, item_crc16, cache)
+				element, render_pairs, counters, item_crc16, html_cache, render_cache)
 			new_list.append(new_element)
 			images.extend(element_images)
 		return new_list, images
@@ -279,7 +266,7 @@ def _convert_value(
 		images = []
 		for key, element in value.items():
 			new_element, element_images = _convert_value(
-				element, render_pairs, counters, item_crc16, cache)
+				element, render_pairs, counters, item_crc16, html_cache, render_cache)
 			new_dict[key] = new_element
 			images.extend(element_images)
 		return new_dict, images
@@ -289,13 +276,13 @@ def _convert_value(
 #============================================
 def _resolve_render_pairs(renderers: list | None) -> list | None:
 	"""
-	Normalize caller renderers into (finder, renderer, family) triples.
+	Attach cache identities to the caller's renderer triples.
 
 	Args:
 		renderers: None, or a list of (finder, renderer, family) triples.
 
 	Returns:
-		Triples ready for convert. None means the caller should use defaults.
+		Resolved entries with a renderer identity. None selects the defaults.
 	"""
 	if renderers is None:
 		return None
@@ -305,36 +292,40 @@ def _resolve_render_pairs(renderers: list | None) -> list | None:
 			raise ValueError(
 				"renderers must be (finder, renderer, family) triples"
 			)
-		pairs.append(entry)
+		pairs.append((*entry, entry[1]))
 	return pairs
 
 
 #============================================
 def _default_render_pairs(table_renderer: TableRenderer) -> list:
 	"""
-	Build the shipped (table screenshot, canvas RDKit) renderer list.
+	Build the shipped renderer list with stable cache identities.
 
 	Args:
-		table_renderer: Open TableRenderer holding one browser.
+		table_renderer: Lazy TableRenderer used for uncached table renders.
 
 	Returns:
-		Default (finder, renderer, family) triples.
+		Default (finder, renderer, family, renderer identity) entries.
 	"""
 	pairs = [
-		(selectors.find_table_fragments, table_renderer.render_table_png, "table"),
-		(selectors.find_canvas_fragments, render_canvas_png, "canvas"),
+		# Fresh TableRenderer sessions share bytes by the shipped implementation.
+		(selectors.find_table_fragments, table_renderer.render_table_png,
+			"table", TableRenderer.render_table_png),
+		(selectors.find_canvas_fragments, render_canvas_png, "canvas", render_canvas_png),
 	]
 	return pairs
 
 
 #============================================
-def _convert_bank_with_pairs(item_bank: ItemBank, render_pairs: list) -> ItemBank:
+def _convert_bank_with_pairs(
+			item_bank: ItemBank, render_pairs: list,
+			render_cache: RenderCache) -> ItemBank:
 	"""
 	Render every selected fragment in memory, then copy the bank and attach PNGs.
 
 	Args:
 		item_bank: Source bank; not mutated.
-		render_pairs: (finder, renderer, family) triples.
+		render_pairs: Resolved finder, renderer, family, and renderer identity entries.
 
 	Returns:
 		A new bank whose drawing fragments are img references.
@@ -343,15 +334,17 @@ def _convert_bank_with_pairs(item_bank: ItemBank, render_pairs: list) -> ItemBan
 	plans = []
 	for item in item_bank:
 		counters = {}
-		cache = {}
+		html_cache = {}
 		images = []
 		new_question, question_images = _convert_html_field(
-			item.question_text, render_pairs, counters, item.item_crc16, cache)
+			item.question_text, render_pairs, counters, item.item_crc16,
+			html_cache, render_cache)
 		images.extend(question_images)
 		new_fields = []
 		for field_value in item.get_tuple():
 			new_value, field_images = _convert_value(
-				field_value, render_pairs, counters, item.item_crc16, cache)
+				field_value, render_pairs, counters, item.item_crc16,
+				html_cache, render_cache)
 			new_fields.append(new_value)
 			images.extend(field_images)
 		plans.append((item, new_question, tuple(new_fields), images))
@@ -368,7 +361,8 @@ def _convert_bank_with_pairs(item_bank: ItemBank, render_pairs: list) -> ItemBan
 #============================================
 def convert_bank(
 			item_bank: ItemBank,
-			renderers: list | None = None) -> ItemBank:
+			renderers: list | None = None,
+			cache: RenderCache | None = None) -> ItemBank:
 	"""
 	Return a new bank with selected fragments replaced by packaged PNGs.
 
@@ -376,15 +370,17 @@ def convert_bank(
 		item_bank: Source bank; left unchanged.
 		renderers: Optional list of (finder, renderer, family) triples.
 			None uses Playwright tables and RDKit canvases.
+		cache: Optional shared rendered PNG cache.
 
 	Returns:
 		A derived ItemBank. The caller owns cleanup() of its media dir.
 	"""
+	render_cache = cache if cache is not None else RenderCache()
 	resolved = _resolve_render_pairs(renderers)
 	if resolved is not None:
-		new_bank = _convert_bank_with_pairs(item_bank, resolved)
+		new_bank = _convert_bank_with_pairs(item_bank, resolved, render_cache)
 		return new_bank
 	with TableRenderer() as table_renderer:
 		new_bank = _convert_bank_with_pairs(
-			item_bank, _default_render_pairs(table_renderer))
+			item_bank, _default_render_pairs(table_renderer), render_cache)
 	return new_bank

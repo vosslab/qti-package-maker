@@ -15,6 +15,7 @@ DOC_NON_ENGINE_IDENTIFIERS = {
 	# docs/MEDIA_LMS_PROBES.md; selects the canvas_qti_v1_2 <img src> variant.
 	"canvas_src_variant",
 	"html_to_image",
+	"html_to_image_cache",
 	"html_to_image_renderers",
 }
 

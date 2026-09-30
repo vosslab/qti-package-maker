@@ -47,6 +47,7 @@ qti_package_maker/
 |  `- ...                   more engines; see docs/ENGINES.md
 +- html_to_image/           opt-in table screenshot and RDKit canvas to PNG
 |  +- selectors.py          which fragments convert
+|  +- render_cache.py       shared PNG-byte cache keyed by prepared fragment
 |  +- render_table.py       pip Playwright table screenshots
 |  +- render_canvas.py      RDKit canvas PNGs (extra; loaded only if present)
 |  `- transform.py          ItemBank -> ItemBank rewrite

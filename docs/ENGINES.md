@@ -190,6 +190,38 @@ surfaces them identically. The three file-packaging engines
 | `moodle_aiken` | **placeholder_warn** | Aiken plain text has no image markup; `<img>` replaced with a `[image: name.ext]` placeholder plus one warning per image. |
 | `okla_chrst_bqgen` | **placeholder_warn** | Plain-text format with no image markup; `<img>` replaced with a `[image: name.ext]` placeholder plus one warning per image. |
 
+### HTML-to-image options
+
+The three ZIP packaging engines (`canvas_qti_v1_2`, `blackboard_qti_v2_1`,
+and `blackboard_export_zip`) accept `html_to_image=False` by default. When
+enabled, they preserve the selected fragments, generated PNG filenames, alt
+text, and media ownership contract while converting tables and supported
+canvases before asset collection.
+
+They also accept these optional constructor kwargs:
+
+- `html_to_image_renderers`: the established list of `(finder, renderer,
+  family)` triples for tests and alternate renderers. It remains a
+  string-finder-compatible extension point with its existing behavior.
+- `html_to_image_cache`: a shared cache of rendered PNG bytes. Direct
+  engine callers using the shipped table/canvas selectors may supply one to
+  share rendering across packages. A
+  `QTIPackageInterface` creates one cache for its entire lifetime and injects it when
+  `html_to_image` is enabled, while respecting a cache explicitly supplied in
+  the options dictionary.
+
+Cache entries include the renderer identity, fragment family, and prepared input:
+full prepared table HTML, or all `CanvasSource` drawing fields. Default table
+sessions share the shipped implementation's identity across engines. Custom
+callbacks share images only when the same callback object is reused; changing
+callbacks produces separate entries, including with an explicitly supplied cache.
+Keep a callback's drawing configuration stable while reusing it. If that
+configuration changes, supply a new callback object or a fresh cache.
+The cache retains custom callbacks for its lifetime to prevent identity reuse.
+It is in-memory only; a direct
+`convert_bank()` call without a cache receives a fresh cache, so it does not
+share output with later calls.
+
 ### Support-claim status
 
 - The `blackboard_qti_v2_1` and `blackboard_export_zip` packaging paths are
