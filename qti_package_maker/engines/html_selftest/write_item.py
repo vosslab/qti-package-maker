@@ -13,8 +13,10 @@ from qti_package_maker.engines.html_selftest import html_functions
 
 #==============================================================
 def _strip_line_trailing_whitespace(html_text: str) -> str:
-	"""Remove spaces and tabs from every emitted HTML line ending."""
-	clean_lines = [line.rstrip(" \t") for line in html_text.split("\n")]
+	"""Normalize emitted HTML to LF and remove line-ending spaces and tabs."""
+	# Output-only normalization; keep stored content and escaping intact (ASVS V1.1.2).
+	normalized_html = html_text.replace("\r\n", "\n").replace("\r", "\n")
+	clean_lines = [line.rstrip(" \t") for line in normalized_html.split("\n")]
 	clean_html = "\n".join(clean_lines)
 	return clean_html
 

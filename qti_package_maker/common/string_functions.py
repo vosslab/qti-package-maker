@@ -338,6 +338,8 @@ def check_ascii(mystr: str) -> bool:
 #==========================
 def make_question_pretty(question: str) -> str:
 	pretty_question = copy.copy(question)
+	# Canonical text lines before converting HTML breaks (output only; ASVS V1.1.2).
+	pretty_question = pretty_question.replace("\r\n", "\n").replace("\r", "\n")
 	#print(len(pretty_question))
 	table_map = {}
 	table_count = 0
@@ -410,7 +412,10 @@ def make_question_pretty(question: str) -> str:
 	for token, table_text in table_map.items():
 		pretty_question = pretty_question.replace(token, table_text)
 	#print(len(pretty_question))
-	return pretty_question.strip()
+	# HTML tag removal and entity decoding can leave padding before text line breaks.
+	# Construct plain-text lines without that HTML layout padding, retaining indentation.
+	pretty_lines = [line.rstrip(" \t") for line in pretty_question.split("\n")]
+	return "\n".join(pretty_lines).strip()
 
 #=====================
 def convert_sub_sup(pretty_question: str) -> str:

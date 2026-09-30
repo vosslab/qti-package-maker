@@ -19,6 +19,12 @@
 
 ### Fixes and Maintenance
 
+- Fixed self-test HTML exports retaining trailing spaces and tabs in authored
+  CRLF or bare-CR lines. Output now normalizes those endings to LF before stripping
+  trailing whitespace; stored question content stays unchanged.
+- Fixed trailing HTML layout padding in `make_question_pretty`, where tag conversion
+  produced plain-text lines with spaces before breaks. Plain-text conversion now
+  constructs clean LF lines, including decoded entities and rendered tables.
 - Six-pass code audit: clarified that the shared cache lasts for the interface's lifetime,
   aligned the archived objective with that boundary, and removed test assertions on exact
   serialization attributes and cache counters while retaining behavior checks.

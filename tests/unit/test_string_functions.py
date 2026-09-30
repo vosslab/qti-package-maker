@@ -81,6 +81,8 @@ def test_check_ascii_rejects_unicode() -> None:
 
 def test_make_question_pretty_strips_html() -> None:
 	assert string_functions.make_question_pretty("<p>Test</p>") == "Test"
+	# HTML break conversion must not leave trailing padding in human-readable output.
+	assert string_functions.make_question_pretty("<p>Calculate the pH. <br/>Next line</p>") == "Calculate the pH.\nNext line"
 
 
 def test_html_helpers() -> None:
