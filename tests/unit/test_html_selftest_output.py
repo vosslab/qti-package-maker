@@ -108,6 +108,9 @@ def test_multi_fib_answers_round_trip_through_html_attribute() -> None:
 
 
 def _assert_scoped_control_queries(html_text: str, crc16_text: str, selector: str) -> None:
+	# Grading and assignments are item-scoped; theme/press-state cleanup is document-wide.
+	document = lxml.html.fromstring(html_text)
+	html_text = '\n'.join(document.xpath('//div[@class="qti-selftest"]//script/text()'))
 	container_marker = f"question_html_{crc16_text}"
 	assert container_marker in html_text
 	assert f"document.getElementById('question_html_{crc16_text}')" in html_text
@@ -276,13 +279,12 @@ def test_fib_js_uses_feedback_classes() -> None:
 	assert "'red'" not in js
 
 
-def test_mc_js_sets_feedback_classes_and_disables_check(sample_items: dict) -> None:
+def test_mc_js_sets_feedback_classes(sample_items: dict) -> None:
 	"""
 	MC generated JS must:
 	- set qti-feedback-success on the result element when the answer is CORRECT
 	- set qti-feedback-error on the result element when the answer is incorrect
 	- still emit the literal string 'CORRECT' as the textContent value
-	- disable the Check button (checkBtn.disabled = true) on correct
 	"""
 	item_cls = qti_package_maker.assessment_items.item_types.MC(*sample_items["MC"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.MC(item_cls)
@@ -291,8 +293,6 @@ def test_mc_js_sets_feedback_classes_and_disables_check(sample_items: dict) -> N
 	assert "qti-feedback-error" in html_text
 	# The textContent for full-correct must still be the exact string the bp-website classifier reads
 	assert "'CORRECT'" in html_text
-	# Check button must be disabled on correct (not relabeled or hidden)
-	assert "checkBtn.disabled = true" in html_text
 
 
 def test_ma_clear_selection_button_has_reset_class(sample_items: dict) -> None:

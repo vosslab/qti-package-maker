@@ -67,20 +67,28 @@ engine's development), see
 - **Compatible LMS:** Any web-based environment
 - **File output:** A self-contained HTML file
 - **Use case:** Self-assessment quizzes without LMS integration
+- **Check Answer:** All question types use readable action buttons with a 44px minimum height.
+  Pressing gives a slight shrink and shading; reduced-motion mode uses shading alone.
+  Check Answer stays available after a correct result, including for MC and MA questions.
 - **ORDER controls:** Drag and drop shuffled colored rows to reorder them, or use Move up/down
   buttons and arrow-key shortcuts. The highlighted edge shows the insertion position.
 - **MATCH controls:** The bordered prompt table sits above a wrapping bank of colored choices.
   Drag a choice into its prompt slot, or select a choice and then select its prompt.
-  Slots have a fixed size, bounded by available width on narrow screens. Assigned slots show
-  compact plain text; full formatted answers remain in the bank below.
+  Dragging and clicking allow repeated guesses. With a slot focused, type a choice letter
+  to move that choice from its other rows into the focused slot. Keyboard moves announce
+  the cleared rows and any replaced answer; focus stays in the destination slot.
+  Tables fit their prompts, with bounded answer widths and wrapping long prompts. Layout
+  responds to the embedded question's width. Slots fill their cells and CSS ellipsis clips
+  plain text to the available width; full formatted answers remain in the bank below.
   The full text is also available through the slot's tooltip and accessible name.
-  One Reset button beside Check Answer resets all matches, pending selection, and grading; Escape
-  cancels selection.
-  Used choices cannot fill another prompt. Choices include distractors. Feedback follows Check;
-  screen-reader announcements do not add visible status or progress panels.
+  Check Answer, Reset, and the score sit together immediately below the table, before the bank.
+  Reset clears all matches, pending selection, and grading; Escape cancels selection.
+  Choices can include distractors. Feedback follows Check; screen-reader announcements
+  do not add visible status or progress panels.
 - **Practice feedback:** Client-side partial scores and per-row marks; ORDER Reset restores the
-  initial shuffled order and MATCH Reset empties all matches. Dragging, keyboard, and click/tap controls share the same
-  state, using the existing light, dark, and MkDocs colors. Drops are confined to the same item.
+  initial shuffled order and MATCH Reset empties all matches. ORDER groups its buttons and score
+  below the list. All controls share assignment state and the existing light, dark, and MkDocs
+  colors. Drops and letter shortcuts are confined to the same item.
 
 Run the permanent native drag regression journey in Firefox, Chromium, and WebKit:
 `source source_me.sh && python3 tests/playwright/playwright_selftest_drag.py`.

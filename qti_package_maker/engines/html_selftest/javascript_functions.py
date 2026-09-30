@@ -29,9 +29,6 @@ def add_clear_selection_javascript(crc16_text: str) -> str:
 	# Reset to neutral base class (remove success/error)
 	javascript_text += "\t\t\tresultDiv.className = 'qti-feedback-result';\n"
 	javascript_text += "\t\t}\n"
-	# Re-enable the Check Answer button (it may have been disabled on correct)
-	javascript_text += f"\t\tconst checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
-	javascript_text += "\t\tif (checkBtn) { checkBtn.disabled = false; }\n"
 	# Close function
 	javascript_text += "\t}\n"
 	# Close script tag
@@ -52,8 +49,7 @@ def add_reset_game_javascript(crc16_text: str) -> str:
 	js += f"  const resultDiv = container.querySelector('#result_{crc16_text}');\n"
 	js += "  resultDiv.textContent = '';\n"
 	js += "  resultDiv.className = 'qti-feedback-result';\n"
-	js += f'  const checkBtn = container.querySelector("[onclick=\'checkAnswer_{crc16_text}()\']");\n'
-	js += "  checkBtn.disabled = false;\n}\n"
+	js += '}\n'
 	js += f'function resetGame_{crc16_text}() {{\n'
 	js += f"  const container = document.getElementById('question_html_{crc16_text}');\n"
 	js += "  container.qtiResetGame();\n"
@@ -92,8 +88,6 @@ def add_check_rows_javascript(crc16_text: str, item_type: str) -> str:
 		js += "  resultDiv.textContent = `Total Score: ${score} out of ${possible}`;\n"
 	js += "  resultDiv.className = 'qti-feedback-result ' +\n"
 	js += "    (score === rows.length ? 'qti-feedback-success' : 'qti-feedback-error');\n"
-	js += f'  const checkBtn = container.querySelector("[onclick=\'checkAnswer_{crc16_text}()\']");\n'
-	js += "  if (score === rows.length) { checkBtn.disabled = true; }\n"
 	js += "  container.querySelector('[role=status]').textContent = resultDiv.textContent;\n"
 	js += '}\n</script>\n'
 	return js

@@ -62,29 +62,72 @@ def get_css() -> str:
 .qti-selftest .qti-order-move {
   background: var(--qti-input-bg);
 }
+.qti-selftest .qti-match-layout {
+  container: qti-match / inline-size;
+}
 .qti-selftest .qti-match-table {
+  --qti-match-feedback-width: 64px;
+  --qti-match-choice-width: clamp(180px, 25cqi, 220px);
   display: table;
-  width: 100%;
-  table-layout: fixed;
+  width: auto;
+  max-width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
   border: 1px solid var(--qti-border);
   margin: 0;
 }
-.qti-selftest .qti-match-table th,
-.qti-selftest .qti-match-table td {
+.qti-selftest .qti-match-table > thead > tr > th,
+.qti-selftest .qti-match-table > tbody > tr > td {
   border: 1px solid var(--qti-border);
   padding: 8px;
   vertical-align: middle;
 }
-.qti-selftest .qti-match-table th:first-child {
-  width: 30px;
-  padding: 3px;
+.qti-selftest .qti-match-table > thead > tr > th:first-child {
+  box-sizing: border-box;
+  width: var(--qti-match-feedback-width);
+  min-width: var(--qti-match-feedback-width);
+  padding: 0;
 }
-.qti-selftest .qti-match-table td.feedback {
-  padding: 3px;
+.qti-selftest .qti-match-table td.qti-match-feedback {
+  padding: 0;
 }
-.qti-selftest .qti-match-table th:nth-child(2) {
-  width: 180px;
+.qti-selftest .qti-match-feedback .feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+}
+.qti-selftest .qti-match-table > thead > tr > th:nth-child(2),
+.qti-selftest .qti-match-table td.qti-match-answer {
+  box-sizing: border-box;
+  width: var(--qti-match-choice-width);
+  min-width: var(--qti-match-choice-width);
+}
+.qti-selftest .qti-match-table td.qti-match-answer {
+  position: relative;
+  height: 44px;
+  padding: 0;
+}
+/* Bound rich/long prompts before native table sizing; short prompts stay short.
+   Reserve the two control columns, prompt padding, and collapsed borders. */
+.qti-selftest .qti-match-prompt-content {
+  max-width: min(36ch, calc(100cqi - var(--qti-match-feedback-width) - var(--qti-match-choice-width) - 20px));
+  overflow-wrap: anywhere;
+  overflow-x: auto;
+}
+.qti-selftest .qti-game-actions,
+.qti-selftest .qti-game-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.qti-selftest .qti-game-actions {
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.qti-selftest .qti-game-actions .qti-feedback-result {
+  margin: 0;
+  font-size: 14px;
 }
 .qti-selftest .qti-match-bank {
   display: flex;
@@ -130,9 +173,10 @@ def get_css() -> str:
   overflow-wrap: anywhere;
 }
 .qti-selftest .qti-match-slot {
-  width: 180px;
-  max-width: 100%;
-  height: 44px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   font-size: 12px;
   overflow: hidden;
   white-space: nowrap;
@@ -141,10 +185,6 @@ def get_css() -> str:
 .qti-selftest .qti-order-move:disabled {
   opacity: 0.55;
   cursor: default;
-}
-.qti-selftest .qti-match-choice:disabled {
-  cursor: default;
-  border-style: dashed;
 }
 .qti-selftest button:focus-visible {
   outline: 3px solid var(--qti-btn-bg);
@@ -165,19 +205,27 @@ def get_css() -> str:
   .qti-selftest .qti-order-row { grid-template-columns: 30px 24px minmax(0, 1fr); }
   .qti-selftest .qti-order-actions { grid-column: 3; flex-wrap: wrap; }
 }
-@media (max-width: 420px) {
+/* Respond to the embedded question's width, including narrow desktop panels. */
+@container qti-match (max-width: 420px) {
   .qti-selftest .qti-match-table,
-  .qti-selftest .qti-match-table tbody { display: block; }
-  .qti-selftest .qti-match-table thead { display: none; }
-  .qti-selftest .qti-match-table tr {
+  .qti-selftest .qti-match-table > tbody { display: block; }
+  .qti-selftest .qti-match-table { width: 100%; }
+  .qti-selftest .qti-match-table > thead { display: none; }
+  .qti-selftest .qti-match-table > tbody > tr {
     display: grid;
-    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-columns: var(--qti-match-feedback-width) minmax(0, 1fr);
     border-bottom: 1px solid var(--qti-border);
   }
-  .qti-selftest .qti-match-table td { border: 0; min-width: 0; }
-  .qti-selftest .qti-match-prompt { grid-column: 2; grid-row: 1; }
-  .qti-selftest .qti-match-answer { grid-column: 2; grid-row: 2; }
-  .qti-selftest .qti-match-table td.feedback { grid-column: 1; grid-row: 1 / 3; }
+  .qti-selftest .qti-match-table > tbody > tr > td { border: 0; min-width: 0; }
+  .qti-selftest .qti-match-prompt { grid-column: 1 / 3; grid-row: 1; }
+  .qti-selftest .qti-match-prompt-content { max-width: 100%; }
+  .qti-selftest .qti-match-table td.qti-match-answer {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    min-width: 0;
+  }
+  .qti-selftest .qti-match-table td.qti-match-feedback { grid-column: 1; grid-row: 2; }
 }
 """
 	return css

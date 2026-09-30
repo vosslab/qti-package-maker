@@ -10,6 +10,15 @@
 
 ### Behavior or Interface Changes
 
+- MATCH self-tests use content-sized tables with bounded answer and prompt columns, cell-filling
+  slots, and landscape feedback marks. Narrow layouts follow the embedded question's width.
+  CSS ellipsis replaces the arbitrary 30-character cutoff while preserving full accessible text.
+- With a MATCH slot focused, a displayed letter moves that choice from its other rows and
+  announces the changes. Dragging and clicking allow duplicate guesses; all choices stay available.
+- MATCH and ORDER group larger Check Answer and Reset buttons with the score directly below
+  the answer area. All self-test types, including MC and MA, share readable 44px-high action
+  buttons and remain checkable after correct answers. Pressing a button shrinks it slightly
+  without shifting layout; reduced-motion mode uses shading without movement.
 - Chromium starts only for an uncached table or MathML render and reuses one page
   with bundled fonts loaded once. Canvas-only and fully cached conversions start no browser.
 - Shipped selectors parse each field once; canvases are drawn and embedded before
@@ -38,6 +47,10 @@
 
 ### Decisions and Failures
 
+- Native pressed-button styling differed across browsers: Firefox omitted keyboard feedback,
+  and WebKit retained a pressed appearance after focus moved mid-keypress. Shared visual press
+  state now follows pointer/keyboard release, cancellation, and focus loss while native buttons
+  continue handling activation. Pointer focus loss in Safari is released by pointerup/cancel.
 - Audit reproduction: changing renderer callbacks on one interface reuses the previous
   renderer's PNG, because keys contain family/content but no renderer configuration.
   The second callback was skipped. Resolved by adding renderer identity to the cache key;
@@ -54,6 +67,14 @@
 
 ### Developer Tests and Notes
 
+- MATCH/ORDER browser coverage now checks letter moves, repeated guesses, independent questions,
+  repeated correct checks, full-text ellipsis, cell-filling slots, and bounded layout with long
+  text and oversized rich prompts in narrow embedded panels.
+- Self-test controls verification: all 3,822 pytest cases pass. Firefox, Chromium, and WebKit
+  pass the expanded browser journey, including mouse/Space/Enter feedback, focus-loss cleanup,
+  reduced motion, and rechecking all seven question types. Chromium and WebKit also pass touch
+  controls. Website-style genetics, protein, and MC/MA previews were visually reviewed at desktop
+  and narrow widths; artifacts remain in `output_smoke/match_website_preview/`.
 - Audit follow-up verification: all 3,822 pytest cases pass. A fresh real Chromium run
   across all three formats launches one browser, renders six tables and one canvas,
   and produces 18 PNGs byte-identical to the prior verified corpus. Report retained at

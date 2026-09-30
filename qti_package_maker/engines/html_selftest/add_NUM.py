@@ -33,8 +33,6 @@ def generate_javascript(crc16_text: str, answer_float: float, tolerance_float: f
 	js += "  if (!inputEl) { return; }\n"
 	js += "  const valStr = inputEl.value.trim();\n"
 	js += f"  const resultDiv = document.getElementById('result_{crc16_text}');\n"
-	# Locate the Check button to disable it on correct
-	js += f"  const checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
 	js += "  if (valStr === '') {\n"
 	# Neutral pill for empty input
 	js += "    resultDiv.className = 'qti-feedback-result';\n"
@@ -52,10 +50,9 @@ def generate_javascript(crc16_text: str, answer_float: float, tolerance_float: f
 	js += f"  const upper = numAnswer_{crc16_text} + numTolerance_{crc16_text};\n"
 	js += "  const isCorrect = (userVal >= lower && userVal <= upper);\n"
 	js += "  if (isCorrect) {\n"
-	# Engage success pill and disable Check on correct
+	# Engage success pill.
 	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
 	js += "    resultDiv.textContent = 'CORRECT';\n"
-	js += "    if (checkBtn) { checkBtn.disabled = true; }\n"
 	js += "  } else {\n"
 	# Engage error pill for wrong answer
 	js += "    if (userVal > upper) {\n"

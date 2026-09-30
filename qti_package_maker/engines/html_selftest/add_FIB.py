@@ -29,14 +29,11 @@ def generate_javascript(crc16_text: str, answers_list: list) -> str:
 	js += "  if (!inputEl) { return; }\n"
 	js += "  const userAns = inputEl.value.trim().toLowerCase();\n"
 	js += f"  const resultDiv = document.getElementById('result_{crc16_text}');\n"
-	# Locate the Check Answer button to disable it on correct
-	js += f"  const checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
 	js += f"  const isCorrect = fibAnswers_{crc16_text}.includes(userAns);\n"
 	js += "  if (isCorrect) {\n"
-	# Engage success pill and disable Check button
+	# Engage success pill.
 	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
 	js += "    resultDiv.textContent = 'CORRECT';\n"
-	js += "    if (checkBtn) { checkBtn.disabled = true; }\n"
 	js += "  } else {\n"
 	# Engage error pill
 	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"

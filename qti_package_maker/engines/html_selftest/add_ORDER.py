@@ -54,9 +54,7 @@ def generate_core_html(crc16_text: str, question_text: str, ordered_answers_list
 	html_text = f'<div id="question_html_{crc16_text}">\n'
 	html_text += html_functions.format_question_text(crc16_text, question_text)
 	html_text += generate_choices_list(crc16_text, ordered_answers_list)
-	html_text += html_functions.add_check_answer_button(crc16_text)
-	html_text += html_functions.add_reset_game_button(crc16_text)
-	html_text += html_functions.add_result_div(crc16_text)
+	html_text += html_functions.add_game_actions(crc16_text)
 	html_text += '</div>'
 	return html_text
 

@@ -12,6 +12,7 @@ import lxml.html
 
 # Import modules from local libraries
 from qti_package_maker.engines.html_selftest import control_styles
+from qti_package_maker.engines.html_selftest import button_controls
 
 #============================================
 def format_question_text(crc16_text: str, question_text: str) -> str:
@@ -145,21 +146,39 @@ def add_selftest_theme_css() -> str:
   accent-color: var(--qti-btn-bg, #3a5acd);
 }
 /* Primary filled button (Check Answer) */
-.qti-btn {
+.qti-selftest .qti-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  margin: 0;
   background-color: var(--qti-btn-bg, #3a5acd);
   color: var(--qti-btn-fg, #ffffff);
   border: none;
   border-radius: 4px;
-  padding: 8px 20px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.3;
+  vertical-align: middle;
   cursor: pointer;
+  transition: transform 80ms ease-out, filter 80ms ease-out;
 }
-.qti-btn:hover {
+.qti-selftest .qti-btn:hover {
   filter: brightness(1.1);
 }
-/* Disabled state: muted appearance after a correct answer (disabled attribute set by JS) */
-.qti-btn:disabled,
-.qti-btn[disabled] {
+.qti-selftest .qti-btn.qti-pressed:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(0.93);
+}
+@media (prefers-reduced-motion: reduce) {
+  .qti-selftest .qti-btn { transition: none; }
+  .qti-selftest .qti-btn.qti-pressed:not(:disabled) { transform: none; }
+}
+/* Explicitly disabled controls retain a distinct state. */
+.qti-selftest .qti-btn:disabled {
   background-color: var(--qti-btn-disabled-bg, #aaaaaa);
   color: var(--qti-btn-disabled-fg, #eeeeee);
   opacity: 0.55;
@@ -167,15 +186,14 @@ def add_selftest_theme_css() -> str:
   filter: none;
 }
 /* Secondary ghost button (Clear / Reset) */
-.qti-btn-reset {
+.qti-selftest .qti-btn-reset {
   background-color: var(--qti-btn-reset-bg, transparent);
   color: var(--qti-btn-reset-fg, #555555);
   border: 1px solid var(--qti-btn-reset-border, #999999);
   border-radius: 4px;
-  padding: 7px 20px;
   cursor: pointer;
 }
-.qti-btn-reset:hover {
+.qti-selftest .qti-btn-reset:hover {
   background-color: var(--qti-surface-hover-bg, #e6e6e6);
 }
 /* Text input styling */
@@ -333,6 +351,7 @@ body[data-md-color-scheme="slate"] .qti-selftest {
 	script += "style.id = 'qti-selftest-theme';"
 	script += f"style.textContent = {style_text};"
 	script += "(document.head || document.documentElement).appendChild(style);"
+	script += button_controls.get_setup_javascript()
 	script += "})();</script>\n"
 	return script
 
@@ -360,8 +379,8 @@ def make_button(button_text: str, js_function: str, button_class: str = None) ->
 	button_content = ""
 	# Set the button type to "button" to prevent form submission
 	button_content += "<button type='button' "
-	# Set the class of the button to match the material design theme of the website
-	button_class = button_class or "md-button md-button--secondary custom-button qti-btn"
+	# Own practice-control sizing instead of inheriting the host's download-button styles.
+	button_class = button_class or "qti-btn"
 	button_content += f'class="{button_class}" '
 	# Add an onclick event to call the answer-checking function for this question
 	button_content += f"onclick='{js_function}()'>"
@@ -381,13 +400,24 @@ def add_check_answer_button(crc16_text: str, button_text: str="Check Answer") ->
 def add_clear_selection_button(crc16_text: str, button_text: str="Clear Selection") -> str:
 	# "Clear Selection" ghost button (qti-btn-reset = secondary/ghost style)
 	js_function = f"clearSelection_{crc16_text}"
-	return make_button(button_text, js_function, "md-button md-button--secondary custom-button qti-btn-reset")
+	return make_button(button_text, js_function, "qti-btn qti-btn-reset")
 
 #============================================
 def add_reset_game_button(crc16_text: str, button_text: str="Reset Game") -> str:
 	# "Reset Game" button
 	js_function = f"resetGame_{crc16_text}"
-	return make_button(button_text, js_function, "md-button md-button--secondary custom-button qti-btn qti-btn-reset")
+	return make_button(button_text, js_function, "qti-btn qti-btn-reset")
+
+#============================================
+def add_game_actions(crc16_text: str) -> str:
+	"""Keep game actions and their result together, independent of host button classes."""
+	content = '<div class="qti-game-actions"><div class="qti-game-buttons">'
+	content += make_button('Check Answer', f'checkAnswer_{crc16_text}', 'qti-btn')
+	content += make_button('Reset', f'resetGame_{crc16_text}', 'qti-btn qti-btn-reset')
+	content += '</div>'
+	content += add_result_div(crc16_text)
+	content += '</div>\n'
+	return content
 
 #============================================
 def _visible_text_length(html_text: str) -> int:

@@ -81,9 +81,6 @@ def generate_javascript(crc16_text: str) -> str:
 	# Get the result display element
 	javascript_html += f"\tconst resultDiv = document.getElementById('result_{crc16_text}');\n"
 
-	# Locate the Check Answer button for this question (used to disable on correct)
-	javascript_html += f"\tconst checkBtn = document.querySelector(\"[onclick='checkAnswer_{crc16_text}()']\");\n"
-
 	# Count correct and incorrect selections
 	javascript_html += "\tconst numCorrectSelected = selectedOptions.filter(option => correctOptions.includes(option)).length;\n"
 	javascript_html += "\tconst numIncorrectSelected = selectedOptions.length - numCorrectSelected;\n"
@@ -95,11 +92,10 @@ def generate_javascript(crc16_text: str) -> str:
 	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result';\n"
 	javascript_html += "\t\tresultDiv.textContent = 'Please select an answer.';\n"
 
-	# Check for a fully correct answer: engage success pill and disable Check
+	# Check for a fully correct answer: engage success pill.
 	javascript_html += "\t} else if (numCorrectSelected === totalCorrect && totalSelected === totalCorrect) {\n"
 	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
 	javascript_html += "\t\tresultDiv.textContent = 'CORRECT';\n"
-	javascript_html += "\t\tif (checkBtn) { checkBtn.disabled = true; }\n"
 
 	# Case: Too many choices (some correct, some incorrect): error pill
 	javascript_html += "\t} else if (totalSelected > totalCorrect) {\n"
