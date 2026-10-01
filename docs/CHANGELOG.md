@@ -28,6 +28,10 @@
 
 ### Fixes and Maintenance
 
+- Rich MATCH prompts use the available column width instead of the 36-character prose limit.
+  Pedigrees and other diagrams remain full size and scroll only when the question container
+  is too narrow; ordinary text prompts retain their compact width. Chromium desktop, narrow,
+  drag/drop, keyboard, touch, and grading checks passed; full pytest suite: 3,834 passed.
 - Fixed self-test HTML exports retaining trailing spaces and tabs in authored
   CRLF or bare-CR lines. Output now normalizes those endings to LF before stripping
   trailing whitespace; stored question content stays unchanged.

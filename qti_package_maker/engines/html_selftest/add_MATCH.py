@@ -34,9 +34,11 @@ def generate_prompts_table(crc16_text: str, prompts_list: list) -> str:
 		table += f'<td class="qti-match-prompt" id="prompt_{crc16_text}_{index}">'
 		# Rich prompts can scroll locally without widening the answer table.
 		scroll_attributes = ''
+		prompt_class = 'qti-match-prompt-content'
 		if re.search(r'<\s*(?:table|div|pre|svg|canvas|img)\b', prompt_text, re.I):
 			scroll_attributes = f' tabindex="0" role="group" aria-label="Prompt {index} content"'
-		table += f'<div class="qti-match-prompt-content"{scroll_attributes}>'
+			prompt_class += ' qti-match-prompt-rich'
+		table += f'<div class="{prompt_class}"{scroll_attributes}>'
 		table += f'{index}. {prompt_text}</div></td></tr>\n'
 	table += '</tbody></table></div>\n'
 	return table

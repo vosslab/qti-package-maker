@@ -111,9 +111,13 @@ def get_css() -> str:
 /* Bound rich/long prompts before native table sizing; short prompts stay short.
    Reserve the two control columns, prompt padding, and collapsed borders. */
 .qti-selftest .qti-match-prompt-content {
-  max-width: min(36ch, calc(100cqi - var(--qti-match-feedback-width) - var(--qti-match-choice-width) - 20px));
+  max-width: min(var(--qti-match-prompt-limit, 36ch), calc(100cqi - var(--qti-match-feedback-width) - var(--qti-match-choice-width) - 20px));
   overflow-wrap: anywhere;
   overflow-x: auto;
+}
+/* Diagrams need the available column width, not a prose line-length limit. */
+.qti-selftest .qti-match-prompt-rich {
+  --qti-match-prompt-limit: 100cqi;
 }
 .qti-selftest .qti-game-actions,
 .qti-selftest .qti-game-buttons {
