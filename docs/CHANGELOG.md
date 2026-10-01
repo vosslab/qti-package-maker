@@ -4,6 +4,9 @@
 
 ### Additions and New Features
 
+- Added the companion Rust port to the related-projects guide, completing the reciprocal
+  links between the Python and Rust repositories.
+
 - Added a content-keyed in-memory PNG cache shared by items and all three ZIP
   packaging engines within one `QTIPackageInterface`. Direct callers may pass
   `html_to_image_cache` to engines or `cache` to `convert_bank`.

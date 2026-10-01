@@ -6,6 +6,16 @@ and writes, and how it compares to other LMS import and QTI converters.
 
 ## Confirmed related projects
 
+### qti-package-maker-rs
+
+- Relationship: same-author Rust port
+- Link: [qti-package-maker-rs](https://github.com/vosslab/qti-package-maker-rs)
+- Notes: Provides native command-line conversion for the same question-bank workflows,
+  including Canvas and Blackboard packages, readable exports, and HTML self-tests.
+  Python callers can continue using this repository's package API.
+- Evidence: The Rust workspace's port plan and format registry use this Python package
+  as the behavioral reference; its related-projects guide links back here.
+
 ### biology-problems (bptools)
 - Relationship: same-author sibling repo and upstream question source
 - Link: https://github.com/vosslab/biology-problems
