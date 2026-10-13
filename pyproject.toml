@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qti_package_maker"
-version = "26.09"
+version = "26.10"
 description = "A package to create, manage, and convert QTI packages for quizzes and assessments in Canvas, Blackboard, Moodle, and LibreTexts ADAPT."
 readme = "README.md"
 authors = [{ name = "Dr. Neil Voss"}]
@@ -29,6 +29,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+	"cssutils>=2.15",
+	"tinycss2>=1.4",
     "crcmod",
     "lxml",
     "num2words",

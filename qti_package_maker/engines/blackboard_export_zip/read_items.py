@@ -9,6 +9,7 @@ import lxml.html
 import lxml.etree
 
 # QTI Package Maker
+from qti_package_maker.assessment_items import inline_css
 from qti_package_maker.assessment_items import item_bank
 from qti_package_maker.assessment_items import item_types
 from qti_package_maker.common import media_assets
@@ -77,6 +78,8 @@ def _parse_one_item(
 	# item does not abort the whole pool, and name the source in the warning.
 	try:
 		item_cls = read_function(item_el, src_map_fn)
+	except inline_css.InlineCssError:
+		raise
 	except (ValueError, IndexError, KeyError, AttributeError) as exc:
 		print(f"Warning: skipping malformed {source}: {exc}")
 		return None

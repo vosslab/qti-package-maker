@@ -31,6 +31,55 @@ def test_validate_html_accepts_clean_inputs() -> None:
 	assert validator.validate_html("<p>&copy; simple html paragraph &amp; escaped characters</p>") is True
 
 
+@pytest.mark.parametrize('style', [
+	'color: ff0303', 'color: #gg0303', 'color: #12345',
+	'color: rgb(banana)', 'color: hsl(banana)', 'color: notacolor',
+	'font-size: 12potatoes', 'height: 25', 'padding: -2px',
+	'text-align: sideways', 'vert-align: middle', 'spacing: 20px',
+	'border: 1px solid rgb(banana)', 'background: ff0303',
+	'color: ff0303; color: red', 'color: ff0303 !important; color: red',
+	'color red', 'color: red; broken',
+])
+def test_inline_css_rejects_confirmed_errors(style: str) -> None:
+	with pytest.raises(ValueError, match='inline CSS'):
+		validator.validate_string_text(f'<span style="{style}">Text</span>', 'question_text')
+
+
+@pytest.mark.parametrize('style', [
+	'color: #abc', 'color: #abcd', 'color: #aAbBcC', 'color: #12345678',
+	'color: rebeccapurple', 'color: rgb(255, 3, 3)', 'color: rgb(100% 0% 0% / .5)',
+	'color: hsl(120deg 50% 50%)', 'color: oklch(50% .2 120)',
+	'color: currentColor', 'color: CanvasText', 'color: transparent',
+	'border: 1px solid #abcd', 'background: #12345678',
+	'width: 50%; height: 0; margin-left: -2px; line-height: 1.5',
+	'display: flex; text-align: start; font-weight: 450; width: 20cqw',
+	'container-type: inline-size; aspect-ratio: 2 / 1',
+	'color: var(--ink); --ink: #123; width: calc(100% - 2em)',
+	'color: rgb(from red r g b); color: color-mix(in srgb, red, blue)',
+	'future-property: future-value; color: future-color(1)',
+	'color: red /* comment */ !important; COLOR: blue',
+	'color: &#35;ff0303', 'accent-color: auto',
+	'background: center / cover red; text-decoration: underline solid red',
+	'font-style: oblique 20deg; display: inline flow-root',
+	'color: color(--my-profile 0 0 0)',
+])
+def test_inline_css_preserves_valid_and_unclassified_content(style: str) -> None:
+	html = f'<span style="{style}">Text</span>'
+	assert validator.validate_html(html) is True
+
+
+def test_inline_css_reports_answer_and_legacy_attribute_context() -> None:
+	with pytest.raises(ValueError, match='text-shadow'):
+		validator.validate_html('<span style="text-shadow: 1px 1px rgb(banana)">Text</span>')
+	with pytest.raises(ValueError, match='choices_list.*span.*color.*ff0303'):
+		validator.validate_MC('Choose one.', ['<span style="color: ff0303">Red</span>', 'Blue'], 'Blue')
+	with pytest.raises(ValueError, match='td.*bgcolor.*4d4d4d'):
+		validator.validate_html('<table><tr><td bgcolor="4d4d4d">Cell</td></tr></table>')
+	assert validator.validate_html('<font color="#4d4d4d">Text</font>') is True
+	with pytest.raises(ValueError, match='td.*color.*ff0303'):
+		validator.validate_html('<tr><td style="color: ff0303">Cell</td></tr>')
+
+
 def test_validate_string_text_accepts_valid() -> None:
 	assert validator.validate_string_text("What is 2 + 2?", "question_text") is True
 	assert validator.validate_string_text("2", "answer_text", 1) is True

@@ -45,12 +45,12 @@ Also:
 ## Design
 
 ### ORDER (`qti_package_maker/engines/html_selftest/add_ORDER.py`)
-- Replace the dropzone table and choice bank with one shuffled `<ol class="qti-order-list">`.
-  - Each `<li class="qti-order-row qti-choice-N" data-value="<token>">` holds four parts:
+- Replace the dropzone table and choice bank with one shuffled `<ol class="qpm-order-list">`.
+  - Each `<li class="qpm-order-row qpm-choice-N" data-value="<token>">` holds four parts:
     - a feedback cell
     - a position number
     - the choice text
-    - "Move up" and "Move down" buttons (`.qti-order-move`, `type="button"`, aria-label
+    - "Move up" and "Move down" buttons (`.qpm-order-move`, `type="button"`, aria-label
       "Move item N earlier/later")
   - Up is disabled on the first row and Down on the last.
 - Moving a row relocates the `<li>` in the DOM, renumbers the rows, updates which buttons are
@@ -69,10 +69,10 @@ Also:
     items share a page.
   - The bank is shuffled, and distractors are kept.
 - Primary path:
-  - Click or tap a bank choice button (`aria-pressed`, `.qti-selected`), then click or tap a prompt
+  - Click or tap a bank choice button (`aria-pressed`, `.qpm-selected`), then click or tap a prompt
     slot button to assign it.
   - Each slot has a Clear button that returns focus to the slot.
-  - A used choice is disabled (`.qti-unavailable`), because every correct answer is unique.
+  - A used choice is disabled (`.qpm-unavailable`), because every correct answer is unique.
   - Assigning into a filled slot frees the old choice.
 - No drag and drop. Every control is a native `<button type="button">`, so Tab plus Space/Enter
   work with no extra code. Escape clears the pending selection.
@@ -88,11 +88,11 @@ Also:
   - Implement it by snapshotting the initial `innerHTML` of the interactive region, or by
     rebuilding it from stored data. Pick whichever is shorter.
 - `html_functions.py` theme CSS: add the new classes:
-  - `.qti-order-*`, `.qti-match-*`, `.qti-selected`, `.qti-unavailable`
-  - `.qti-sr-only` (visually hidden)
+  - `.qpm-order-*`, `.qpm-match-*`, `.qpm-selected`, `.qpm-unavailable`
+  - `.qpm-sr-only` (visually hidden)
   - 44px minimum targets, focus-visible outlines, and a stacking media query
   - light, dark and MkDocs variants that reuse the existing variables
-- Remove the now-dead drag code, the `.qti-dropzone*` CSS, and the "Drop Your Choice Here"
+- Remove the now-dead drag code, the `.qpm-dropzone*` CSS, and the "Drop Your Choice Here"
   placeholders.
 
 ## Files

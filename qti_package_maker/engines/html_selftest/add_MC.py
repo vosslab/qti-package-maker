@@ -41,7 +41,7 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 		# Block content can contain both text and table-based drawings.
 		html_content += f"    <label for=\"{option_id}\">"
 		html_content += f"<span style=\"font-weight: bold;\">{choice_letter}.</span> "
-		html_content += f'<div class="qti-choice-content">{choice_text}</div></label>\n'
+		html_content += f'<div class="qpm-choice-content">{choice_text}</div></label>\n'
 		# Close the list item
 		html_content += "  </li>\n"
 	# Close the unordered list of choices
@@ -84,16 +84,16 @@ def generate_javascript(crc16_text: str) -> str:
 	javascript_html += " if (selectedOption) {\n"
 	# If the selected option is correct, display a "CORRECT" message and engage success pill
 	javascript_html += "  if (selectedOption === correctOption) {\n"
-	javascript_html += "   resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
+	javascript_html += "   resultDiv.className = 'qpm-feedback-result qpm-feedback-success';\n"
 	javascript_html += "   resultDiv.textContent = 'CORRECT';\n"
 	# If the selected option is incorrect, display an "incorrect" message and engage error pill
 	javascript_html += "  } else {\n"
-	javascript_html += "   resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	javascript_html += "   resultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	javascript_html += "   resultDiv.textContent = 'incorrect';\n"
 	javascript_html += "  }\n"
 	# If no option was selected, prompt the user to select an answer (neutral pill)
 	javascript_html += " } else {\n"
-	javascript_html += "  resultDiv.className = 'qti-feedback-result';\n"
+	javascript_html += "  resultDiv.className = 'qpm-feedback-result';\n"
 	javascript_html += "  resultDiv.textContent = 'Please select an answer.';\n"
 	javascript_html += " }\n"
 	# Close the function definition

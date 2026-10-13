@@ -1,5 +1,41 @@
 # Design decisions
 
+### QPM Python namespace (2026-10-12)
+
+**Decision.** Preserve the established `qti_package_maker` Python import namespace and
+distribution name, and expose `QTIPackageInterface`. QPM abbreviates QTI Package Maker and names
+the Rust, Wasm, and project integration surfaces; QTI remains in format, schema, and
+interoperability names.
+
+**Why.** Existing Python consumers rely on the established package API. QPM names newer
+project-owned integration surfaces without breaking that API.
+
+**Consequence.** Consumers continue to import `qti_package_maker` and may install the established
+PyPI distribution. Self-test HTML/CSS/JavaScript hooks use the `qpm-` prefix, with no compatibility
+aliases. Integration settings use explicit arguments, functions, or defaults instead of
+project-specific environment variables.
+
+**Owner.** [package_interface.py](../qti_package_maker/package_interface.py) and
+[pyproject.toml](../pyproject.toml).
+
+### Inline CSS validation (2026-10-12)
+
+**Decision.** Check original inline style and legacy color/bgcolor attributes after the
+existing XML validation. tinycss2 supplies declaration/color parsing and cssutils supplies
+common property grammars. Confirmed errors raise ValueError with field/element/value context.
+
+**Why.** Well-formed XML can still contain invalid CSS. Older library grammar limits must
+not turn legitimate modern CSS into errors, so validation uses a conservative shared scope.
+
+**Consequence.** No repair or warning fallback. Unknown properties/functions and modern
+forms outside the reliable common grammar pass. BP owns generator corrections. Keep the
+behavior cases aligned with Rust QPM's inline_css module, not an exhaustive CSS standard.
+The ValueError-compatible InlineCssError is re-raised by recovering readers to keep confirmed
+CSS failures fatal at the conversion boundary.
+
+**Owner.** [inline_css.py](../qti_package_maker/assessment_items/inline_css.py) and
+[test_validator.py](../tests/unit/test_validator.py).
+
 <!-- VENDORED HEADER: START -->
 Record each durable decision about how this code and repository are shaped, once it is settled, with
 the reasoning a later reader needs. Guidance Neil Voss states belongs in

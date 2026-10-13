@@ -21,32 +21,32 @@ def generate_check_answers_js(crc16_text: str) -> str:
 
 #==============
 def generate_choices_list(crc16_text: str, ordered_answers_list: list) -> str:
-	html_text = '<p class="qti-control-instructions">Drag and drop rows to arrange the answers, '
+	html_text = '<p class="qpm-control-instructions">Drag and drop rows to arrange the answers, '
 	html_text += 'or use Move up and Move down. '
 	html_text += 'You can also use the arrow keys while a move button is focused.</p>\n'
-	html_text += '<ol class="qti-order-list" aria-label="Your answer order">\n'
+	html_text += '<ol class="qpm-order-list" aria-label="Your answer order">\n'
 	choices = list(enumerate(ordered_answers_list, start=1))
 	random.shuffle(choices)
 	for display_idx, (orig_idx, choice_text) in enumerate(choices, start=1):
 		token = _choice_token(crc16_text, orig_idx)
 		palette_index = display_idx % 5 + 1
-		html_text += f'<li class="qti-order-row qti-choice-{palette_index}" data-value="{token}" draggable="true">'
+		html_text += f'<li class="qpm-order-row qpm-choice-{palette_index}" data-value="{token}" draggable="true">'
 		html_text += '<span class="feedback"></span>'
-		html_text += f'<strong class="qti-order-position">{display_idx}</strong>'
+		html_text += f'<strong class="qpm-order-position">{display_idx}</strong>'
 		# Oversized diagrams retain local scrolling and a keyboard-accessible scroll region.
 		scroll_attributes = ''
 		if re.search(r'<\s*(?:table|div|pre|svg|canvas|img)\b', choice_text, re.I):
 			scroll_attributes = ' tabindex="0" role="group" aria-label="Answer content"'
-		html_text += f'<div class="qti-choice-content"{scroll_attributes}>{choice_text}</div>'
-		html_text += '<div class="qti-order-actions">'
+		html_text += f'<div class="qpm-choice-content"{scroll_attributes}>{choice_text}</div>'
+		html_text += '<div class="qpm-order-actions">'
 		for direction, label, relative in [('up', 'Move up', 'earlier'), ('down', 'Move down', 'later')]:
 			disabled = (direction == 'up' and display_idx == 1)
 			disabled = disabled or (direction == 'down' and display_idx == len(choices))
 			disabled_attr = ' disabled' if disabled else ''
-			html_text += f'<button type="button" class="qti-order-move" data-direction="{direction}" '
+			html_text += f'<button type="button" class="qpm-order-move" data-direction="{direction}" '
 			html_text += f'aria-label="Move item {display_idx} {relative}"{disabled_attr}>{label}</button>'
 		html_text += '</div></li>\n'
-	html_text += '</ol>\n<div class="qti-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>\n'
+	html_text += '</ol>\n<div class="qpm-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>\n'
 	return html_text
 
 #==============

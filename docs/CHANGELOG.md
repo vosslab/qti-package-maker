@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-10-12
+
+### Fixes and Maintenance
+
+- Preserved the established `qti_package_maker` Python import namespace, distribution, and
+  `QTIPackageInterface` API. QPM abbreviates QTI Package Maker and names the Rust, Wasm, and
+  project integration surfaces. Generated self-test HTML/CSS/JavaScript hooks changed from
+  `qti-` to `qpm-`; QTI format and schema identifiers remain unchanged.
+- Removed the project-specific package path shell variable; the Biology Problems bootstrap now
+  resolves its adjacent checkout directly.
+- Extended strict HTML validation to inline CSS and legacy color/bgcolor attributes using
+  tinycss2 and cssutils. Confirmed invalid colors, common dimensions/values, declaration
+  syntax, and the nonexistent vert-align/spacing properties raise actionable errors without
+  changing source content. Unknown properties/functions and unclassified modern forms pass.
+- Preserve the ValueError-compatible InlineCssError through BBQ, text2qti, and Blackboard
+  pool readers; confirmed CSS failures abort instead of becoming skipped-item warnings.
+- Added regression coverage for errors, valid modern CSS, and answer/table-cell context.
+  Cross-checked 18,172 distinct BPW CSS declarations and 374 legacy color cases against Rust
+  QPM with no acceptance differences. BP generator corrections remain upstream work.
+
 ## 2026-09-30
 
 ### Additions and New Features

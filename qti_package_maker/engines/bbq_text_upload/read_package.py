@@ -5,6 +5,7 @@ import os
 # Pip3 Library
 
 # QTI Package Maker
+from qti_package_maker.assessment_items import inline_css
 from qti_package_maker.assessment_items import item_bank
 from qti_package_maker.assessment_items import item_types
 
@@ -162,6 +163,8 @@ def read_items_from_file(input_file: str, allow_mixed: bool = False) -> item_ban
 		for line_num, line in enumerate(f, start=1):
 			try:
 				item_cls = make_item_cls_from_line(line)
+			except inline_css.InlineCssError:
+				raise
 			except (ValueError, IndexError) as exc:
 				print(f"Warning: skipping line {line_num}: {exc}")
 				continue

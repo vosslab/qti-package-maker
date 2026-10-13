@@ -1,5 +1,14 @@
 # Human guidance
 
+- 2026-10-12: Validate inline CSS strictly, like unmatched HTML tags. Reject confirmed errors
+  with actionable messages; BP must correct its generators. Never silently repair CSS or turn
+  confirmed errors into warnings. Accept CSS that cannot reliably be classified as invalid.
+- 2026-10-12: Prefer existing parsers and validators for common colors, dimensions, property
+  names, and values. Keep Python and Rust behavior consistent; avoid obscure CSS edge cases.
+- 2026-10-12: QPM abbreviates QTI Package Maker. Keep the established `qti_package_maker`
+  Python import namespace and distribution; use QPM for Rust, Wasm, and project integration names.
+  Use direct arguments, functions, or defaults instead of custom environment configuration.
+
 <!-- VENDORED HEADER: START -->
 Record the durable guidance Neil Voss states, or approves for preservation here, in his own words:
 first person or close paraphrase, one to three lines per bullet. Material he supplies as a source

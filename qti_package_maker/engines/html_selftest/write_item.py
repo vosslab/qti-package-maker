@@ -23,7 +23,7 @@ def _strip_line_trailing_whitespace(html_text: str) -> str:
 #==============================================================
 def _wrap_selftest_html(html_text: str) -> str:
 	theme_css = html_functions.add_selftest_theme_css()
-	wrapped = f"{theme_css}<div class=\"qti-selftest\">\n{html_text}\n</div>\n"
+	wrapped = f"{theme_css}<div class=\"qpm-selftest\">\n{html_text}\n</div>\n"
 	ascii_html = html_functions.escape_non_ascii(wrapped)
 	clean_html = _strip_line_trailing_whitespace(ascii_html)
 	return clean_html

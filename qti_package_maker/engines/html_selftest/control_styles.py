@@ -2,18 +2,18 @@
 def get_css() -> str:
 	"""Scoped ORDER/MATCH controls; colors come from the shared theme variables."""
 	css = """
-.qti-selftest .qti-control-instructions {
+.qpm-selftest .qpm-control-instructions {
   font-style: italic;
   font-size: 14px;
   margin: 10px 0;
 }
-.qti-selftest .qti-order-list,
-.qti-selftest .qti-match-bank {
+.qpm-selftest .qpm-order-list,
+.qpm-selftest .qpm-match-bank {
   list-style: none;
   padding: 0;
   margin: 0 0 12px;
 }
-.qti-selftest .qti-order-row {
+.qpm-selftest .qpm-order-row {
   display: grid;
   grid-template-columns: 30px 32px minmax(0, 1fr) auto;
   align-items: center;
@@ -22,52 +22,52 @@ def get_css() -> str:
   padding: 8px;
   margin: 5px 0;
 }
-.qti-selftest .qti-order-position,
-.qti-selftest .feedback {
+.qpm-selftest .qpm-order-position,
+.qpm-selftest .feedback {
   text-align: center;
 }
-.qti-selftest .qti-order-row[draggable="true"],
-.qti-selftest .qti-match-choice[draggable="true"] {
+.qpm-selftest .qpm-order-row[draggable="true"],
+.qpm-selftest .qpm-match-choice[draggable="true"] {
   cursor: grab;
 }
-.qti-selftest .qti-dragging {
+.qpm-selftest .qpm-dragging {
   opacity: 0.65;
   cursor: grabbing;
 }
-.qti-selftest .qti-drop-target {
-  outline: 3px solid var(--qti-btn-bg);
+.qpm-selftest .qpm-drop-target {
+  outline: 3px solid var(--qpm-btn-bg);
   outline-offset: 2px;
 }
-.qti-selftest .qti-order-row.qti-drop-before {
-  box-shadow: inset 0 4px var(--qti-btn-bg);
+.qpm-selftest .qpm-order-row.qpm-drop-before {
+  box-shadow: inset 0 4px var(--qpm-btn-bg);
 }
-.qti-selftest .qti-order-row.qti-drop-after {
-  box-shadow: inset 0 -4px var(--qti-btn-bg);
+.qpm-selftest .qpm-order-row.qpm-drop-after {
+  box-shadow: inset 0 -4px var(--qpm-btn-bg);
 }
-.qti-selftest .qti-order-row .feedback {
+.qpm-selftest .qpm-order-row .feedback {
   min-height: 30px;
   line-height: 30px;
 }
-.qti-selftest .qti-order-actions {
+.qpm-selftest .qpm-order-actions {
   display: flex;
   gap: 6px;
 }
-.qti-selftest .qti-order-move {
-  background: var(--qti-btn-reset-bg);
-  color: var(--qti-btn-reset-fg);
-  border: 1px solid var(--qti-btn-reset-border);
+.qpm-selftest .qpm-order-move {
+  background: var(--qpm-btn-reset-bg);
+  color: var(--qpm-btn-reset-fg);
+  border: 1px solid var(--qpm-btn-reset-border);
   border-radius: 4px;
   padding: 6px 10px;
 }
-.qti-selftest .qti-order-move {
-  background: var(--qti-input-bg);
+.qpm-selftest .qpm-order-move {
+  background: var(--qpm-input-bg);
 }
-.qti-selftest .qti-match-layout {
-  container: qti-match / inline-size;
+.qpm-selftest .qpm-match-layout {
+  container: qpm-match / inline-size;
 }
-.qti-selftest .qti-match-table {
-  --qti-match-feedback-width: 64px;
-  --qti-match-choice-width: clamp(180px, 25cqi, 220px);
+.qpm-selftest .qpm-match-table {
+  --qpm-match-feedback-width: 64px;
+  --qpm-match-choice-width: clamp(180px, 25cqi, 220px);
   display: table;
   width: auto;
   max-width: 100%;
@@ -76,74 +76,74 @@ def get_css() -> str:
   border: 1px solid var(--qti-border);
   margin: 0;
 }
-.qti-selftest .qti-match-table > thead > tr > th,
-.qti-selftest .qti-match-table > tbody > tr > td {
+.qpm-selftest .qpm-match-table > thead > tr > th,
+.qpm-selftest .qpm-match-table > tbody > tr > td {
   border: 1px solid var(--qti-border);
   padding: 8px;
   vertical-align: middle;
 }
-.qti-selftest .qti-match-table > thead > tr > th:first-child {
+.qpm-selftest .qpm-match-table > thead > tr > th:first-child {
   box-sizing: border-box;
-  width: var(--qti-match-feedback-width);
-  min-width: var(--qti-match-feedback-width);
+  width: var(--qpm-match-feedback-width);
+  min-width: var(--qpm-match-feedback-width);
   padding: 0;
 }
-.qti-selftest .qti-match-table td.qti-match-feedback {
+.qpm-selftest .qpm-match-table td.qpm-match-feedback {
   padding: 0;
 }
-.qti-selftest .qti-match-feedback .feedback {
+.qpm-selftest .qpm-match-feedback .feedback {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 44px;
 }
-.qti-selftest .qti-match-table > thead > tr > th:nth-child(2),
-.qti-selftest .qti-match-table td.qti-match-answer {
+.qpm-selftest .qpm-match-table > thead > tr > th:nth-child(2),
+.qpm-selftest .qpm-match-table td.qpm-match-answer {
   box-sizing: border-box;
-  width: var(--qti-match-choice-width);
-  min-width: var(--qti-match-choice-width);
+  width: var(--qpm-match-choice-width);
+  min-width: var(--qpm-match-choice-width);
 }
-.qti-selftest .qti-match-table td.qti-match-answer {
+.qpm-selftest .qpm-match-table td.qpm-match-answer {
   position: relative;
   height: 44px;
   padding: 0;
 }
 /* Bound rich/long prompts before native table sizing; short prompts stay short.
    Reserve the two control columns, prompt padding, and collapsed borders. */
-.qti-selftest .qti-match-prompt-content {
-  max-width: min(var(--qti-match-prompt-limit, 36ch), calc(100cqi - var(--qti-match-feedback-width) - var(--qti-match-choice-width) - 20px));
+.qpm-selftest .qpm-match-prompt-content {
+  max-width: min(var(--qpm-match-prompt-limit, 36ch), calc(100cqi - var(--qpm-match-feedback-width) - var(--qpm-match-choice-width) - 20px));
   overflow-wrap: anywhere;
   overflow-x: auto;
 }
 /* Diagrams need the available column width, not a prose line-length limit. */
-.qti-selftest .qti-match-prompt-rich {
-  --qti-match-prompt-limit: 100cqi;
+.qpm-selftest .qpm-match-prompt-rich {
+  --qpm-match-prompt-limit: 100cqi;
 }
-.qti-selftest .qti-game-actions,
-.qti-selftest .qti-game-buttons {
+.qpm-selftest .qpm-game-actions,
+.qpm-selftest .qpm-game-buttons {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.qti-selftest .qti-game-actions {
+.qpm-selftest .qpm-game-actions {
   flex-wrap: wrap;
   margin: 10px 0;
 }
-.qti-selftest .qti-game-actions .qti-feedback-result {
+.qpm-selftest .qpm-game-actions .qpm-feedback-result {
   margin: 0;
   font-size: 14px;
 }
-.qti-selftest .qti-match-bank {
+.qpm-selftest .qpm-match-bank {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.qti-selftest .qti-match-bank > li {
+.qpm-selftest .qpm-match-bank > li {
   max-width: 100%;
   min-width: 0;
 }
-.qti-selftest .qti-match-choice,
-.qti-selftest .qti-match-slot {
+.qpm-selftest .qpm-match-choice,
+.qpm-selftest .qpm-match-slot {
   display: block;
   width: 100%;
   border: 1px solid var(--qti-border);
@@ -151,24 +151,24 @@ def get_css() -> str:
   text-align: left;
   overflow-x: auto;
 }
-.qti-selftest .qti-match-choice .qti-choice-content {
+.qpm-selftest .qpm-match-choice .qpm-choice-content {
   display: block;
   overflow: visible;
 }
-.qti-selftest .qti-match-slot:not([data-value]) {
-  background: var(--qti-slot-bg);
+.qpm-selftest .qpm-match-slot:not([data-value]) {
+  background: var(--qpm-slot-bg);
   color: inherit;
-  border: 2px dashed var(--qti-slot-border);
+  border: 2px dashed var(--qpm-slot-border);
   font-style: italic;
   text-align: center;
 }
-.qti-selftest .qti-selected {
-  outline: 3px solid var(--qti-btn-bg);
+.qpm-selftest .qpm-selected {
+  outline: 3px solid var(--qpm-btn-bg);
   outline-offset: 2px;
 }
-.qti-selftest .qti-order-move,
-.qti-selftest .qti-match-choice,
-.qti-selftest .qti-match-slot {
+.qpm-selftest .qpm-order-move,
+.qpm-selftest .qpm-match-choice,
+.qpm-selftest .qpm-match-slot {
   box-sizing: border-box;
   min-height: 44px;
   min-width: 44px;
@@ -176,7 +176,7 @@ def get_css() -> str:
   cursor: pointer;
   overflow-wrap: anywhere;
 }
-.qti-selftest .qti-match-slot {
+.qpm-selftest .qpm-match-slot {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -186,15 +186,15 @@ def get_css() -> str:
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.qti-selftest .qti-order-move:disabled {
+.qpm-selftest .qpm-order-move:disabled {
   opacity: 0.55;
   cursor: default;
 }
-.qti-selftest button:focus-visible {
-  outline: 3px solid var(--qti-btn-bg);
+.qpm-selftest button:focus-visible {
+  outline: 3px solid var(--qpm-btn-bg);
   outline-offset: 3px;
 }
-.qti-selftest .qti-sr-only {
+.qpm-selftest .qpm-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -206,30 +206,30 @@ def get_css() -> str:
   border: 0;
 }
 @media (max-width: 700px) {
-  .qti-selftest .qti-order-row { grid-template-columns: 30px 24px minmax(0, 1fr); }
-  .qti-selftest .qti-order-actions { grid-column: 3; flex-wrap: wrap; }
+  .qpm-selftest .qpm-order-row { grid-template-columns: 30px 24px minmax(0, 1fr); }
+  .qpm-selftest .qpm-order-actions { grid-column: 3; flex-wrap: wrap; }
 }
 /* Respond to the embedded question's width, including narrow desktop panels. */
-@container qti-match (max-width: 420px) {
-  .qti-selftest .qti-match-table,
-  .qti-selftest .qti-match-table > tbody { display: block; }
-  .qti-selftest .qti-match-table { width: 100%; }
-  .qti-selftest .qti-match-table > thead { display: none; }
-  .qti-selftest .qti-match-table > tbody > tr {
+@container qpm-match (max-width: 420px) {
+  .qpm-selftest .qpm-match-table,
+  .qpm-selftest .qpm-match-table > tbody { display: block; }
+  .qpm-selftest .qpm-match-table { width: 100%; }
+  .qpm-selftest .qpm-match-table > thead { display: none; }
+  .qpm-selftest .qpm-match-table > tbody > tr {
     display: grid;
-    grid-template-columns: var(--qti-match-feedback-width) minmax(0, 1fr);
+    grid-template-columns: var(--qpm-match-feedback-width) minmax(0, 1fr);
     border-bottom: 1px solid var(--qti-border);
   }
-  .qti-selftest .qti-match-table > tbody > tr > td { border: 0; min-width: 0; }
-  .qti-selftest .qti-match-prompt { grid-column: 1 / 3; grid-row: 1; }
-  .qti-selftest .qti-match-prompt-content { max-width: 100%; }
-  .qti-selftest .qti-match-table td.qti-match-answer {
+  .qpm-selftest .qpm-match-table > tbody > tr > td { border: 0; min-width: 0; }
+  .qpm-selftest .qpm-match-prompt { grid-column: 1 / 3; grid-row: 1; }
+  .qpm-selftest .qpm-match-prompt-content { max-width: 100%; }
+  .qpm-selftest .qpm-match-table td.qpm-match-answer {
     grid-column: 2;
     grid-row: 2;
     width: auto;
     min-width: 0;
   }
-  .qti-selftest .qti-match-table td.qti-match-feedback { grid-column: 1; grid-row: 2; }
+  .qpm-selftest .qpm-match-table td.qpm-match-feedback { grid-column: 1; grid-row: 2; }
 }
 """
 	return css

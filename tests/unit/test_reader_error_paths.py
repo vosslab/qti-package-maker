@@ -10,6 +10,19 @@ from qti_package_maker.engines.text2qti import read_package as text2qti_reader
 from qti_package_maker.engines.okla_chrst_bqgen import read_package as okla_reader
 
 
+def test_readers_propagate_confirmed_css_errors(tmp_path: pathlib.Path) -> None:
+	question = '<span style="color: ff0303">Choose one.</span>'
+	infile = tmp_path / 'invalid.txt'
+	infile.write_text(f'MC\t{question}\tRed\tCorrect\tBlue\tIncorrect\n')
+	with pytest.raises(ValueError, match='invalid inline CSS.*ff0303'):
+		bbq_reader.read_items_from_file(str(infile))
+	with pytest.raises(ValueError, match='invalid inline CSS.*ff0303'):
+		text2qti_reader.process_text_lines(f'1. {question}\n*a) Red\nb) Blue\n')
+	infile.write_text(f'1. {question}\n*a) Red\nb) Blue\n')
+	with pytest.raises(ValueError, match='invalid inline CSS.*ff0303'):
+		okla_reader.read_items_from_file(str(infile))
+
+
 def test_bbq_reader_rejects_unknown_type() -> None:
 	with pytest.raises(ValueError):
 		bbq_reader.make_item_cls_from_line("NOPE\tQuestion\tA")

@@ -9,7 +9,7 @@ def generate_core_html(
 	html_content = f"<div id=\"question_html_{crc16_text}\">\n"
 	html_content += html_functions.format_question_text(crc16_text, question_text)
 	html_content += "<div>\n"
-	html_content += f"<input type=\"text\" class=\"qti-input\" id=\"num_input_{crc16_text}\" inputmode=\"decimal\" pattern=\"[0-9]*[.,]?[0-9]*\" "
+	html_content += f"<input type=\"text\" class=\"qpm-input\" id=\"num_input_{crc16_text}\" inputmode=\"decimal\" pattern=\"[0-9]*[.,]?[0-9]*\" "
 	html_content += "placeholder=\"Enter a number\" />\n"
 	html_content += html_functions.add_check_answer_button(crc16_text)
 	html_content += html_functions.add_result_div(crc16_text)
@@ -35,14 +35,14 @@ def generate_javascript(crc16_text: str, answer_float: float, tolerance_float: f
 	js += f"  const resultDiv = document.getElementById('result_{crc16_text}');\n"
 	js += "  if (valStr === '') {\n"
 	# Neutral pill for empty input
-	js += "    resultDiv.className = 'qti-feedback-result';\n"
+	js += "    resultDiv.className = 'qpm-feedback-result';\n"
 	js += "    resultDiv.textContent = 'Please enter a value.';\n"
 	js += "    return;\n"
 	js += "  }\n"
 	js += "  const userVal = Number(valStr);\n"
 	js += "  if (Number.isNaN(userVal)) {\n"
 	# Neutral pill for invalid input
-	js += "    resultDiv.className = 'qti-feedback-result';\n"
+	js += "    resultDiv.className = 'qpm-feedback-result';\n"
 	js += "    resultDiv.textContent = 'Please enter a valid number.';\n"
 	js += "    return;\n"
 	js += "  }\n"
@@ -51,18 +51,18 @@ def generate_javascript(crc16_text: str, answer_float: float, tolerance_float: f
 	js += "  const isCorrect = (userVal >= lower && userVal <= upper);\n"
 	js += "  if (isCorrect) {\n"
 	# Engage success pill.
-	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
+	js += "    resultDiv.className = 'qpm-feedback-result qpm-feedback-success';\n"
 	js += "    resultDiv.textContent = 'CORRECT';\n"
 	js += "  } else {\n"
 	# Engage error pill for wrong answer
 	js += "    if (userVal > upper) {\n"
-	js += "      resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	js += "      resultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	js += "      resultDiv.textContent = 'Too high. Try again.';\n"
 	js += "    } else if (userVal < lower) {\n"
-	js += "      resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	js += "      resultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	js += "      resultDiv.textContent = 'Too low. Try again.';\n"
 	js += "    } else {\n"
-	js += "      resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	js += "      resultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	js += "      resultDiv.textContent = 'Incorrect. Try again.';\n"
 	js += "    }\n"
 	js += "  }\n"

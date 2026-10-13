@@ -10,7 +10,7 @@ def generate_core_html(crc16_text: str, question_text: str, answers_list: list) 
 	html_content = f"<div id=\"question_html_{crc16_text}\">\n"
 	html_content += html_functions.format_question_text(crc16_text, question_text)
 	html_content += "<form>\n"
-	html_content += f"<input type=\"text\" class=\"qti-input\" id=\"fib_input_{crc16_text}\" "
+	html_content += f"<input type=\"text\" class=\"qpm-input\" id=\"fib_input_{crc16_text}\" "
 	html_content += "placeholder=\"Enter your answer\" autocomplete=\"off\"/>\n"
 	html_content += html_functions.add_check_answer_button(crc16_text)
 	html_content += html_functions.add_result_div(crc16_text)
@@ -32,11 +32,11 @@ def generate_javascript(crc16_text: str, answers_list: list) -> str:
 	js += f"  const isCorrect = fibAnswers_{crc16_text}.includes(userAns);\n"
 	js += "  if (isCorrect) {\n"
 	# Engage success pill.
-	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
+	js += "    resultDiv.className = 'qpm-feedback-result qpm-feedback-success';\n"
 	js += "    resultDiv.textContent = 'CORRECT';\n"
 	js += "  } else {\n"
 	# Engage error pill
-	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	js += "    resultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	js += "    resultDiv.textContent = 'incorrect';\n"
 	js += "  }\n"
 	js += "}\n"

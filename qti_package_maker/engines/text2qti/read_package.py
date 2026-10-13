@@ -6,6 +6,7 @@ import re
 # Pip3 Library
 
 # QTI Package Maker
+from qti_package_maker.assessment_items import inline_css
 from qti_package_maker.assessment_items import item_bank
 from qti_package_maker.assessment_items import item_types
 
@@ -373,6 +374,8 @@ def process_text_lines(text_lines: str, allow_mixed: bool = False) -> item_bank.
 	for block_index, question_block in enumerate(question_blocks, start=1):
 		try:
 			item_cls = make_item_cls_from_block(question_block)
+		except inline_css.InlineCssError:
+			raise
 		except (ValueError, IndexError) as exc:
 			print(f"Warning: skipping question block {block_index}: {exc}")
 			continue

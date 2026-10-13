@@ -42,7 +42,7 @@ def generate_core_html(crc16_text: str, question_text: str, choices_list: list, 
 		# Block content can contain both text and table-based drawings.
 		html_content += f"    <label for=\"option_{crc16_text}_{idx}\">"
 		html_content += f"<span style=\"font-weight: bold;\">{choice_letter}.</span> "
-		html_content += f'<div class="qti-choice-content">{choice_text}</div></label>\n'
+		html_content += f'<div class="qpm-choice-content">{choice_text}</div></label>\n'
 		# Close the list item
 		html_content += "  </li>\n"
 	# Close the unordered list of choices
@@ -89,27 +89,27 @@ def generate_javascript(crc16_text: str) -> str:
 
 	# Handle an empty selection before the broader too-few condition
 	javascript_html += "\tif (totalSelected === 0) {\n"
-	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result';\n"
+	javascript_html += "\t\tresultDiv.className = 'qpm-feedback-result';\n"
 	javascript_html += "\t\tresultDiv.textContent = 'Please select an answer.';\n"
 
 	# Check for a fully correct answer: engage success pill.
 	javascript_html += "\t} else if (numCorrectSelected === totalCorrect && totalSelected === totalCorrect) {\n"
-	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
+	javascript_html += "\t\tresultDiv.className = 'qpm-feedback-result qpm-feedback-success';\n"
 	javascript_html += "\t\tresultDiv.textContent = 'CORRECT';\n"
 
 	# Case: Too many choices (some correct, some incorrect): error pill
 	javascript_html += "\t} else if (totalSelected > totalCorrect) {\n"
-	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	javascript_html += "\t\tresultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	javascript_html += "\t\tresultDiv.textContent = `Too many answers selected. You selected ${numCorrectSelected} correct answers, but also included ${numIncorrectSelected} incorrect choices.`;\n"
 
 	# Case: Too few correct answers selected: error pill
 	javascript_html += "\t} else if (numCorrectSelected < totalCorrect && totalSelected < totalCorrect) {\n"
-	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	javascript_html += "\t\tresultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	javascript_html += "\t\tresultDiv.textContent = `Too few answers selected. You got ${numCorrectSelected} out of ${totalCorrect} correct.`;\n"
 
 	# Case: Correct number of boxes checked, but contains incorrect answers: error pill
 	javascript_html += "\t} else if (totalSelected === totalCorrect && numCorrectSelected < totalCorrect) {\n"
-	javascript_html += "\t\tresultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	javascript_html += "\t\tresultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	javascript_html += "\t\tresultDiv.textContent = `You selected the right number of choices, but only ${numCorrectSelected} out of ${totalCorrect} are correct.`;\n"
 
 	javascript_html += "\t}\n"  # Close the if statement

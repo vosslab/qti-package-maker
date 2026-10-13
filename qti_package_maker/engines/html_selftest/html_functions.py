@@ -44,11 +44,11 @@ def escape_non_ascii(html_text: str) -> str:
 #============================================
 def add_result_div(crc16_text: str) -> str:
 	# Add a div to display the result message as a styled pill/badge.
-	# The qti-feedback-result class provides base pill styling (neutral state).
-	# JS toggles qti-feedback-success / qti-feedback-error after answer check.
+	# The qpm-feedback-result class provides base pill styling (neutral state).
+	# JS toggles qpm-feedback-success / qpm-feedback-error after answer check.
 	# Inline style dropped in favor of CSS classes for theme-awareness.
 	# Use numeric entity &#160; instead of &nbsp; so output is pure ASCII
-	html_content = f"<div id='result_{crc16_text}' class='qti-feedback-result'>&#160;</div>\n"
+	html_content = f"<div id='result_{crc16_text}' class='qpm-feedback-result'>&#160;</div>\n"
 	return html_content
 
 #============================================
@@ -57,46 +57,46 @@ def add_selftest_theme_css() -> str:
 	Inject scoped theme CSS for html_selftest output if not already present.
 	"""
 	css = """
-.qti-selftest {
+.qpm-selftest {
   color: var(--md-default-fg-color, #111111);
   background-color: var(--md-default-bg-color, transparent);
-  --qti-choice-1-bg: #fff3dc; --qti-choice-1-fg: #8a5300;
-  --qti-choice-2-bg: #e8f1ff; --qti-choice-2-fg: #004080;
-  --qti-choice-3-bg: #e6fff3; --qti-choice-3-fg: #008066;
-  --qti-choice-4-bg: #f5e6cc; --qti-choice-4-fg: #803300;
-  --qti-choice-5-bg: #ffd6ff; --qti-choice-5-fg: #660033;
-  --qti-slot-bg: #f8f8f8;
-  --qti-surface-hover-bg: #e6e6e6;
+  --qpm-choice-1-bg: #fff3dc; --qpm-choice-1-fg: #8a5300;
+  --qpm-choice-2-bg: #e8f1ff; --qpm-choice-2-fg: #004080;
+  --qpm-choice-3-bg: #e6fff3; --qpm-choice-3-fg: #008066;
+  --qpm-choice-4-bg: #f5e6cc; --qpm-choice-4-fg: #803300;
+  --qpm-choice-5-bg: #ffd6ff; --qpm-choice-5-fg: #660033;
+  --qpm-slot-bg: #f8f8f8;
+  --qpm-surface-hover-bg: #e6e6e6;
   --qti-border: #999999;
-  --qti-slot-border: #bbbbbb;
-  --qti-success-bg: #ccffcc;
-  --qti-error-bg: #ffcccc;
-  --qti-success-fg: #008000;
-  --qti-error-fg: #9b1b1b;
-  --qti-warning-fg: #b37100;
-  --qti-btn-bg: #3a5acd;
-  --qti-btn-fg: #ffffff;
-  --qti-btn-disabled-bg: #aaaaaa;
-  --qti-btn-disabled-fg: #eeeeee;
-  --qti-btn-reset-bg: transparent;
-  --qti-btn-reset-fg: #555555;
-  --qti-btn-reset-border: #999999;
-  --qti-input-bg: #ffffff;
-  --qti-input-fg: #111111;
-  --qti-input-border: #999999;
+  --qpm-slot-border: #bbbbbb;
+  --qpm-success-bg: #ccffcc;
+  --qpm-error-bg: #ffcccc;
+  --qpm-success-fg: #008000;
+  --qpm-error-fg: #9b1b1b;
+  --qpm-warning-fg: #b37100;
+  --qpm-btn-bg: #3a5acd;
+  --qpm-btn-fg: #ffffff;
+  --qpm-btn-disabled-bg: #aaaaaa;
+  --qpm-btn-disabled-fg: #eeeeee;
+  --qpm-btn-reset-bg: transparent;
+  --qpm-btn-reset-fg: #555555;
+  --qpm-btn-reset-border: #999999;
+  --qpm-input-bg: #ffffff;
+  --qpm-input-fg: #111111;
+  --qpm-input-border: #999999;
 }
-.qti-choice-1 { background-color: var(--qti-choice-1-bg); color: var(--qti-choice-1-fg); }
-.qti-choice-2 { background-color: var(--qti-choice-2-bg); color: var(--qti-choice-2-fg); }
-.qti-choice-3 { background-color: var(--qti-choice-3-bg); color: var(--qti-choice-3-fg); }
-.qti-choice-4 { background-color: var(--qti-choice-4-bg); color: var(--qti-choice-4-fg); }
-.qti-choice-5 { background-color: var(--qti-choice-5-bg); color: var(--qti-choice-5-fg); }
-.qti-selftest ul[id^="choices_"] {
+.qpm-choice-1 { background-color: var(--qpm-choice-1-bg); color: var(--qpm-choice-1-fg); }
+.qpm-choice-2 { background-color: var(--qpm-choice-2-bg); color: var(--qpm-choice-2-fg); }
+.qpm-choice-3 { background-color: var(--qpm-choice-3-bg); color: var(--qpm-choice-3-fg); }
+.qpm-choice-4 { background-color: var(--qpm-choice-4-bg); color: var(--qpm-choice-4-fg); }
+.qpm-choice-5 { background-color: var(--qpm-choice-5-bg); color: var(--qpm-choice-5-fg); }
+.qpm-selftest ul[id^="choices_"] {
   list-style: none;
   padding-left: 0;
   margin: 0 0 12px 0;
 }
 /* Each choice row: min 40px height for comfortable tap targets */
-.qti-selftest ul[id^="choices_"] > li {
+.qpm-selftest ul[id^="choices_"] > li {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -104,17 +104,17 @@ def add_selftest_theme_css() -> str:
   padding: 6px 4px;
   min-height: 40px;
 }
-.qti-selftest ul[id^="choices_"].qti-auto-grid {
+.qpm-selftest ul[id^="choices_"].qpm-auto-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 6px 12px;
 }
-.qti-selftest ul[id^="choices_"].qti-auto-grid-compact {
+.qpm-selftest ul[id^="choices_"].qpm-auto-grid-compact {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 6px 12px;
 }
-.qti-selftest ul[id^="choices_"] > li > label {
+.qpm-selftest ul[id^="choices_"] > li > label {
   display: flex;
   flex: 1;
   min-width: 0;
@@ -123,38 +123,38 @@ def add_selftest_theme_css() -> str:
   margin: 0;
   cursor: pointer;
 }
-.qti-selftest ul[id^="choices_"] > li > label > span:first-child {
+.qpm-selftest ul[id^="choices_"] > li > label > span:first-child {
   flex-shrink: 0;
 }
-.qti-selftest .qti-choice-content {
+.qpm-selftest .qpm-choice-content {
   flex: 1;
   min-width: 0;
   overflow-x: auto;
 }
 /* Preserve cell sizing when a host theme makes tables inline blocks. */
-.qti-selftest table:not([class]) {
+.qpm-selftest table:not([class]) {
   display: table;
 }
 /* Enlarged radio/checkbox inputs: ~1.4em via width/height, transform-origin top-left keeps layout aligned */
-.qti-selftest ul[id^="choices_"] > li > input[type="radio"],
-.qti-selftest ul[id^="choices_"] > li > input[type="checkbox"] {
+.qpm-selftest ul[id^="choices_"] > li > input[type="radio"],
+.qpm-selftest ul[id^="choices_"] > li > input[type="checkbox"] {
   margin: 0;
   flex-shrink: 0;
   width: 1.4em;
   height: 1.4em;
   cursor: pointer;
-  accent-color: var(--qti-btn-bg, #3a5acd);
+  accent-color: var(--qpm-btn-bg, #3a5acd);
 }
 /* Primary filled button (Check Answer) */
-.qti-selftest .qti-btn {
+.qpm-selftest .qpm-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   min-height: 44px;
   margin: 0;
-  background-color: var(--qti-btn-bg, #3a5acd);
-  color: var(--qti-btn-fg, #ffffff);
+  background-color: var(--qpm-btn-bg, #3a5acd);
+  color: var(--qpm-btn-fg, #ffffff);
   border: none;
   border-radius: 4px;
   padding: 8px 14px;
@@ -166,54 +166,54 @@ def add_selftest_theme_css() -> str:
   cursor: pointer;
   transition: transform 80ms ease-out, filter 80ms ease-out;
 }
-.qti-selftest .qti-btn:hover {
+.qpm-selftest .qpm-btn:hover {
   filter: brightness(1.1);
 }
-.qti-selftest .qti-btn.qti-pressed:not(:disabled) {
+.qpm-selftest .qpm-btn.qpm-pressed:not(:disabled) {
   transform: scale(0.97);
   filter: brightness(0.93);
 }
 @media (prefers-reduced-motion: reduce) {
-  .qti-selftest .qti-btn { transition: none; }
-  .qti-selftest .qti-btn.qti-pressed:not(:disabled) { transform: none; }
+  .qpm-selftest .qpm-btn { transition: none; }
+  .qpm-selftest .qpm-btn.qpm-pressed:not(:disabled) { transform: none; }
 }
 /* Explicitly disabled controls retain a distinct state. */
-.qti-selftest .qti-btn:disabled {
-  background-color: var(--qti-btn-disabled-bg, #aaaaaa);
-  color: var(--qti-btn-disabled-fg, #eeeeee);
+.qpm-selftest .qpm-btn:disabled {
+  background-color: var(--qpm-btn-disabled-bg, #aaaaaa);
+  color: var(--qpm-btn-disabled-fg, #eeeeee);
   opacity: 0.55;
   cursor: not-allowed;
   filter: none;
 }
 /* Secondary ghost button (Clear / Reset) */
-.qti-selftest .qti-btn-reset {
-  background-color: var(--qti-btn-reset-bg, transparent);
-  color: var(--qti-btn-reset-fg, #555555);
-  border: 1px solid var(--qti-btn-reset-border, #999999);
+.qpm-selftest .qpm-btn-reset {
+  background-color: var(--qpm-btn-reset-bg, transparent);
+  color: var(--qpm-btn-reset-fg, #555555);
+  border: 1px solid var(--qpm-btn-reset-border, #999999);
   border-radius: 4px;
   cursor: pointer;
 }
-.qti-selftest .qti-btn-reset:hover {
-  background-color: var(--qti-surface-hover-bg, #e6e6e6);
+.qpm-selftest .qpm-btn-reset:hover {
+  background-color: var(--qpm-surface-hover-bg, #e6e6e6);
 }
 /* Text input styling */
-.qti-input {
-  background-color: var(--qti-input-bg, #ffffff);
-  color: var(--qti-input-fg, #111111);
-  border: 1px solid var(--qti-input-border, #999999);
+.qpm-input {
+  background-color: var(--qpm-input-bg, #ffffff);
+  color: var(--qpm-input-fg, #111111);
+  border: 1px solid var(--qpm-input-border, #999999);
   border-radius: 4px;
   font-size: 1.1em;
   line-height: 1.2;
   padding: 4px 6px;
 }
 /* Responsive images: prevent RDKit/structure canvases from overflowing on mobile */
-.qti-selftest canvas,
-.qti-selftest img {
+.qpm-selftest canvas,
+.qpm-selftest img {
   max-width: 100%;
   height: auto;
 }
 /* Feedback pill: neutral base state (empty placeholder, invisible until JS sets content) */
-.qti-feedback-result {
+.qpm-feedback-result {
   display: inline-block;
   min-height: 1.5em;
   margin: 8px 0 8px 0;
@@ -226,10 +226,10 @@ def add_selftest_theme_css() -> str:
   vertical-align: middle;
 }
 /* Success pill */
-.qti-feedback-success {
+.qpm-feedback-success {
   display: inline-block;
-  background-color: var(--qti-success-bg, #ccffcc);
-  color: var(--qti-success-fg, #008000);
+  background-color: var(--qpm-success-bg, #ccffcc);
+  color: var(--qpm-success-fg, #008000);
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 1em;
@@ -240,10 +240,10 @@ def add_selftest_theme_css() -> str:
   vertical-align: middle;
 }
 /* Error pill */
-.qti-feedback-error {
+.qpm-feedback-error {
   display: inline-block;
-  background-color: var(--qti-error-bg, #ffcccc);
-  color: var(--qti-error-fg, #9b1b1b);
+  background-color: var(--qpm-error-bg, #ffcccc);
+  color: var(--qpm-error-fg, #9b1b1b);
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 1em;
@@ -254,101 +254,101 @@ def add_selftest_theme_css() -> str:
   vertical-align: middle;
 }
 /* Non-color accessibility markers (ASCII, no impact on textContent) */
-.qti-feedback-success::before { content: "[+] "; }
-.qti-feedback-error::before { content: "[x] "; }
+.qpm-feedback-success::before { content: "[+] "; }
+.qpm-feedback-error::before { content: "[x] "; }
 @media (prefers-color-scheme: dark) {
-  .qti-selftest {
+  .qpm-selftest {
     color: var(--md-default-fg-color, #e0e0e0);
     background-color: var(--md-default-bg-color, transparent);
-    --qti-choice-1-bg: #5a3600; --qti-choice-1-fg: #ffd9a3;
-    --qti-choice-2-bg: #0f2a55; --qti-choice-2-fg: #b7d4ff;
-    --qti-choice-3-bg: #10493c; --qti-choice-3-fg: #b6f2e1;
-    --qti-choice-4-bg: #4a2300; --qti-choice-4-fg: #f1c7a0;
-    --qti-choice-5-bg: #4b0030; --qti-choice-5-fg: #f7b2df;
-    --qti-slot-bg: #2b2b2b;
-    --qti-surface-hover-bg: #3a3a3a;
+    --qpm-choice-1-bg: #5a3600; --qpm-choice-1-fg: #ffd9a3;
+    --qpm-choice-2-bg: #0f2a55; --qpm-choice-2-fg: #b7d4ff;
+    --qpm-choice-3-bg: #10493c; --qpm-choice-3-fg: #b6f2e1;
+    --qpm-choice-4-bg: #4a2300; --qpm-choice-4-fg: #f1c7a0;
+    --qpm-choice-5-bg: #4b0030; --qpm-choice-5-fg: #f7b2df;
+    --qpm-slot-bg: #2b2b2b;
+    --qpm-surface-hover-bg: #3a3a3a;
     --qti-border: #777777;
-    --qti-slot-border: #666666;
-    --qti-success-bg: #1f4d2a;
-    --qti-error-bg: #5a1f1f;
-    --qti-success-fg: #a8e6b0;
-    --qti-error-fg: #ffc1c1;
-    --qti-warning-fg: #ffd9a3;
-    --qti-btn-bg: #4a6ee0;
-    --qti-btn-fg: #ffffff;
-    --qti-btn-disabled-bg: #555555;
-    --qti-btn-disabled-fg: #aaaaaa;
-    --qti-btn-reset-bg: transparent;
-    --qti-btn-reset-fg: #c0c0c0;
-    --qti-btn-reset-border: #777777;
-    --qti-input-bg: #2a2a2a;
-    --qti-input-fg: #e0e0e0;
-    --qti-input-border: #666666;
+    --qpm-slot-border: #666666;
+    --qpm-success-bg: #1f4d2a;
+    --qpm-error-bg: #5a1f1f;
+    --qpm-success-fg: #a8e6b0;
+    --qpm-error-fg: #ffc1c1;
+    --qpm-warning-fg: #ffd9a3;
+    --qpm-btn-bg: #4a6ee0;
+    --qpm-btn-fg: #ffffff;
+    --qpm-btn-disabled-bg: #555555;
+    --qpm-btn-disabled-fg: #aaaaaa;
+    --qpm-btn-reset-bg: transparent;
+    --qpm-btn-reset-fg: #c0c0c0;
+    --qpm-btn-reset-border: #777777;
+    --qpm-input-bg: #2a2a2a;
+    --qpm-input-fg: #e0e0e0;
+    --qpm-input-border: #666666;
   }
 }
-body[data-md-color-scheme="default"] .qti-selftest {
+body[data-md-color-scheme="default"] .qpm-selftest {
   color: var(--md-default-fg-color, #111111);
   background-color: var(--md-default-bg-color, transparent);
-  --qti-choice-1-bg: #fff3dc; --qti-choice-1-fg: #8a5300;
-  --qti-choice-2-bg: #e8f1ff; --qti-choice-2-fg: #004080;
-  --qti-choice-3-bg: #e6fff3; --qti-choice-3-fg: #008066;
-  --qti-choice-4-bg: #f5e6cc; --qti-choice-4-fg: #803300;
-  --qti-choice-5-bg: #ffd6ff; --qti-choice-5-fg: #660033;
-  --qti-slot-bg: #f8f8f8;
-  --qti-surface-hover-bg: #e6e6e6;
+  --qpm-choice-1-bg: #fff3dc; --qpm-choice-1-fg: #8a5300;
+  --qpm-choice-2-bg: #e8f1ff; --qpm-choice-2-fg: #004080;
+  --qpm-choice-3-bg: #e6fff3; --qpm-choice-3-fg: #008066;
+  --qpm-choice-4-bg: #f5e6cc; --qpm-choice-4-fg: #803300;
+  --qpm-choice-5-bg: #ffd6ff; --qpm-choice-5-fg: #660033;
+  --qpm-slot-bg: #f8f8f8;
+  --qpm-surface-hover-bg: #e6e6e6;
   --qti-border: #999999;
-  --qti-slot-border: #bbbbbb;
-  --qti-success-bg: #ccffcc;
-  --qti-error-bg: #ffcccc;
-  --qti-success-fg: #008000;
-  --qti-error-fg: #9b1b1b;
-  --qti-warning-fg: #b37100;
-  --qti-btn-bg: #3a5acd;
-  --qti-btn-fg: #ffffff;
-  --qti-btn-disabled-bg: #aaaaaa;
-  --qti-btn-disabled-fg: #eeeeee;
-  --qti-btn-reset-bg: transparent;
-  --qti-btn-reset-fg: #555555;
-  --qti-btn-reset-border: #999999;
-  --qti-input-bg: #ffffff;
-  --qti-input-fg: #111111;
-  --qti-input-border: #999999;
+  --qpm-slot-border: #bbbbbb;
+  --qpm-success-bg: #ccffcc;
+  --qpm-error-bg: #ffcccc;
+  --qpm-success-fg: #008000;
+  --qpm-error-fg: #9b1b1b;
+  --qpm-warning-fg: #b37100;
+  --qpm-btn-bg: #3a5acd;
+  --qpm-btn-fg: #ffffff;
+  --qpm-btn-disabled-bg: #aaaaaa;
+  --qpm-btn-disabled-fg: #eeeeee;
+  --qpm-btn-reset-bg: transparent;
+  --qpm-btn-reset-fg: #555555;
+  --qpm-btn-reset-border: #999999;
+  --qpm-input-bg: #ffffff;
+  --qpm-input-fg: #111111;
+  --qpm-input-border: #999999;
 }
-body[data-md-color-scheme="slate"] .qti-selftest {
+body[data-md-color-scheme="slate"] .qpm-selftest {
   color: var(--md-default-fg-color, #e0e0e0);
   background-color: var(--md-default-bg-color, transparent);
-  --qti-choice-1-bg: #5a3600; --qti-choice-1-fg: #ffd9a3;
-  --qti-choice-2-bg: #0f2a55; --qti-choice-2-fg: #b7d4ff;
-  --qti-choice-3-bg: #10493c; --qti-choice-3-fg: #b6f2e1;
-  --qti-choice-4-bg: #4a2300; --qti-choice-4-fg: #f1c7a0;
-  --qti-choice-5-bg: #4b0030; --qti-choice-5-fg: #f7b2df;
-  --qti-slot-bg: #2b2b2b;
-  --qti-surface-hover-bg: #3a3a3a;
+  --qpm-choice-1-bg: #5a3600; --qpm-choice-1-fg: #ffd9a3;
+  --qpm-choice-2-bg: #0f2a55; --qpm-choice-2-fg: #b7d4ff;
+  --qpm-choice-3-bg: #10493c; --qpm-choice-3-fg: #b6f2e1;
+  --qpm-choice-4-bg: #4a2300; --qpm-choice-4-fg: #f1c7a0;
+  --qpm-choice-5-bg: #4b0030; --qpm-choice-5-fg: #f7b2df;
+  --qpm-slot-bg: #2b2b2b;
+  --qpm-surface-hover-bg: #3a3a3a;
   --qti-border: #777777;
-  --qti-slot-border: #666666;
-  --qti-success-bg: #1f4d2a;
-  --qti-error-bg: #5a1f1f;
-  --qti-success-fg: #a8e6b0;
-  --qti-error-fg: #ffc1c1;
-  --qti-warning-fg: #ffd9a3;
-  --qti-btn-bg: #4a6ee0;
-  --qti-btn-fg: #ffffff;
-  --qti-btn-disabled-bg: #555555;
-  --qti-btn-disabled-fg: #aaaaaa;
-  --qti-btn-reset-bg: transparent;
-  --qti-btn-reset-fg: #c0c0c0;
-  --qti-btn-reset-border: #777777;
-  --qti-input-bg: #2a2a2a;
-  --qti-input-fg: #e0e0e0;
-  --qti-input-border: #666666;
+  --qpm-slot-border: #666666;
+  --qpm-success-bg: #1f4d2a;
+  --qpm-error-bg: #5a1f1f;
+  --qpm-success-fg: #a8e6b0;
+  --qpm-error-fg: #ffc1c1;
+  --qpm-warning-fg: #ffd9a3;
+  --qpm-btn-bg: #4a6ee0;
+  --qpm-btn-fg: #ffffff;
+  --qpm-btn-disabled-bg: #555555;
+  --qpm-btn-disabled-fg: #aaaaaa;
+  --qpm-btn-reset-bg: transparent;
+  --qpm-btn-reset-fg: #c0c0c0;
+  --qpm-btn-reset-border: #777777;
+  --qpm-input-bg: #2a2a2a;
+  --qpm-input-fg: #e0e0e0;
+  --qpm-input-border: #666666;
 }
 """
 	css += control_styles.get_css()
 	style_text = json.dumps(css.strip())
 	script = "<script>(function() {"
-	script += "if (document.getElementById('qti-selftest-theme')) return;"
+	script += "if (document.getElementById('qpm-selftest-theme')) return;"
 	script += "var style = document.createElement('style');"
-	script += "style.id = 'qti-selftest-theme';"
+	script += "style.id = 'qpm-selftest-theme';"
 	script += f"style.textContent = {style_text};"
 	script += "(document.head || document.documentElement).appendChild(style);"
 	script += button_controls.get_setup_javascript()
@@ -380,7 +380,7 @@ def make_button(button_text: str, js_function: str, button_class: str = None) ->
 	# Set the button type to "button" to prevent form submission
 	button_content += "<button type='button' "
 	# Own practice-control sizing instead of inheriting the host's download-button styles.
-	button_class = button_class or "qti-btn"
+	button_class = button_class or "qpm-btn"
 	button_content += f'class="{button_class}" '
 	# Add an onclick event to call the answer-checking function for this question
 	button_content += f"onclick='{js_function}()'>"
@@ -398,22 +398,22 @@ def add_check_answer_button(crc16_text: str, button_text: str="Check Answer") ->
 
 #============================================
 def add_clear_selection_button(crc16_text: str, button_text: str="Clear Selection") -> str:
-	# "Clear Selection" ghost button (qti-btn-reset = secondary/ghost style)
+	# "Clear Selection" ghost button (qpm-btn-reset = secondary/ghost style)
 	js_function = f"clearSelection_{crc16_text}"
-	return make_button(button_text, js_function, "qti-btn qti-btn-reset")
+	return make_button(button_text, js_function, "qpm-btn qpm-btn-reset")
 
 #============================================
 def add_reset_game_button(crc16_text: str, button_text: str="Reset Game") -> str:
 	# "Reset Game" button
 	js_function = f"resetGame_{crc16_text}"
-	return make_button(button_text, js_function, "qti-btn qti-btn-reset")
+	return make_button(button_text, js_function, "qpm-btn qpm-btn-reset")
 
 #============================================
 def add_game_actions(crc16_text: str) -> str:
 	"""Keep game actions and their result together, independent of host button classes."""
-	content = '<div class="qti-game-actions"><div class="qti-game-buttons">'
-	content += make_button('Check Answer', f'checkAnswer_{crc16_text}', 'qti-btn')
-	content += make_button('Reset', f'resetGame_{crc16_text}', 'qti-btn qti-btn-reset')
+	content = '<div class="qpm-game-actions"><div class="qpm-game-buttons">'
+	content += make_button('Check Answer', f'checkAnswer_{crc16_text}', 'qpm-btn')
+	content += make_button('Reset', f'resetGame_{crc16_text}', 'qpm-btn qpm-btn-reset')
 	content += '</div>'
 	content += add_result_div(crc16_text)
 	content += '</div>\n'
@@ -444,8 +444,8 @@ def determine_choice_layout_class(choices_list: list) -> str:
 
 	Returns one of:
 	- "" (empty string): default vertical layout (2-3 choices or any long choice)
-	- "qti-auto-grid-compact": responsive grid with min 150px columns (4-5 short choices)
-	- "qti-auto-grid": responsive grid with min 200px columns (6+ short choices)
+	- "qpm-auto-grid-compact": responsive grid with min 150px columns (4-5 short choices)
+	- "qpm-auto-grid": responsive grid with min 200px columns (6+ short choices)
 	"""
 	num_choices = len(choices_list)
 	# Drawings and block content need an entire answer row, regardless of text length.
@@ -465,8 +465,8 @@ def determine_choice_layout_class(choices_list: list) -> str:
 	# For 4-5 short choices, use compact grid (min 150px per choice)
 	# Will fit 2-3 columns on typical screens, adapts to actual width
 	if num_choices <= 5:
-		return "qti-auto-grid-compact"
+		return "qpm-auto-grid-compact"
 
 	# For 6+ short choices, use standard grid (min 200px per choice)
 	# Will fit 2-4 columns depending on choice content width
-	return "qti-auto-grid"
+	return "qpm-auto-grid"

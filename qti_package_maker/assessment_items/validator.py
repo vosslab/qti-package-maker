@@ -7,7 +7,7 @@ import math
 import lxml.etree
 
 # QTI Package Maker
-# none allowed here!!
+from qti_package_maker.assessment_items import inline_css
 
 def is_valid_crc16_code_string(code_string: str) -> bool:
 	pattern = r"\b([0-9a-f]{4})(?:_[0-9a-f]{4})*\b"
@@ -51,6 +51,11 @@ def clean_html_for_xml(html_str: str) -> str:
 
 #========================================================
 def validate_html(html_str: str) -> bool:
+	"""Validate XML structure and demonstrable errors in inline CSS."""
+	return _validate_html(html_str, 'HTML')
+
+
+def _validate_html(html_str: str, field: str) -> bool:
 	"""
 	Validates if the input HTML string is well-formed by removing entities
 	and wrapping the content in a root element for XML parsing using lxml.
@@ -68,6 +73,7 @@ def validate_html(html_str: str) -> bool:
 		print(wrapped_html)  # Prints the problematic HTML
 		print("\n=================================\n")
 		raise  # Re-raises the error so it doesn't silently fail
+	inline_css.validate_html_attributes(html_str, field)
 	return True
 
 #========================================================
@@ -81,7 +87,7 @@ def validate_string_text(string_text: str, name: str, min_length: int = 3) -> bo
 		raise ValueError(f"The {name} cannot be empty.")
 	if len(string_text.strip()) < min_length:
 		raise ValueError(f"'{name}' must have at least {min_length} length (found {len(string_text.strip())}).")
-	validate_html(string_text)
+	_validate_html(string_text, name)
 	return True
 
 #========================================================

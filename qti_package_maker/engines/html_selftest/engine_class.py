@@ -21,7 +21,7 @@ class EngineClass(base_engine.BaseEngine):
 	data:<mime>;base64,... URI (via media_assets.rewrite_html_srcs, writer
 	output only) so the emitted fragment carries zero external image
 	references and embeds cleanly at any mkdocs-material nav depth. The
-	existing `.qti-selftest img` responsive CSS (html_functions.py) already
+	existing `.qpm-selftest img` responsive CSS (html_functions.py) already
 	renders data-URI images the same as file-referenced ones, so no CSS
 	changes are needed here.
 	"""

@@ -37,7 +37,7 @@ def test_html_selftest_outputs_are_valid_html(sample_items: dict, item_type: str
 	item_cls = _build_item(item_type, sample_items[item_type])
 	html_text = getattr(qti_package_maker.engines.html_selftest.write_item, item_type)(item_cls)
 	assert html_text
-	assert "qti-selftest" in html_text
+	assert "qpm-selftest" in html_text
 	qti_package_maker.engines.html_selftest.html_functions.validate_selftest_html(html_text)
 
 
@@ -59,27 +59,27 @@ def test_html_selftest_wrapper_removes_authored_trailing_whitespace() -> None:
 def test_html_selftest_theme_css_contains_palette_selectors(sample_items: dict) -> None:
 	item_cls = _build_item("MC", sample_items["MC"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.MC(item_cls)
-	assert "qti-selftest-theme" in html_text
+	assert "qpm-selftest-theme" in html_text
 	assert "prefers-color-scheme: dark" in html_text
 	assert "data-md-color-scheme" in html_text
 	assert "slate" in html_text
 	assert "default" in html_text
-	assert "--qti-choice-1-bg" in html_text
+	assert "--qpm-choice-1-bg" in html_text
 
 
 @pytest.mark.parametrize("item_type", ["MATCH", "ORDER"])
 def test_html_selftest_choice_palette_classes(sample_items: dict, item_type: str) -> None:
 	item_cls = _build_item(item_type, sample_items[item_type])
 	html_text = getattr(qti_package_maker.engines.html_selftest.write_item, item_type)(item_cls)
-	assert "qti-choice-" in html_text
-	assert "var(--qti-choice-" in html_text
+	assert "qpm-choice-" in html_text
+	assert "var(--qpm-choice-" in html_text
 	assert 'draggable="true"' in html_text
 
 
 def test_html_selftest_num_input_uses_theme_class(sample_items: dict) -> None:
 	item_cls = _build_item("NUM", sample_items["NUM"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.NUM(item_cls)
-	assert "qti-input" in html_text
+	assert "qpm-input" in html_text
 
 
 def test_html_selftest_mc_fragments_have_unique_element_ids() -> None:
@@ -110,7 +110,7 @@ def test_multi_fib_answers_round_trip_through_html_attribute() -> None:
 def _assert_scoped_control_queries(html_text: str, crc16_text: str, selector: str) -> None:
 	# Grading and assignments are item-scoped; theme/press-state cleanup is document-wide.
 	document = lxml.html.fromstring(html_text)
-	html_text = '\n'.join(document.xpath('//div[@class="qti-selftest"]//script/text()'))
+	html_text = '\n'.join(document.xpath('//div[@class="qpm-selftest"]//script/text()'))
 	container_marker = f"question_html_{crc16_text}"
 	assert container_marker in html_text
 	assert f"document.getElementById('question_html_{crc16_text}')" in html_text
@@ -131,13 +131,13 @@ def _assert_scoped_control_queries(html_text: str, crc16_text: str, selector: st
 def test_html_selftest_match_scopes_control_queries(sample_items: dict) -> None:
 	item_cls = _build_item("MATCH", sample_items["MATCH"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.MATCH(item_cls)
-	_assert_scoped_control_queries(html_text, item_cls.item_crc16, '.qti-match-slot')
+	_assert_scoped_control_queries(html_text, item_cls.item_crc16, '.qpm-match-slot')
 
 
 def test_html_selftest_order_scopes_control_queries(sample_items: dict) -> None:
 	item_cls = _build_item("ORDER", sample_items["ORDER"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.ORDER(item_cls)
-	_assert_scoped_control_queries(html_text, item_cls.item_crc16, '.qti-order-row')
+	_assert_scoped_control_queries(html_text, item_cls.item_crc16, '.qpm-order-row')
 
 
 def test_order_and_match_controls_are_accessible_and_have_unique_ids() -> None:
@@ -169,11 +169,11 @@ def test_order_and_match_controls_are_accessible_and_have_unique_ids() -> None:
 @pytest.mark.parametrize("num_choices,expected_class", [
 	(2, ""),  # 2 choices: vertical layout (no class)
 	(3, ""),  # 3 choices: vertical layout (no class)
-	(4, "qti-auto-grid-compact"),  # 4 choices: compact grid
-	(5, "qti-auto-grid-compact"),  # 5 choices: compact grid
-	(6, "qti-auto-grid"),  # 6 choices: standard grid
-	(7, "qti-auto-grid"),  # 7 choices: standard grid
-	(8, "qti-auto-grid"),  # 8+ choices: standard grid
+	(4, "qpm-auto-grid-compact"),  # 4 choices: compact grid
+	(5, "qpm-auto-grid-compact"),  # 5 choices: compact grid
+	(6, "qpm-auto-grid"),  # 6 choices: standard grid
+	(7, "qpm-auto-grid"),  # 7 choices: standard grid
+	(8, "qpm-auto-grid"),  # 8+ choices: standard grid
 ])
 def test_determine_choice_layout_class(num_choices: int, expected_class: str) -> None:
 	"""Test that determine_choice_layout_class returns correct classes for different choice counts."""
@@ -197,8 +197,8 @@ def test_graphical_choices_use_full_rows(choice: str) -> None:
 
 @pytest.mark.parametrize("num_choices,expected_class", [
 	(3, None),  # 3 choices: no grid class expected
-	(4, "qti-auto-grid-compact"),
-	(6, "qti-auto-grid"),
+	(4, "qpm-auto-grid-compact"),
+	(6, "qpm-auto-grid"),
 ])
 def test_html_selftest_mc_adaptive_grid_classes(num_choices: int, expected_class: str | None) -> None:
 	"""Test that MC items get correct adaptive grid classes in HTML output."""
@@ -215,13 +215,13 @@ def test_html_selftest_mc_adaptive_grid_classes(num_choices: int, expected_class
 	else:
 		# For 3 choices, should have <ul id="choices_..."> with no class attribute
 		assert '<ul id="choices_' in html_text
-		assert 'class="qti-auto-grid' not in html_text
+		assert 'class="qpm-auto-grid' not in html_text
 
 
 @pytest.mark.parametrize("num_choices,expected_class", [
 	(3, None),  # 3 choices: no grid class expected
-	(4, "qti-auto-grid-compact"),
-	(6, "qti-auto-grid"),
+	(4, "qpm-auto-grid-compact"),
+	(6, "qpm-auto-grid"),
 ])
 def test_html_selftest_ma_adaptive_grid_classes(num_choices: int, expected_class: str | None) -> None:
 	"""Test that MA items get correct adaptive grid classes in HTML output."""
@@ -238,7 +238,7 @@ def test_html_selftest_ma_adaptive_grid_classes(num_choices: int, expected_class
 	else:
 		# For 3 choices, should have <ul id="choices_..."> with no class attribute
 		assert '<ul id="choices_' in html_text
-		assert 'class="qti-auto-grid' not in html_text
+		assert 'class="qpm-auto-grid' not in html_text
 
 
 def test_fib_js_uses_crc_not_literal_placeholder() -> None:
@@ -273,8 +273,8 @@ def test_fib_js_uses_feedback_classes() -> None:
 	sample_crc = "ab12"
 	js = qti_package_maker.engines.html_selftest.add_FIB.generate_javascript(sample_crc, ["answer"])
 	# Classes carry theme-var colors via CSS; no hardcoded color strings should appear
-	assert "qti-feedback-success" in js
-	assert "qti-feedback-error" in js
+	assert "qpm-feedback-success" in js
+	assert "qpm-feedback-error" in js
 	assert "'green'" not in js
 	assert "'red'" not in js
 
@@ -282,24 +282,24 @@ def test_fib_js_uses_feedback_classes() -> None:
 def test_mc_js_sets_feedback_classes(sample_items: dict) -> None:
 	"""
 	MC generated JS must:
-	- set qti-feedback-success on the result element when the answer is CORRECT
-	- set qti-feedback-error on the result element when the answer is incorrect
+	- set qpm-feedback-success on the result element when the answer is CORRECT
+	- set qpm-feedback-error on the result element when the answer is incorrect
 	- still emit the literal string 'CORRECT' as the textContent value
 	"""
 	item_cls = qti_package_maker.assessment_items.item_types.MC(*sample_items["MC"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.MC(item_cls)
 	# Feedback pill classes must be set in the JS
-	assert "qti-feedback-success" in html_text
-	assert "qti-feedback-error" in html_text
+	assert "qpm-feedback-success" in html_text
+	assert "qpm-feedback-error" in html_text
 	# The textContent for full-correct must still be the exact string the bp-website classifier reads
 	assert "'CORRECT'" in html_text
 
 
 def test_ma_clear_selection_button_has_reset_class(sample_items: dict) -> None:
 	"""
-	MA Clear Selection button must carry qti-btn-reset so it renders as a ghost button.
+	MA Clear Selection button must carry qpm-btn-reset so it renders as a ghost button.
 	"""
 	item_cls = qti_package_maker.assessment_items.item_types.MA(*sample_items["MA"])
 	html_text = qti_package_maker.engines.html_selftest.write_item.MA(item_cls)
 	# The Clear Selection button must have the ghost/secondary class
-	assert "qti-btn-reset" in html_text
+	assert "qpm-btn-reset" in html_text

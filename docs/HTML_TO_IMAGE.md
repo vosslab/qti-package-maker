@@ -47,7 +47,7 @@ script with `RDKitModule`, convert loads RDKit then. Missing RDKit raises
 pip install rdkit
 ```
 
-or `pip install qti-package-maker[rdkit]` when using the package extras.
+or `python3 -m pip install -e .[rdkit]` from the source checkout when using the package extras.
 
 The offline renderer reads the literal SMILES, canvas dimensions, legend,
 `explicitMethyl`, atom and bond highlight arrays, and RGB highlight colour. It

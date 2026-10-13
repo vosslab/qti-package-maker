@@ -66,14 +66,14 @@ def verify_desktop(page: Page, html: str, crcs: list[str], output: Path) -> None
 		});
 	}""")
 	order = page.locator('#question_html_' + crcs[0])
-	rows = order.locator('.qti-order-row')
+	rows = order.locator('.qpm-order-row')
 	initial = values(rows)
 	first = rows.first
 	first_token = first.get_attribute('data-value')
-	order.locator('.qti-btn:not(.qti-btn-reset)').click()
+	order.locator('.qpm-btn:not(.qpm-btn-reset)').click()
 	drag(first, rows.last, after=True)
 	assert values(rows) == initial[1:] + initial[:1], 'ORDER downward drag failed'
-	assert order.locator('.qti-feedback-result').inner_text() == ''
+	assert order.locator('.qpm-feedback-result').inner_text() == ''
 	assert order.locator('.feedback').all_inner_texts() == ['', '', '']
 	assert rows.last.get_attribute('data-value') == first_token
 	drag(rows.last, rows.first)
@@ -82,37 +82,37 @@ def verify_desktop(page: Page, html: str, crcs: list[str], output: Path) -> None
 	# Both halves of a row must allow positioning without replacing row content.
 	for index in range(3):
 		token = crcs[0] + '_' + str(index + 1).zfill(3)
-		source = order.locator('.qti-order-row[data-value="' + token + '"]')
+		source = order.locator('.qpm-order-row[data-value="' + token + '"]')
 		if rows.nth(index).get_attribute('data-value') != token:
 			drag(source, rows.nth(index))
-	order.locator('.qti-btn:not(.qti-btn-reset)').click()
-	assert order.locator('.qti-feedback-result').inner_text() == 'Correct positions: 3 of 3'
-	assert order.locator('.qti-btn:not(.qti-btn-reset)').is_enabled()
-	order.locator('.qti-btn:not(.qti-btn-reset)').click()
-	assert order.locator('.qti-feedback-result').inner_text() == 'Correct positions: 3 of 3'
-	assert order.locator('.qti-choice-content b').inner_text() == 'Middle'
+	order.locator('.qpm-btn:not(.qpm-btn-reset)').click()
+	assert order.locator('.qpm-feedback-result').inner_text() == 'Correct positions: 3 of 3'
+	assert order.locator('.qpm-btn:not(.qpm-btn-reset)').is_enabled()
+	order.locator('.qpm-btn:not(.qpm-btn-reset)').click()
+	assert order.locator('.qpm-feedback-result').inner_text() == 'Correct positions: 3 of 3'
+	assert order.locator('.qpm-choice-content b').inner_text() == 'Middle'
 	drag(rows.first, rows.last, after=True)
-	assert order.locator('.qti-btn:not(.qti-btn-reset)').is_enabled()
-	order.locator('.qti-btn-reset').click()
+	assert order.locator('.qpm-btn:not(.qpm-btn-reset)').is_enabled()
+	order.locator('.qpm-btn-reset').click()
 	assert values(rows) == initial, 'ORDER reset lost original shuffle'
 	# The added keyboard path must continue using the same reordered nodes.
 	token = rows.first.get_attribute('data-value')
 	rows.first.locator('[data-direction=down]').press('ArrowDown')
 	assert rows.nth(1).get_attribute('data-value') == token
-	order.locator('.qti-btn-reset').click()
+	order.locator('.qpm-btn-reset').click()
 
 	match = page.locator('#question_html_' + crcs[1])
 	other = page.locator('#question_html_' + crcs[2])
-	slots = match.locator('.qti-match-slot')
-	alpha = match.locator('.qti-match-choice[data-value="' + crcs[1] + '_001"]')
-	quote = match.locator('.qti-match-choice[data-value="' + crcs[1] + '_002"]')
-	extra = match.locator('.qti-match-choice[data-value="' + crcs[1] + '_003"]')
+	slots = match.locator('.qpm-match-slot')
+	alpha = match.locator('.qpm-match-choice[data-value="' + crcs[1] + '_001"]')
+	quote = match.locator('.qpm-match-choice[data-value="' + crcs[1] + '_002"]')
+	extra = match.locator('.qpm-match-choice[data-value="' + crcs[1] + '_003"]')
 	reset = match.get_by_role('button', name='Reset', exact=True)
 	assert reset.count() == 1 and reset.is_visible() and reset.is_enabled()
 	slot_size = slots.first.evaluate('(slot) => [slot.offsetWidth, slot.offsetHeight]')
 	drag(extra, slots.first)
-	match.locator('.qti-btn:not(.qti-btn-reset)').click()
-	assert match.locator('.qti-feedback-result').inner_text() == 'Total Score: 0 out of 2'
+	match.locator('.qpm-btn:not(.qpm-btn-reset)').click()
+	assert match.locator('.qpm-feedback-result').inner_text() == 'Total Score: 0 out of 2'
 	assert extra.is_enabled()
 	assert extra.get_attribute('draggable') == 'true'
 	drag(alpha, slots.first)
@@ -126,36 +126,36 @@ def verify_desktop(page: Page, html: str, crcs: list[str], output: Path) -> None
 	assert slots.first.evaluate('(slot) => [slot.offsetWidth, slot.offsetHeight]') == slot_size
 	assert slots.last.evaluate('(slot) => [slot.offsetWidth, slot.offsetHeight]') == slot_size
 	assert extra.is_enabled(), 'Replacing a match did not free the previous choice'
-	assert match.locator('.qti-feedback-result').inner_text() == ''
+	assert match.locator('.qpm-feedback-result').inner_text() == ''
 	drag(quote, slots.last)
-	match.locator('.qti-btn:not(.qti-btn-reset)').click()
-	assert match.locator('.qti-feedback-result').inner_text() == 'Total Score: 2 out of 2'
-	assert match.locator('.qti-btn:not(.qti-btn-reset)').is_enabled()
-	match.locator('.qti-btn:not(.qti-btn-reset)').click()
-	assert match.locator('.qti-feedback-result').inner_text() == 'Total Score: 2 out of 2'
+	match.locator('.qpm-btn:not(.qpm-btn-reset)').click()
+	assert match.locator('.qpm-feedback-result').inner_text() == 'Total Score: 2 out of 2'
+	assert match.locator('.qpm-btn:not(.qpm-btn-reset)').is_enabled()
+	match.locator('.qpm-btn:not(.qpm-btn-reset)').click()
+	assert match.locator('.qpm-feedback-result').inner_text() == 'Total Score: 2 out of 2'
 	reset.click()
-	assert match.locator('.qti-match-slot[data-value]').count() == 0
+	assert match.locator('.qpm-match-slot[data-value]').count() == 0
 	assert slots.first.get_attribute('title') is None
-	assert match.locator('.qti-match-choice:disabled').count() == 0
+	assert match.locator('.qpm-match-choice:disabled').count() == 0
 	assert alpha.is_enabled()
 	assert alpha.get_attribute('draggable') == 'true'
-	assert match.locator('.qti-btn:not(.qti-btn-reset)').is_enabled()
+	assert match.locator('.qpm-btn:not(.qpm-btn-reset)').is_enabled()
 	drag(alpha, slots.first)
-	match.locator('.qti-btn-reset').click()
-	assert match.locator('.qti-match-choice:disabled').count() == 0
-	assert match.locator('.qti-match-slot[data-value]').count() == 0
+	match.locator('.qpm-btn-reset').click()
+	assert match.locator('.qpm-match-choice:disabled').count() == 0
+	assert match.locator('.qpm-match-slot[data-value]').count() == 0
 	assert reset.is_visible() and reset.is_enabled()
 	# A real drag across question boundaries must leave both questions untouched.
-	drag(alpha, other.locator('.qti-match-slot').first)
-	assert other.locator('.qti-match-slot[data-value]').count() == 0
+	drag(alpha, other.locator('.qpm-match-slot').first)
+	assert other.locator('.qpm-match-slot[data-value]').count() == 0
 	assert alpha.is_enabled()
 	drag(alpha, slots.first)
 	assert slots.first.get_attribute('data-value') == crcs[1] + '_001'
 	# Cancel a drag by dropping outside the controls.
 	quote.drag_to(page.locator('body'), target_position={'x': 5, 'y': 5})
 	assert quote.is_enabled()
-	assert match.locator('.qti-dragging, .qti-drop-target').count() == 0
-	match.locator('.qti-btn-reset').click()
+	assert match.locator('.qpm-dragging, .qpm-drop-target').count() == 0
+	match.locator('.qpm-btn-reset').click()
 	quote.press('Space')
 	assert quote.get_attribute('aria-pressed') == 'true'
 	quote.press('Escape')
@@ -165,13 +165,13 @@ def verify_desktop(page: Page, html: str, crcs: list[str], output: Path) -> None
 	assert slots.first.get_attribute('data-value') == crcs[1] + '_001'
 	quote.press('Space')
 	assert quote.get_attribute('aria-pressed') == 'true'
-	match.locator('.qti-btn-reset').click()
+	match.locator('.qpm-btn-reset').click()
 	assert quote.get_attribute('aria-pressed') == 'false'
 	verify_match_letters(match, other)
 	drops = page.evaluate('window.nativeDrops')
 	assert drops and all(drop['trusted'] and drop['value'] for drop in drops)
 	assert not errors, errors
-	assert page.locator('.qti-dragging, .qti-drop-target').count() == 0
+	assert page.locator('.qpm-dragging, .qpm-drop-target').count() == 0
 	page.evaluate('window.getSelection().removeAllRanges()')
 	page.screenshot(path=str(output / 'desktop-light.png'), full_page=True)
 	page.emulate_media(color_scheme='dark')
@@ -186,29 +186,29 @@ def verify_desktop(page: Page, html: str, crcs: list[str], output: Path) -> None
 #==============
 def verify_match_letters(match: Locator, other: Locator) -> None:
 	"""Letters move every prior placement; drag/click allow independent duplicate guesses."""
-	slots = match.locator('.qti-match-slot')
-	choice = match.locator('.qti-match-choice').first
-	replacement = match.locator('.qti-match-choice').nth(1)
+	slots = match.locator('.qpm-match-slot')
+	choice = match.locator('.qpm-match-choice').first
+	replacement = match.locator('.qpm-match-choice').nth(1)
 	token = choice.get_attribute('data-value')
 	letter = choice.get_attribute('data-letter')
-	other_values = values(other.locator('.qti-match-slot'))
+	other_values = values(other.locator('.qpm-match-slot'))
 	# Both input paths can reuse an already assigned bank choice.
 	drag(choice, slots.first)
 	drag(choice, slots.last)
 	assert values(slots) == [token, token]
-	match.locator('.qti-btn-reset').click()
+	match.locator('.qpm-btn-reset').click()
 	for slot in [slots.first, slots.last]:
 		choice.click()
 		slot.click()
 	assert values(slots) == [token, token]
-	match.locator('.qti-btn:not(.qti-btn-reset)').click()
+	match.locator('.qpm-btn:not(.qpm-btn-reset)').click()
 	correct = sum(slot.get_attribute('data-correct') == token for slot in [slots.first, slots.last])
-	assert match.locator('.qti-feedback-result').inner_text() == f'Total Score: {correct} out of 2'
+	assert match.locator('.qpm-feedback-result').inner_text() == f'Total Score: {correct} out of 2'
 	slots.last.press(letter.lower())
 	assert values(slots) == [None, token]
 	assert 'moved from prompt 1 to prompt 2' in match.locator('[role=status]').inner_text()
 	assert slots.first.get_attribute('title') is None
-	assert match.locator('.qti-feedback-result').inner_text() == ''
+	assert match.locator('.qpm-feedback-result').inner_text() == ''
 	assert match.locator('.feedback').all_inner_texts() == ['', '']
 	assert slots.last.evaluate('(slot) => slot === document.activeElement')
 	# A move replaces the destination's old answer and keeps both choices available.
@@ -227,10 +227,10 @@ def verify_match_letters(match: Locator, other: Locator) -> None:
 	slots.last.dispatch_event('keydown', {'key': letter, 'isComposing': True})
 	choice.press(letter)
 	assert values(slots) == [token, None]
-	assert values(other.locator('.qti-match-slot')) == other_values
-	match.locator('.qti-btn-reset').click()
+	assert values(other.locator('.qpm-match-slot')) == other_values
+	match.locator('.qpm-btn-reset').click()
 	assert values(slots) == [None, None]
-	assert match.locator('.qti-match-choice[aria-pressed=true]').count() == 0
+	assert match.locator('.qpm-match-choice[aria-pressed=true]').count() == 0
 
 
 #==============
@@ -255,12 +255,12 @@ def verify_match_layout(page: Page, output: Path) -> None:
 		main.evaluate('(main, width) => main.style.width = width + "px"', width)
 		for item in items:
 			question = page.locator('#question_html_' + item.item_crc16)
-			table = question.locator('.qti-match-table')
-			slot = question.locator('.qti-match-slot').first
+			table = question.locator('.qpm-match-table')
+			slot = question.locator('.qpm-match-slot').first
 			bounds = table.bounding_box()
 			container = question.bounding_box()
 			assert bounds['width'] <= container['width'] + 1, 'MATCH table escaped its container'
-			cell = question.locator('.qti-match-answer').first.bounding_box()
+			cell = question.locator('.qpm-match-answer').first.bounding_box()
 			slot_bounds = slot.bounding_box()
 			assert abs(slot_bounds['width'] - cell['width']) <= 2, 'Slot leaves wasted cell width'
 			assert abs(slot_bounds['height'] - cell['height']) <= 2, 'Slot leaves wasted cell height'
@@ -270,34 +270,34 @@ def verify_match_layout(page: Page, output: Path) -> None:
 			reset_button = question.get_by_role('button', name='Reset', exact=True)
 			check = check_button.bounding_box()
 			reset = reset_button.bounding_box()
-			bank = question.locator('.qti-match-bank').bounding_box()
+			bank = question.locator('.qpm-match-bank').bounding_box()
 			assert check_button.evaluate('(button) => button.offsetHeight') >= 44
 			assert reset_button.evaluate('(button) => button.offsetHeight') >= 44
 			assert abs(check['y'] - reset['y']) <= 1, 'Buttons must stay on the same row'
 			assert check['y'] >= bounds['y'] + bounds['height']
 			assert check['y'] + check['height'] <= bank['y']
 			if width > 420:
-				assert question.locator('.qti-match-table thead').is_visible()
+				assert question.locator('.qpm-match-table thead').is_visible()
 			else:
-				assert not question.locator('.qti-match-table thead').is_visible()
+				assert not question.locator('.qpm-match-table thead').is_visible()
 		assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
 		page.screenshot(path=str(output / f'layout-{width}.png'), full_page=True)
 	# Short labels must not inherit the width needed by a long description.
 	short = page.locator('#question_html_' + items[0].item_crc16)
-	short_table = short.locator('.qti-match-table')
+	short_table = short.locator('.qpm-match-table')
 	short_size = short_table.bounding_box()
-	long_table = page.locator('#question_html_' + items[1].item_crc16 + ' .qti-match-table')
+	long_table = page.locator('#question_html_' + items[1].item_crc16 + ' .qpm-match-table')
 	assert short_size['width'] < long_table.bounding_box()['width']
 	assert long_table.bounding_box()['width'] < main.bounding_box()['width']
-	choice = short.locator('.qti-match-choice[data-value="' + items[0].item_crc16 + '_001"]')
-	slot = short.locator('.qti-match-slot').first
+	choice = short.locator('.qpm-match-choice[data-value="' + items[0].item_crc16 + '_001"]')
+	slot = short.locator('.qpm-match-slot').first
 	slot.press(choice.get_attribute('data-letter'))
 	short.get_by_role('button', name='Check Answer', exact=True).click()
 	assert short_table.bounding_box() == short_size, 'Answer text or grading changed table dimensions'
 	assert slot.evaluate('(slot) => slot.scrollWidth > slot.clientWidth')
-	assert short.locator('.qti-game-actions .qti-feedback-result').is_visible()
+	assert short.locator('.qpm-game-actions .qpm-feedback-result').is_visible()
 	# Moving a repeated guess must clear all previous copies, not only the first one.
-	slots = short.locator('.qti-match-slot')
+	slots = short.locator('.qpm-match-slot')
 	for index in range(slots.count()):
 		choice.click()
 		slots.nth(index).click()
@@ -316,18 +316,18 @@ def verify_touch(browser_type: BrowserType, html: str, crcs: list[str]) -> None:
 		match = page.locator('#question_html_' + crcs[1])
 		for index in range(2):
 			token = crcs[1] + '_' + str(index + 1).zfill(3)
-			match.locator('.qti-match-choice[data-value="' + token + '"]').tap()
-			match.locator('.qti-match-slot').nth(index).tap()
-		match.locator('.qti-btn:not(.qti-btn-reset)').tap()
-		assert match.locator('.qti-feedback-result').inner_text() == 'Total Score: 2 out of 2'
-		match.locator('.qti-btn-reset').tap()
-		assert match.locator('.qti-match-slot[data-value]').count() == 0
+			match.locator('.qpm-match-choice[data-value="' + token + '"]').tap()
+			match.locator('.qpm-match-slot').nth(index).tap()
+		match.locator('.qpm-btn:not(.qpm-btn-reset)').tap()
+		assert match.locator('.qpm-feedback-result').inner_text() == 'Total Score: 2 out of 2'
+		match.locator('.qpm-btn-reset').tap()
+		assert match.locator('.qpm-match-slot[data-value]').count() == 0
 		order = page.locator('#question_html_' + crcs[0])
-		initial = values(order.locator('.qti-order-row'))
-		order.locator('.qti-order-row').first.locator('[data-direction=down]').tap()
-		assert values(order.locator('.qti-order-row'))[1] == initial[0]
-		order.locator('.qti-btn-reset').tap()
-		assert values(order.locator('.qti-order-row')) == initial
+		initial = values(order.locator('.qpm-order-row'))
+		order.locator('.qpm-order-row').first.locator('[data-direction=down]').tap()
+		assert values(order.locator('.qpm-order-row'))[1] == initial[0]
+		order.locator('.qpm-btn-reset').tap()
+		assert values(order.locator('.qpm-order-row')) == initial
 		context.close()
 	print(f'{browser_type.name}: touch alternatives passed')
 
@@ -348,7 +348,7 @@ def verify_check_buttons(page: Page, output: Path) -> None:
 	for item in items:
 		question = page.locator('#question_html_' + item.item_crc16)
 		check = question.get_by_role('button', name='Check Answer', exact=True)
-		result = question.locator('.qti-feedback-result')
+		result = question.locator('.qpm-feedback-result')
 		assert check.evaluate('(button) => button.offsetHeight') >= 44
 		if item.item_type in ['MC', 'MA']:
 			for option in question.locator('input[data-correct=true]').all():
@@ -371,7 +371,7 @@ def verify_check_buttons(page: Page, output: Path) -> None:
 			question.locator('input').fill('10' if item.item_type == 'NUM' else 'dog')
 		check.click()
 		assert result.inner_text() != 'CORRECT'
-		assert 'qti-feedback-error' in result.get_attribute('class')
+		assert 'qpm-feedback-error' in result.get_attribute('class')
 	check = page.get_by_role('button', name='Check Answer', exact=True).first
 	verify_button_press(page, check)
 	page.screenshot(path=str(output / 'check-buttons.png'), full_page=True)

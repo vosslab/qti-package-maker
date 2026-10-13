@@ -85,11 +85,11 @@ def generate_javascript(crc16_text: str) -> str:
 	js += "  const resultDiv = document.getElementById('result_"+crc16_text+"');\n"
 	js += "  if (correctCount === inputs.length) {\n"
 	# All blanks correct: engage success pill.
-	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-success';\n"
+	js += "    resultDiv.className = 'qpm-feedback-result qpm-feedback-success';\n"
 	js += "    resultDiv.textContent = 'CORRECT';\n"
 	js += "  } else {\n"
 	# Partial: engage error pill
-	js += "    resultDiv.className = 'qti-feedback-result qti-feedback-error';\n"
+	js += "    resultDiv.className = 'qpm-feedback-result qpm-feedback-error';\n"
 	js += "    resultDiv.textContent = `Correct: ${correctCount} of ${inputs.length}`;\n"
 	js += "  }\n"
 	js += "}\n"

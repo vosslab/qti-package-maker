@@ -26,6 +26,7 @@ import pathlib
 
 # PIP3 modules
 import lxml.etree
+import pytest
 
 # QTI Package Maker
 from qti_package_maker.engines.blackboard_export_zip import assessment_meta
@@ -677,6 +678,14 @@ def test_unknown_question_type_is_skipped_with_warning(tmp_path: pathlib.Path, c
 	assert "res00002.dat" in captured.out
 
 #============================================
+def test_reader_propagates_confirmed_css_errors(tmp_path: pathlib.Path) -> None:
+	item = lxml.etree.fromstring(REAL_SHAPE_MA_11CH_5CORRECT_XML.encode())
+	item.find('.//mat_formattedtext').text = '<span style="color: rgb(banana)">Question</span>'
+	pool_dir = _write_ma_pool_package(tmp_path, lxml.etree.tostring(item, encoding='unicode'))
+	with pytest.raises(ValueError, match='invalid inline CSS.*rgb'):
+		read_package.read_items_from_file(str(pool_dir), allow_mixed=True)
+
+
 def test_ma_reader_real_shape_multi_correct(tmp_path: pathlib.Path) -> None:
 	# Real-shape MA (11 choices, 5 correct) from FURAN MA pool: the reader must
 	# recover only the 5 correct choices and not include the 6 negated ones.

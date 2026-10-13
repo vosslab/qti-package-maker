@@ -1,4 +1,5 @@
 colour-science
+cssutils>=2.15
 crcmod
 lxml
 num2words
@@ -7,3 +8,4 @@ pyyaml
 seaborn
 six
 tabulate
+tinycss2>=1.4
